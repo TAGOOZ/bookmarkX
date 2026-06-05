@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import Database from 'better-sqlite3';
 import { initializeSchema } from '../../db/schema';
-import { startCronScheduler, stopCronScheduler } from '../cron';
+import { startCronScheduler } from '../cron';
 
 vi.mock('../../pipeline/fetch-and-store', () => ({
   fetchAndStore: vi.fn(),
@@ -28,7 +28,6 @@ describe('cron scheduler', () => {
   });
 
   afterEach(() => {
-    stopCronScheduler();
     vi.useRealTimers();
     db.close();
   });
@@ -63,7 +62,7 @@ describe('cron scheduler', () => {
 
   it('runs classify after fetch on trigger', async () => {
     mockFetchAndStore.mockResolvedValue({ stored: 2, skipped: 0 });
-    mockClassifyAndNotify.mockResolvedValue({ classified: 2, notified: 1 });
+    mockClassifyAndNotify.mockResolvedValue({ classified: 2, notified: 1, errors: 0 });
 
     const job = startCronScheduler(db, '0 */6 * * *');
     await job.trigger();

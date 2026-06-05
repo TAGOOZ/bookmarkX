@@ -16,8 +16,10 @@
   box-sizing: border-box;
 }
 
+@import './fonts.css';
+
 body {
-  font-family: 'Thmadayah', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-family: 'Thmanyah', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   background-color: var(--bg-primary);
   color: var(--text-primary);
   overflow: hidden;
