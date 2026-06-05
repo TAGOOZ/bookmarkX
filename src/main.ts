@@ -3,6 +3,13 @@ import path from 'node:path';
 import fs from 'node:fs';
 import started from 'electron-squirrel-startup';
 import Database from 'better-sqlite3';
+
+// Disable GPU acceleration on Linux/Wayland to avoid crashes
+if (process.platform === 'linux') {
+  app.commandLine.appendSwitch('disable-gpu');
+  app.commandLine.appendSwitch('disable-gpu-compositing');
+  app.commandLine.appendSwitch('no-sandbox');
+}
 import { initializeSchema } from './db/schema';
 import { getStoredBookmarks } from './db/bookmarks';
 import { getClassifiedBookmarks } from './db/classifications';
