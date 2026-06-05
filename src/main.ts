@@ -6,6 +6,7 @@ import Database from 'better-sqlite3';
 import { initializeSchema } from './db/schema';
 import { getStoredBookmarks } from './db/bookmarks';
 import { getClassifiedBookmarks } from './db/classifications';
+import { startCronScheduler } from './scheduler/cron';
 
 // Handle creating/removing shortcuts on Windows when installing/uninstalling.
 if (started) {
@@ -139,5 +140,11 @@ app.whenReady().then(() => {
     return classifyAndNotify(db, {
       apiKey: parse('GEMINI_API_KEY') || undefined,
     });
+  });
+
+  // Start cron scheduler: fetch every 6 hours, then classify
+  const cronJob = startCronScheduler(db, '0 */6 * * *');
+  app.on('before-quit', () => {
+    cronJob.stop();
   });
 });
