@@ -46,6 +46,8 @@ const messages = {
   noBookmarksDescription: 'لم يتم العثور على إشارات مرجعية تطابق البحث',
   fetchNow: 'جلب الآن',
   fetching: 'جاري الجلب...',
+  classifyNow: 'تصنيف الآن',
+  classifying: 'جاري التصنيف...',
 };
 
 function App() {
@@ -72,6 +74,11 @@ function App() {
     setRefreshKey((k) => k + 1);
   }, []);
 
+  const handleClassify = useCallback(async () => {
+    await window.api.classifyAndNotify();
+    setRefreshKey((k) => k + 1);
+  }, []);
+
   return (
     <IntlProvider messages={messages} locale="ar" defaultLocale="ar">
       <div className="app-container">
@@ -80,6 +87,7 @@ function App() {
           filters={filters}
           onFilterChange={handleFilterChange}
           onFetchClick={handleFetch}
+          onClassifyClick={handleClassify}
         />
         <BookmarkList
           selectedBookmark={selectedBookmark}

@@ -36,6 +36,7 @@ declare global {
       getSettings: () => Promise<SettingsData>;
       saveSettings: (settings: SettingsData) => Promise<void>;
       fetchBookmarks: () => Promise<{ stored: number; skipped: number }>;
+      classifyAndNotify: () => Promise<{ classified: number; notified: number; errors: number }>;
     };
   }
 }

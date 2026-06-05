@@ -128,4 +128,16 @@ app.whenReady().then(() => {
       chromeProfile: parse('BIRD_CHROME_PROFILE') || undefined,
     });
   });
+
+  ipcMain.handle('classify-and-notify', async () => {
+    const { classifyAndNotify } = await import('./pipeline/classify-and-notify');
+    const envContent = fs.existsSync(envPath) ? fs.readFileSync(envPath, 'utf-8') : '';
+    const parse = (key: string): string => {
+      const match = envContent.match(new RegExp(`^${key}=(.*)$`, 'm'));
+      return match ? match[1] : '';
+    };
+    return classifyAndNotify(db, {
+      apiKey: parse('GEMINI_API_KEY') || undefined,
+    });
+  });
 });
