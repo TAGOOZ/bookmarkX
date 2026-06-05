@@ -1,5 +1,8 @@
 import { execFile } from 'child_process';
+import dotenv from 'dotenv';
 import type { Bookmark, FetchOptions } from './types';
+
+dotenv.config();
 
 function runBird(args: string[], env?: Record<string, string>): Promise<string> {
   return new Promise((resolve, reject) => {
