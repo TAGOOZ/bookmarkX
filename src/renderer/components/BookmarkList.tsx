@@ -8,6 +8,7 @@ interface BookmarkListProps {
   filters: FilterState;
   searchQuery: string;
   onSearchChange: (query: string) => void;
+  refreshKey?: number;
 }
 
 const BookmarkList: React.FC<BookmarkListProps> = ({
@@ -16,6 +17,7 @@ const BookmarkList: React.FC<BookmarkListProps> = ({
   filters,
   searchQuery,
   onSearchChange,
+  refreshKey = 0,
 }) => {
   const [bookmarks, setBookmarks] = useState<Bookmark[]>([]);
   const [loading, setLoading] = useState(true);
@@ -59,7 +61,7 @@ const BookmarkList: React.FC<BookmarkListProps> = ({
 
   useEffect(() => {
     fetchBookmarks();
-  }, []);
+  }, [refreshKey]);
 
   const filteredBookmarks = bookmarks.filter((bookmark) => {
     if (filters.priority && bookmark.priority !== filters.priority) {

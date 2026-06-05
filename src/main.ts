@@ -114,4 +114,18 @@ app.whenReady().then(() => {
     ];
     fs.writeFileSync(envPath, lines.join('\n'), 'utf-8');
   });
+
+  ipcMain.handle('fetch-bookmarks', async () => {
+    const { fetchAndStore } = await import('./pipeline/fetch-and-store');
+    const envContent = fs.existsSync(envPath) ? fs.readFileSync(envPath, 'utf-8') : '';
+    const parse = (key: string): string => {
+      const match = envContent.match(new RegExp(`^${key}=(.*)$`, 'm'));
+      return match ? match[1] : '';
+    };
+    return fetchAndStore(db, {
+      authToken: parse('BIRD_AUTH_TOKEN') || undefined,
+      ct0: parse('BIRD_CT0') || undefined,
+      chromeProfile: parse('BIRD_CHROME_PROFILE') || undefined,
+    });
+  });
 });

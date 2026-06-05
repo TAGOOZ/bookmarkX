@@ -6,12 +6,14 @@ interface SidebarProps {
   onSettingsClick: () => void;
   filters: FilterState;
   onFilterChange: (filters: FilterState) => void;
+  onFetchClick: () => void;
 }
 
 const Sidebar: React.FC<SidebarProps> = ({
   onSettingsClick,
   filters,
   onFilterChange,
+  onFetchClick,
 }) => {
   const priorities = [
     { value: '', label: 'all' },
@@ -45,6 +47,9 @@ const Sidebar: React.FC<SidebarProps> = ({
       <nav className="sidebar-nav">
         <div className="nav-item active">
           <FormattedMessage id="bookmarks" />
+        </div>
+        <div className="nav-item" onClick={onFetchClick}>
+          <FormattedMessage id="fetchNow" />
         </div>
         <div className="nav-item" onClick={onSettingsClick}>
           <FormattedMessage id="settings" />

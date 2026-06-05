@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import { IntlProvider } from 'react-intl';
 import Sidebar from './components/Sidebar';
 import BookmarkList from './components/BookmarkList';
@@ -44,6 +44,8 @@ const messages = {
   openLink: 'فتح الرابط',
   noBookmarks: 'لا توجد إشارات مرجعية',
   noBookmarksDescription: 'لم يتم العثور على إشارات مرجعية تطابق البحث',
+  fetchNow: 'جلب الآن',
+  fetching: 'جاري الجلب...',
 };
 
 function App() {
@@ -55,6 +57,7 @@ function App() {
     contentType: '',
   });
   const [searchQuery, setSearchQuery] = useState('');
+  const [refreshKey, setRefreshKey] = useState(0);
 
   const handleBookmarkSelect = (bookmark: Bookmark) => {
     setSelectedBookmark(bookmark);
@@ -64,6 +67,11 @@ function App() {
     setFilters(newFilters);
   };
 
+  const handleFetch = useCallback(async () => {
+    await window.api.fetchBookmarks();
+    setRefreshKey((k) => k + 1);
+  }, []);
+
   return (
     <IntlProvider messages={messages} locale="ar" defaultLocale="ar">
       <div className="app-container">
@@ -71,6 +79,7 @@ function App() {
           onSettingsClick={() => setShowSettings(true)}
           filters={filters}
           onFilterChange={handleFilterChange}
+          onFetchClick={handleFetch}
         />
         <BookmarkList
           selectedBookmark={selectedBookmark}
@@ -78,6 +87,7 @@ function App() {
           filters={filters}
           searchQuery={searchQuery}
           onSearchChange={setSearchQuery}
+          refreshKey={refreshKey}
         />
         <BookmarkDetail bookmark={selectedBookmark} />
         {showSettings && (

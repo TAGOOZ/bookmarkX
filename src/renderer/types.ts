@@ -35,6 +35,7 @@ declare global {
       getBookmarkWithClassification: (bookmarkId: string) => Promise<ClassificationData | null>;
       getSettings: () => Promise<SettingsData>;
       saveSettings: (settings: SettingsData) => Promise<void>;
+      fetchBookmarks: () => Promise<{ stored: number; skipped: number }>;
     };
   }
 }

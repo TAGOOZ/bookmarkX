@@ -12,4 +12,5 @@ contextBridge.exposeInMainWorld('api', {
     birdCt0: string;
     birdChromeProfile: string;
   }) => ipcRenderer.invoke('save-settings', settings),
+  fetchBookmarks: () => ipcRenderer.invoke('fetch-bookmarks'),
 });
