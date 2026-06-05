@@ -30,6 +30,7 @@
 - As a user, I can search bookmarks by keyword (full-text)
 - As a user, I get desktop notifications + in-app badge for high-priority new bookmarks
 - As a user, the app works offline with previously fetched data
+- As a user, I can configure API keys and auth tokens from the Settings screen
 
 **Acceptance Criteria:**
 - bird.fast CLI is bundled or accessible from the Electron app
@@ -39,6 +40,9 @@
 - Full RTL layout: sidebar, navigation, and content areas mirror for Arabic text
 - Mixed Arabic/English text renders correctly (bidirectional text support)
 - Thmanyah font family loaded and applied to Arabic text
+- Settings screen allows updating: GEMINI_API_KEY, BIRD_AUTH_TOKEN, BIRD_CT0, BIRD_CHROME_PROFILE
+- Settings persist to .env file and are loaded on app start
+- Sensitive values (API keys, tokens) are masked in the UI
 
 ### Phase 2: Summarize, Chat & Glossary
 
