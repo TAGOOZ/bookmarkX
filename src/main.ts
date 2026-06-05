@@ -1,11 +1,17 @@
-import { app, BrowserWindow } from 'electron';
+import { app, BrowserWindow, ipcMain } from 'electron';
 import path from 'node:path';
 import started from 'electron-squirrel-startup';
+import Database from 'better-sqlite3';
+import { initializeSchema } from './db/schema';
+import { getStoredBookmarks } from './db/bookmarks';
+import { getClassifiedBookmarks } from './db/classifications';
 
 // Handle creating/removing shortcuts on Windows when installing/uninstalling.
 if (started) {
   app.quit();
 }
+
+let db: Database.Database;
 
 const createWindow = () => {
   // Create the browser window.
@@ -52,5 +58,24 @@ app.on('activate', () => {
   }
 });
 
-// In this file you can include the rest of your app's specific main process
-// code. You can also put them in separate files and import them here.
+// Initialize database and IPC handlers
+app.whenReady().then(() => {
+  // Initialize SQLite database
+  const dbPath = path.join(app.getPath('userData'), 'bookmarks.db');
+  db = new Database(dbPath);
+  initializeSchema(db);
+
+  // IPC handlers for bookmark data
+  ipcMain.handle('get-bookmarks', () => {
+    return getStoredBookmarks(db);
+  });
+
+  ipcMain.handle('get-classifications', () => {
+    return getClassifiedBookmarks(db);
+  });
+
+  ipcMain.handle('get-bookmark-with-classification', async (_event, bookmarkId: string) => {
+    const { getClassification } = await import('./db/classifications');
+    return getClassification(db, bookmarkId);
+  });
+});

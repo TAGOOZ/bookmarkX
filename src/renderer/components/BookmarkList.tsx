@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { FormattedMessage } from 'react-intl';
 import { Bookmark, FilterState } from '../App';
 
@@ -10,39 +10,6 @@ interface BookmarkListProps {
   onSearchChange: (query: string) => void;
 }
 
-const mockBookmarks: Bookmark[] = [
-  {
-    id: '1',
-    title: 'مقدمة في تعلم الآلة',
-    url: 'https://example.com/ml-intro',
-    topic: 'technology',
-    priority: 'high',
-    contentType: 'article',
-    content: 'مقال شامل عن أساسيات تعلم الآلة والذكاء الاصطناعي.',
-    createdAt: '2024-01-15',
-  },
-  {
-    id: '2',
-    title: 'أساسيات التصميم UI/UX',
-    url: 'https://example.com/design-basics',
-    topic: 'design',
-    priority: 'medium',
-    contentType: 'video',
-    content: 'دورة فيديو عن أساسيات تصميم واجهات المستخدم وتجربة المستخدم.',
-    createdAt: '2024-01-10',
-  },
-  {
-    id: '3',
-    title: 'ريادة الأعمال في 2024',
-    url: 'https://example.com/entrepreneurship',
-    topic: 'business',
-    priority: 'low',
-    contentType: 'article',
-    content: 'مقال عن أهم اتجاهات ريادة الأعمال في عام 2024.',
-    createdAt: '2024-01-05',
-  },
-];
-
 const BookmarkList: React.FC<BookmarkListProps> = ({
   selectedBookmark,
   onBookmarkSelect,
@@ -50,7 +17,47 @@ const BookmarkList: React.FC<BookmarkListProps> = ({
   searchQuery,
   onSearchChange,
 }) => {
-  const filteredBookmarks = mockBookmarks.filter((bookmark) => {
+  const [bookmarks, setBookmarks] = useState<Bookmark[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchBookmarks = async () => {
+      try {
+        const [dbBookmarks, classifications] = await Promise.all([
+          window.api.getBookmarks(),
+          window.api.getClassifications(),
+        ]);
+
+        const classificationMap = new Map(
+          classifications.map(c => [c.bookmark_id, c])
+        );
+
+        const mappedBookmarks: Bookmark[] = dbBookmarks.map(dbBookmark => {
+          const classification = classificationMap.get(dbBookmark.id);
+          return {
+            id: dbBookmark.id,
+            title: dbBookmark.title || dbBookmark.tweet_text || 'Untitled',
+            url: dbBookmark.url,
+            topic: classification?.priority || 'medium',
+            priority: (classification?.priority as 'high' | 'medium' | 'low') || 'medium',
+            contentType: dbBookmark.content_type,
+            content: dbBookmark.tweet_text || '',
+            createdAt: dbBookmark.fetched_at,
+          };
+        });
+
+        setBookmarks(mappedBookmarks);
+      } catch (error) {
+        console.error('Failed to fetch bookmarks:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchBookmarks();
+  }, []);
+
+  const filteredBookmarks = bookmarks.filter((bookmark) => {
     if (filters.priority && bookmark.priority !== filters.priority) {
       return false;
     }
@@ -81,6 +88,27 @@ const BookmarkList: React.FC<BookmarkListProps> = ({
         return '';
     }
   };
+
+  if (loading) {
+    return (
+      <div className="bookmark-list">
+        <div className="list-header">
+          <FormattedMessage id="bookmarks" />
+          <input
+            type="text"
+            className="search-input"
+            placeholder="بحث..."
+            value={searchQuery}
+            onChange={(e) => onSearchChange(e.target.value)}
+          />
+        </div>
+        <div className="empty-state">
+          <div className="empty-icon">⏳</div>
+          <div className="empty-title">جاري التحميل...</div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="bookmark-list">
