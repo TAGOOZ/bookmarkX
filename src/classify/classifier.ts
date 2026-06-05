@@ -1,0 +1,81 @@
+import { execFile } from 'child_process';
+import dotenv from 'dotenv';
+import type { Bookmark, ClassificationResult, ClassifierOptions } from './types';
+
+dotenv.config();
+
+function runCurl(args: string[]): Promise<string> {
+  return new Promise((resolve, reject) => {
+    execFile('curl', args, (error, stdout, _stderr) => {
+      if (error) return reject(error);
+      resolve(stdout);
+    });
+  });
+}
+
+function buildPrompt(bookmark: Bookmark): string {
+  const parts = [];
+  if (bookmark.title) parts.push(`Title: ${bookmark.title}`);
+  if (bookmark.author_name) parts.push(`Author: ${bookmark.author_name} (@${bookmark.author_handle})`);
+  if (bookmark.tweet_text) parts.push(`Tweet: ${bookmark.tweet_text}`);
+  parts.push(`Content type: ${bookmark.content_type}`);
+  parts.push(`URL: ${bookmark.url}`);
+
+  return `Classify this bookmark. Return JSON with:
+- priority: "high" | "medium" | "low" (how important/useful is this to read?)
+- topics: string[] (1-3 topic tags, e.g. ["AI", "Web Development"])
+- reading_time_min: number (estimated minutes to read)
+
+Bookmark info:
+${parts.join('\n')}
+
+Return ONLY valid JSON, no markdown.`;
+}
+
+export async function classifyBookmark(
+  bookmark: Bookmark,
+  options: ClassifierOptions = {}
+): Promise<ClassificationResult> {
+  const apiKey = options.apiKey || process.env.GEMINI_API_KEY;
+  const model = options.model || 'gemini-2.0-flash';
+
+  if (!apiKey) {
+    throw new Error('GEMINI_API_KEY is required');
+  }
+
+  const prompt = buildPrompt(bookmark);
+
+  const payload = JSON.stringify({
+    contents: [{ parts: [{ text: prompt }] }],
+  });
+
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
+
+  const stdout = await runCurl([
+    '-s',
+    '-X', 'POST',
+    '-H', 'Content-Type: application/json',
+    '-d', payload,
+    url,
+  ]);
+
+  const response = JSON.parse(stdout);
+
+  if (response.error) {
+    throw new Error(response.error.message || 'Gemini API error');
+  }
+
+  const text = response.candidates?.[0]?.content?.parts?.[0]?.text;
+  if (!text) {
+    throw new Error('Invalid Gemini API response');
+  }
+
+  const cleaned = text.replace(/```json\n?|\n?```/g, '').trim();
+  const result = JSON.parse(cleaned) as ClassificationResult;
+
+  if (!result.priority || !result.topics || !result.reading_time_min) {
+    throw new Error('Invalid classification result');
+  }
+
+  return result;
+}
