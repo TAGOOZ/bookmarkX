@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { FormattedMessage } from 'react-intl';
 
 interface SettingsProps {
@@ -12,12 +12,14 @@ const Settings: React.FC<SettingsProps> = ({ onClose }) => {
     birdCt0: '',
     birdChromeProfile: '',
   });
+  const [loading, setLoading] = useState(true);
 
-  const [showPasswords, setShowPasswords] = useState({
-    geminiApiKey: false,
-    birdAuthToken: false,
-    birdCt0: false,
-  });
+  useEffect(() => {
+    window.api.getSettings().then((settings) => {
+      setFormData(settings);
+      setLoading(false);
+    });
+  }, []);
 
   const handleInputChange = (field: string, value: string) => {
     setFormData((prev) => ({
@@ -26,23 +28,21 @@ const Settings: React.FC<SettingsProps> = ({ onClose }) => {
     }));
   };
 
-  const togglePasswordVisibility = (field: string) => {
-    setShowPasswords((prev) => ({
-      ...prev,
-      [field]: !prev[field as keyof typeof prev],
-    }));
-  };
-
-  const maskValue = (value: string) => {
-    if (!value) return '';
-    return '•'.repeat(8);
-  };
-
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log('Settings saved:', formData);
+    await window.api.saveSettings(formData);
     onClose();
   };
+
+  if (loading) {
+    return (
+      <div className="settings-panel">
+        <div className="settings-container">
+          <p>Loading...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="settings-panel">
@@ -62,7 +62,7 @@ const Settings: React.FC<SettingsProps> = ({ onClose }) => {
               <FormattedMessage id="apiKey" />
             </label>
             <input
-              type={showPasswords.geminiApiKey ? 'text' : 'password'}
+              type="password"
               className="form-input"
               value={formData.geminiApiKey}
               onChange={(e) => handleInputChange('geminiApiKey', e.target.value)}
@@ -75,7 +75,7 @@ const Settings: React.FC<SettingsProps> = ({ onClose }) => {
               <FormattedMessage id="authToken" />
             </label>
             <input
-              type={showPasswords.birdAuthToken ? 'text' : 'password'}
+              type="password"
               className="form-input"
               value={formData.birdAuthToken}
               onChange={(e) => handleInputChange('birdAuthToken', e.target.value)}
@@ -88,7 +88,7 @@ const Settings: React.FC<SettingsProps> = ({ onClose }) => {
               <FormattedMessage id="ct0" />
             </label>
             <input
-              type={showPasswords.birdCt0 ? 'text' : 'password'}
+              type="password"
               className="form-input"
               value={formData.birdCt0}
               onChange={(e) => handleInputChange('birdCt0', e.target.value)}

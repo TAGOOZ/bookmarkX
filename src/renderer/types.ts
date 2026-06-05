@@ -16,6 +16,13 @@ export interface ClassificationData {
   topics: string[];
 }
 
+export interface SettingsData {
+  geminiApiKey: string;
+  birdAuthToken: string;
+  birdCt0: string;
+  birdChromeProfile: string;
+}
+
 declare global {
   interface Window {
     api: {
@@ -26,6 +33,8 @@ declare global {
         reading_time_min: number;
       }>>;
       getBookmarkWithClassification: (bookmarkId: string) => Promise<ClassificationData | null>;
+      getSettings: () => Promise<SettingsData>;
+      saveSettings: (settings: SettingsData) => Promise<void>;
     };
   }
 }

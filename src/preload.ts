@@ -5,4 +5,11 @@ contextBridge.exposeInMainWorld('api', {
   getClassifications: () => ipcRenderer.invoke('get-classifications'),
   getBookmarkWithClassification: (bookmarkId: string) =>
     ipcRenderer.invoke('get-bookmark-with-classification', bookmarkId),
+  getSettings: () => ipcRenderer.invoke('get-settings'),
+  saveSettings: (settings: {
+    geminiApiKey: string;
+    birdAuthToken: string;
+    birdCt0: string;
+    birdChromeProfile: string;
+  }) => ipcRenderer.invoke('save-settings', settings),
 });

@@ -1,5 +1,6 @@
 import { app, BrowserWindow, ipcMain } from 'electron';
 import path from 'node:path';
+import fs from 'node:fs';
 import started from 'electron-squirrel-startup';
 import Database from 'better-sqlite3';
 import { initializeSchema } from './db/schema';
@@ -77,5 +78,40 @@ app.whenReady().then(() => {
   ipcMain.handle('get-bookmark-with-classification', async (_event, bookmarkId: string) => {
     const { getClassification } = await import('./db/classifications');
     return getClassification(db, bookmarkId);
+  });
+
+  // Settings IPC handlers
+  const envPath = path.join(app.getAppPath(), '.env');
+
+  ipcMain.handle('get-settings', () => {
+    const envContent = fs.existsSync(envPath) ? fs.readFileSync(envPath, 'utf-8') : '';
+    const parse = (key: string): string => {
+      const match = envContent.match(new RegExp(`^${key}=(.*)$`, 'm'));
+      return match ? match[1] : '';
+    };
+    return {
+      geminiApiKey: parse('GEMINI_API_KEY'),
+      birdAuthToken: parse('BIRD_AUTH_TOKEN'),
+      birdCt0: parse('BIRD_CT0'),
+      birdChromeProfile: parse('BIRD_CHROME_PROFILE'),
+    };
+  });
+
+  ipcMain.handle('save-settings', (_event, settings: {
+    geminiApiKey: string;
+    birdAuthToken: string;
+    birdCt0: string;
+    birdChromeProfile: string;
+  }) => {
+    const lines = [
+      '# Gemini API Key (required for classification)',
+      `GEMINI_API_KEY=${settings.geminiApiKey}`,
+      '',
+      '# Bird CLI authentication (for X/Twitter bookmarks)',
+      `BIRD_CHROME_PROFILE=${settings.birdChromeProfile}`,
+      `BIRD_AUTH_TOKEN=${settings.birdAuthToken}`,
+      `BIRD_CT0=${settings.birdCt0}`,
+    ];
+    fs.writeFileSync(envPath, lines.join('\n'), 'utf-8');
   });
 });
