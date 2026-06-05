@@ -13,12 +13,18 @@ const Settings: React.FC<SettingsProps> = ({ onClose }) => {
     birdChromeProfile: '',
   });
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    window.api.getSettings().then((settings) => {
-      setFormData(settings);
-      setLoading(false);
-    });
+    window.api.getSettings()
+      .then((settings) => {
+        setFormData(settings);
+        setLoading(false);
+      })
+      .catch((err) => {
+        setError(err instanceof Error ? err.message : 'Failed to load settings');
+        setLoading(false);
+      });
   }, []);
 
   const handleInputChange = (field: string, value: string) => {
@@ -30,8 +36,13 @@ const Settings: React.FC<SettingsProps> = ({ onClose }) => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    await window.api.saveSettings(formData);
-    onClose();
+    setError(null);
+    try {
+      await window.api.saveSettings(formData);
+      onClose();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to save settings');
+    }
   };
 
   if (loading) {
@@ -57,6 +68,11 @@ const Settings: React.FC<SettingsProps> = ({ onClose }) => {
         </div>
 
         <form className="settings-form" onSubmit={handleSubmit}>
+          {error && (
+            <div className="error-message" style={{ color: '#ff6b6b', marginBottom: '12px' }}>
+              {error}
+            </div>
+          )}
           <div className="form-group">
             <label className="form-label">
               <FormattedMessage id="apiKey" />

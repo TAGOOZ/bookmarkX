@@ -19,41 +19,45 @@ const BookmarkList: React.FC<BookmarkListProps> = ({
 }) => {
   const [bookmarks, setBookmarks] = useState<Bookmark[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const fetchBookmarks = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const [dbBookmarks, classifications] = await Promise.all([
+        window.api.getBookmarks(),
+        window.api.getClassifications(),
+      ]);
+
+      const classificationMap = new Map(
+        classifications.map(c => [c.bookmark_id, c])
+      );
+
+      const mappedBookmarks: Bookmark[] = dbBookmarks.map(dbBookmark => {
+        const classification = classificationMap.get(dbBookmark.id);
+        return {
+          id: dbBookmark.id,
+          title: dbBookmark.title || dbBookmark.tweet_text || 'Untitled',
+          url: dbBookmark.url,
+          topic: classification?.priority || 'medium',
+          priority: (classification?.priority as 'high' | 'medium' | 'low') || 'medium',
+          contentType: dbBookmark.content_type,
+          content: dbBookmark.tweet_text || '',
+          createdAt: dbBookmark.fetched_at,
+        };
+      });
+
+      setBookmarks(mappedBookmarks);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Unknown error';
+      setError(message);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    const fetchBookmarks = async () => {
-      try {
-        const [dbBookmarks, classifications] = await Promise.all([
-          window.api.getBookmarks(),
-          window.api.getClassifications(),
-        ]);
-
-        const classificationMap = new Map(
-          classifications.map(c => [c.bookmark_id, c])
-        );
-
-        const mappedBookmarks: Bookmark[] = dbBookmarks.map(dbBookmark => {
-          const classification = classificationMap.get(dbBookmark.id);
-          return {
-            id: dbBookmark.id,
-            title: dbBookmark.title || dbBookmark.tweet_text || 'Untitled',
-            url: dbBookmark.url,
-            topic: classification?.priority || 'medium',
-            priority: (classification?.priority as 'high' | 'medium' | 'low') || 'medium',
-            contentType: dbBookmark.content_type,
-            content: dbBookmark.tweet_text || '',
-            createdAt: dbBookmark.fetched_at,
-          };
-        });
-
-        setBookmarks(mappedBookmarks);
-      } catch (error) {
-        console.error('Failed to fetch bookmarks:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
     fetchBookmarks();
   }, []);
 
@@ -105,6 +109,31 @@ const BookmarkList: React.FC<BookmarkListProps> = ({
         <div className="empty-state">
           <div className="empty-icon">⏳</div>
           <div className="empty-title">جاري التحميل...</div>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="bookmark-list">
+        <div className="list-header">
+          <FormattedMessage id="bookmarks" />
+          <input
+            type="text"
+            className="search-input"
+            placeholder="بحث..."
+            value={searchQuery}
+            onChange={(e) => onSearchChange(e.target.value)}
+          />
+        </div>
+        <div className="empty-state">
+          <div className="empty-icon">⚠️</div>
+          <div className="empty-title">Failed to load bookmarks</div>
+          <div className="empty-description">{error}</div>
+          <button className="action-button primary-button" onClick={fetchBookmarks}>
+            Retry
+          </button>
         </div>
       </div>
     );
