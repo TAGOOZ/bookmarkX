@@ -5,6 +5,7 @@
 1. **Every task must be committed to git after finishing** — Use conventional commits per `docs/CONTRIBUTING.md`
 2. **Tests commit separately from impl** when possible — `test(scope): ...` then `feat(scope): ...`
 3. **Run lint and tests before committing** — `pnpm lint && pnpm test`
+4. **When user says "done" for the session** — Use the `handoff` skill to create a handoff document for the next agent
 
 ## Commit Convention
 
