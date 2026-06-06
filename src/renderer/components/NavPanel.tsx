@@ -1,4 +1,5 @@
 import React, { useState, useCallback, useEffect, useMemo } from 'react';
+import { Search, Download, Tag, FlaskConical, FlaskConicalOff, Settings } from 'lucide-react';
 import { Bookmark } from '../App';
 import TopicGroup from './TopicGroup';
 import SearchOverlay from './SearchOverlay';
@@ -103,7 +104,7 @@ const NavPanel: React.FC<NavPanelProps> = ({
           onClick={handleOpenSearch}
           title="بحث"
         >
-          🔍
+          <Search size={18} />
         </button>
         {!mockMode && (
           <>
@@ -112,14 +113,14 @@ const NavPanel: React.FC<NavPanelProps> = ({
               onClick={onFetchClick}
               title="جلب الآن"
             >
-              📥
+              <Download size={18} />
             </button>
             <button
               className="nav-panel-tab"
               onClick={onClassifyClick}
               title="تصنيف الآن"
             >
-              🏷
+              <Tag size={18} />
             </button>
           </>
         )}
@@ -128,14 +129,14 @@ const NavPanel: React.FC<NavPanelProps> = ({
           onClick={onToggleMockMode}
           title={mockMode ? 'إيقاف وضع التجريب' : 'وضع التجريب'}
         >
-          {mockMode ? '🎭' : '🧪'}
+          {mockMode ? <FlaskConicalOff size={18} /> : <FlaskConical size={18} />}
         </button>
         <button
           className="nav-panel-tab"
           onClick={onSettingsClick}
           title="الإعدادات"
         >
-          ⚙
+          <Settings size={18} />
         </button>
       </div>
 

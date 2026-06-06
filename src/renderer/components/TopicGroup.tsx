@@ -1,4 +1,5 @@
 import React, { useState, useCallback } from 'react';
+import { ChevronDown, ChevronRight } from 'lucide-react';
 import { Bookmark } from '../App';
 
 interface TopicGroupProps {
@@ -60,7 +61,9 @@ const TopicGroup: React.FC<TopicGroupProps> = ({
         onClick={handleToggle}
         aria-expanded={isExpanded}
       >
-        <span className="topic-group-chevron">{isExpanded ? '▼' : '▶'}</span>
+        <span className="topic-group-chevron">
+          {isExpanded ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
+        </span>
         <span className="topic-group-name">{topic}</span>
         <span className="topic-group-count">{bookmarks.length}</span>
       </button>
