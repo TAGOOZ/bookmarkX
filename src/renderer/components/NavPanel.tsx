@@ -77,48 +77,6 @@ const NavPanel: React.FC<NavPanelProps> = ({
 
   return (
     <div className="nav-panel">
-      <div className="nav-panel-icon-strip">
-        <button
-          className="nav-panel-icon"
-          onClick={handleOpenSearch}
-          title="بحث"
-        >
-          🔍
-        </button>
-        {!mockMode && (
-          <>
-            <button
-              className="nav-panel-icon"
-              onClick={onFetchClick}
-              title="جلب الآن"
-            >
-              📥
-            </button>
-            <button
-              className="nav-panel-icon"
-              onClick={onClassifyClick}
-              title="تصنيف الآن"
-            >
-              🏷
-            </button>
-          </>
-        )}
-        <button
-          className={`nav-panel-icon ${mockMode ? 'mock-mode-active' : ''}`}
-          onClick={onToggleMockMode}
-          title={mockMode ? 'إيقاف وضع التجريب' : 'وضع التجريب'}
-        >
-          {mockMode ? '🎭' : '🧪'}
-        </button>
-        <button
-          className="nav-panel-icon"
-          onClick={onSettingsClick}
-          title="الإعدادات"
-        >
-          ⚙
-        </button>
-      </div>
-
       <div className="nav-panel-content">
         {topicNames.length === 0 ? (
           <div className="nav-panel-empty">
@@ -137,6 +95,48 @@ const NavPanel: React.FC<NavPanelProps> = ({
             />
           ))
         )}
+      </div>
+
+      <div className="nav-panel-tabs">
+        <button
+          className="nav-panel-tab"
+          onClick={handleOpenSearch}
+          title="بحث"
+        >
+          🔍
+        </button>
+        {!mockMode && (
+          <>
+            <button
+              className="nav-panel-tab"
+              onClick={onFetchClick}
+              title="جلب الآن"
+            >
+              📥
+            </button>
+            <button
+              className="nav-panel-tab"
+              onClick={onClassifyClick}
+              title="تصنيف الآن"
+            >
+              🏷
+            </button>
+          </>
+        )}
+        <button
+          className={`nav-panel-tab ${mockMode ? 'mock-mode-active' : ''}`}
+          onClick={onToggleMockMode}
+          title={mockMode ? 'إيقاف وضع التجريب' : 'وضع التجريب'}
+        >
+          {mockMode ? '🎭' : '🧪'}
+        </button>
+        <button
+          className="nav-panel-tab"
+          onClick={onSettingsClick}
+          title="الإعدادات"
+        >
+          ⚙
+        </button>
       </div>
 
       {showSearch && (

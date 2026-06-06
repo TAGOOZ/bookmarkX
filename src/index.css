@@ -82,41 +82,37 @@ body {
   background-color: var(--bg-secondary);
   border-left: 1px solid var(--border-color);
   display: flex;
-  flex-direction: row;
-  overflow: hidden;
-}
-
-.nav-panel-icon-strip {
-  display: flex;
   flex-direction: column;
-  padding: var(--space-s);
-  gap: var(--space-s);
-  border-left: 1px solid var(--border-color);
-  background-color: var(--bg-tertiary);
-}
-
-.nav-panel-icon {
-  width: 36px;
-  height: 36px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: var(--radius-m);
-  border: none;
-  background: transparent;
-  cursor: pointer;
-  font-size: 1.1rem;
-  transition: background-color var(--transition-fast);
-}
-
-.nav-panel-icon:hover {
-  background-color: var(--bg-secondary);
+  overflow: hidden;
 }
 
 .nav-panel-content {
   flex: 1;
   overflow-y: auto;
   padding: var(--space-s);
+}
+
+.nav-panel-tabs {
+  display: flex;
+  border-top: 1px solid var(--border-color);
+  background-color: var(--bg-tertiary);
+}
+
+.nav-panel-tab {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-s) 0;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  font-size: 1rem;
+  transition: background-color var(--transition-fast);
+}
+
+.nav-panel-tab:hover {
+  background-color: var(--bg-secondary);
 }
 
 .nav-panel-empty {
@@ -818,18 +814,9 @@ body {
 
   .nav-panel {
     width: 100%;
-    flex-direction: column;
     border-left: none;
     border-top: 1px solid var(--border-color);
     max-height: 40vh;
-  }
-
-  .nav-panel-icon-strip {
-    flex-direction: row;
-    border-left: none;
-    border-bottom: 1px solid var(--border-color);
-    justify-content: space-around;
-    padding: var(--space-xs);
   }
 
   .nav-panel-content {
