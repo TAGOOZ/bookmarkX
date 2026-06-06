@@ -58,6 +58,10 @@ body {
   padding-top: 36px;
 }
 
+[dir="ltr"] .app-container {
+  flex-direction: row-reverse;
+}
+
 .titlebar {
   position: fixed;
   top: 0;

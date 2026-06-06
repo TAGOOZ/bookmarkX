@@ -33,6 +33,8 @@ const renderWithIntl = (ui: React.ReactElement) =>
 const baseBookmark = {
   id: '1',
   title: 'Test Article',
+  titleAr: null,
+  titleEn: 'Test Article',
   url: 'https://example.com',
   topic: 'technology',
   priority: 'high' as const,

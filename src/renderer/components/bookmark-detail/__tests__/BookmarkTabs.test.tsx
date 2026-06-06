@@ -12,9 +12,9 @@ afterEach(() => {
 });
 
 const bookmarks = [
-  { id: '1', title: 'First Bookmark', url: 'https://a.com', topic: 'tech', priority: 'high' as const, contentType: 'article', content: '', createdAt: '' },
-  { id: '2', title: 'Second Bookmark', url: 'https://b.com', topic: 'design', priority: 'medium' as const, contentType: 'video', content: '', createdAt: '' },
-  { id: '3', title: 'A Very Long Bookmark Title That Should Be Truncated Someday', url: 'https://c.com', topic: 'science', priority: 'low' as const, contentType: 'article', content: '', createdAt: '' },
+  { id: '1', title: 'First Bookmark', titleAr: null, titleEn: 'First Bookmark', url: 'https://a.com', topic: 'tech', priority: 'high' as const, contentType: 'article', content: '', createdAt: '' },
+  { id: '2', title: 'Second Bookmark', titleAr: null, titleEn: 'Second Bookmark', url: 'https://b.com', topic: 'design', priority: 'medium' as const, contentType: 'video', content: '', createdAt: '' },
+  { id: '3', title: 'A Very Long Bookmark Title That Should Be Truncated Someday', titleAr: null, titleEn: 'A Very Long Bookmark Title That Should Be Truncated Someday', url: 'https://c.com', topic: 'science', priority: 'low' as const, contentType: 'article', content: '', createdAt: '' },
 ];
 
 describe('BookmarkTabs', () => {

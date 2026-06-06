@@ -23,6 +23,8 @@ describe('UI Components', () => {
     const bookmark = {
       id: '1',
       title: 'Test',
+      titleAr: null,
+      titleEn: 'Test',
       url: 'https://test.com',
       topic: 'tech',
       priority: 'high' as const,

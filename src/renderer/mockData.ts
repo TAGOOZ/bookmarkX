@@ -145,6 +145,8 @@ Snapshot:
   {
     id: 'mock-12',
     title: 'The Art of Negotiation in Business',
+    titleAr: null,
+    titleEn: 'The Art of Negotiation in Business',
     url: 'https://example.com/negotiation',
     topic: 'أعمال',
     priority: 'low',
