@@ -92,7 +92,7 @@ function App() {
 
   return (
     <IntlProvider messages={messages} locale="ar" defaultLocale="ar">
-      <div className="titlebar" />
+      <div className="titlebar">bookmarkx</div>
       <div className="app-container">
         <Sidebar
           onSettingsClick={() => setShowSettings(true)}
