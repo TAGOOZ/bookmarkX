@@ -124,7 +124,13 @@ export function bookmarkToBlocks(bookmark: BookmarkDetailData): PartialBlock[] {
     try {
       const parsed = JSON.parse(bookmark.articleBlocks);
       if (Array.isArray(parsed) && parsed.length > 0) {
-        blocks.push(...parsed);
+        blocks.push(customBlock('articleReader', {
+          blocksJson: bookmark.articleBlocks,
+          wordCount: bookmark.articleWordCount || 0,
+          readingTime: bookmark.articleReadingTime || 0,
+          sourceUrl: bookmark.url || '',
+          isExpanded: false,
+        }));
       }
     } catch {
       // Fall back to collapsibleArticle
