@@ -137,8 +137,8 @@ describe('fetchBookmarks', () => {
       ['bookmarks', '--json', '--count', '20'],
       expect.objectContaining({
         env: expect.objectContaining({
-          BIRD_AUTH_TOKEN: 'my-token',
-          BIRD_CT0: 'my-ct0',
+          AUTH_TOKEN: 'my-token',
+          CT0: 'my-ct0',
         }),
       }),
       expect.any(Function)

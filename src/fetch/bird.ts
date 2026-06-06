@@ -55,8 +55,8 @@ export async function fetchBookmarks(
   const args = ['bookmarks', '--json', '--count', String(count)];
 
   const env: Record<string, string> = {};
-  if (authToken) env.BIRD_AUTH_TOKEN = authToken;
-  if (ct0) env.BIRD_CT0 = ct0;
+  if (authToken) env.AUTH_TOKEN = authToken;
+  if (ct0) env.CT0 = ct0;
 
   if (chromeProfile) args.push('--chrome-profile', chromeProfile);
   if (firefoxProfile) args.push('--firefox-profile', firefoxProfile);
