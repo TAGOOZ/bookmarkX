@@ -111,6 +111,5 @@ dist/
 Thumbs.db
 __MACOSX/
 
-# Extracted fonts / PDFs
-thmanyah typeface/
+# PDFs
 *.pdf
