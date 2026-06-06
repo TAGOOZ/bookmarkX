@@ -156,6 +156,108 @@ app.whenReady().then(async () => {
     });
   });
 
+  // Phase 2 IPC handlers: Summarize
+  ipcMain.handle('summarize-bookmark', async (_event, bookmarkId: string) => {
+    const { summarizeBookmark } = await import('./services/summarize');
+    const { getStoredBookmarks } = await import('./db/bookmarks');
+    const bookmarks = await getStoredBookmarks(db);
+    const bookmark = bookmarks.find((b) => b.id === bookmarkId);
+    if (!bookmark) throw new Error('Bookmark not found');
+    const envContent = fs.existsSync(envPath) ? fs.readFileSync(envPath, 'utf-8') : '';
+    const parse = (key: string): string => {
+      const match = envContent.match(new RegExp(`^${key}=(.*)$`, 'm'));
+      return match ? match[1] : '';
+    };
+    return summarizeBookmark(db, bookmarkId, bookmark, {
+      apiKey: parse('GEMINI_API_KEY') || undefined,
+    });
+  });
+
+  // Phase 2 IPC handlers: Extract article
+  ipcMain.handle('extract-article', async (_event, bookmarkId: string, url: string) => {
+    const { extractArticle } = await import('./services/extract');
+    const envContent = fs.existsSync(envPath) ? fs.readFileSync(envPath, 'utf-8') : '';
+    const parse = (key: string): string => {
+      const match = envContent.match(new RegExp(`^${key}=(.*)$`, 'm'));
+      return match ? match[1] : '';
+    };
+    return extractArticle(db, bookmarkId, url, {
+      apiKey: parse('GEMINI_API_KEY') || undefined,
+    });
+  });
+
+  // Phase 2 IPC handlers: Chat
+  ipcMain.handle('send-chat-message', async (_event, sessionId: string, message: string, articleContext?: string) => {
+    const { sendMessage } = await import('./services/chat');
+    const envContent = fs.existsSync(envPath) ? fs.readFileSync(envPath, 'utf-8') : '';
+    const parse = (key: string): string => {
+      const match = envContent.match(new RegExp(`^${key}=(.*)$`, 'm'));
+      return match ? match[1] : '';
+    };
+    return sendMessage(db, sessionId, message, articleContext, {
+      apiKey: parse('GEMINI_API_KEY') || undefined,
+    });
+  });
+
+  // Phase 2 IPC handlers: Highlights
+  ipcMain.handle('save-highlight', async (_event, bookmarkId: string, data: { selected_text: string; note: string | null; color: string | null }) => {
+    const { storeHighlight } = await import('./db/highlights');
+    await storeHighlight(db, bookmarkId, data);
+    return { success: true };
+  });
+
+  ipcMain.handle('get-highlights', async (_event, bookmarkId: string) => {
+    const { getHighlights } = await import('./db/highlights');
+    return getHighlights(db, bookmarkId);
+  });
+
+  // Phase 2 IPC handlers: Notes
+  ipcMain.handle('save-note', async (_event, bookmarkId: string, data: { title: string | null; content: string | null }) => {
+    const { storeNote } = await import('./db/notes');
+    await storeNote(db, bookmarkId, data);
+    return { success: true };
+  });
+
+  ipcMain.handle('get-notes', async (_event, bookmarkId: string) => {
+    const { getNotes } = await import('./db/notes');
+    return getNotes(db, bookmarkId);
+  });
+
+  // Phase 2 IPC handlers: Glossary
+  ipcMain.handle('add-glossary-term', async (_event, term: string, definition: string) => {
+    const { addTerm } = await import('./db/glossary');
+    return addTerm(db, term, definition);
+  });
+
+  ipcMain.handle('search-glossary', async (_event, query: string) => {
+    const { searchTerms } = await import('./db/glossary');
+    return searchTerms(db, query);
+  });
+
+  // Phase 2 IPC handlers: Enhance note
+  ipcMain.handle('enhance-note', async (_event, selectedText: string, context?: string) => {
+    const { enhanceNote } = await import('./services/enhance');
+    const envContent = fs.existsSync(envPath) ? fs.readFileSync(envPath, 'utf-8') : '';
+    const parse = (key: string): string => {
+      const match = envContent.match(new RegExp(`^${key}=(.*)$`, 'm'));
+      return match ? match[1] : '';
+    };
+    return enhanceNote(selectedText, context, {
+      apiKey: parse('GEMINI_API_KEY') || undefined,
+    });
+  });
+
+  // Phase 2 IPC handlers: Chat sessions
+  ipcMain.handle('create-chat-session', async (_event, bookmarkId: string) => {
+    const { createChatSession } = await import('./db/chat');
+    return createChatSession(db, bookmarkId);
+  });
+
+  ipcMain.handle('get-chat-messages', async (_event, sessionId: string) => {
+    const { getChatMessages } = await import('./db/chat');
+    return getChatMessages(db, sessionId);
+  });
+
   // Start cron scheduler: fetch every 6 hours, then classify
   const cronJob = startCronScheduler(db, '0 */6 * * *');
   app.on('before-quit', () => {
