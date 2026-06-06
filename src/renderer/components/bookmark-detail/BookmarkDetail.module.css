@@ -24,7 +24,7 @@
 .editorScroll {
   flex: 1;
   overflow-y: auto;
-  padding-inline: 40px;
+  padding-inline: 24px;
   padding-top: 24px;
 }
 

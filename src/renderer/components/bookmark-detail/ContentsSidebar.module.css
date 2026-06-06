@@ -6,7 +6,7 @@
   align-items: center;
   gap: var(--space-m);
   padding: var(--space-l) var(--space-xs);
-  width: var(--contents-sidebar-width);
+  width: 48px;
   min-height: 100%;
 }
 
