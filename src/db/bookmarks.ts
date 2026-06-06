@@ -5,14 +5,16 @@ export async function storeBookmarks(db: Client, bookmarks: Bookmark[]): Promise
   if (bookmarks.length === 0) return;
 
   const stmts = bookmarks.map((bookmark) => ({
-    sql: `INSERT OR IGNORE INTO bookmarks (id, tweet_id, url, content_type, title, author_name, author_handle, tweet_text, fetched_at)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    sql: `INSERT OR IGNORE INTO bookmarks (id, tweet_id, url, content_type, title, title_ar, title_en, author_name, author_handle, tweet_text, fetched_at)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     args: [
       bookmark.id,
       bookmark.tweet_id,
       bookmark.url,
       bookmark.content_type,
       bookmark.title,
+      bookmark.title_ar,
+      bookmark.title_en,
       bookmark.author_name,
       bookmark.author_handle,
       bookmark.tweet_text,
@@ -31,6 +33,8 @@ export async function getStoredBookmarks(db: Client): Promise<Bookmark[]> {
     url: row.url,
     content_type: row.content_type,
     title: row.title,
+    title_ar: row.title_ar,
+    title_en: row.title_en,
     author_name: row.author_name,
     author_handle: row.author_handle,
     tweet_text: row.tweet_text,
@@ -52,6 +56,8 @@ export async function getUnfetchedBookmarks(db: Client): Promise<Bookmark[]> {
     url: row.url,
     content_type: row.content_type,
     title: row.title,
+    title_ar: row.title_ar,
+    title_en: row.title_en,
     author_name: row.author_name,
     author_handle: row.author_handle,
     tweet_text: row.tweet_text,

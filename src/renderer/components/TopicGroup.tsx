@@ -1,4 +1,5 @@
 import React, { useState, useCallback } from 'react';
+import { useIntl } from 'react-intl';
 import { ChevronDown, ChevronRight } from 'lucide-react';
 import { Bookmark } from '../App';
 
@@ -21,6 +22,7 @@ const TopicGroup: React.FC<TopicGroupProps> = ({
   onSelectBookmark,
   selectedBookmarkId,
 }) => {
+  const intl = useIntl();
   const [showAll, setShowAll] = useState(false);
   const visibleBookmarks = showAll ? bookmarks : bookmarks.slice(0, maxVisible);
   const hasMore = bookmarks.length > maxVisible;
@@ -97,8 +99,8 @@ const TopicGroup: React.FC<TopicGroupProps> = ({
           {hasMore && (
             <button className="topic-show-more" onClick={handleShowMore}>
               {showAll
-                ? `show less`
-                : `show more (${bookmarks.length - maxVisible})`}
+                ? intl.formatMessage({ id: 'showLess' })
+                : intl.formatMessage({ id: 'showMore' }, { count: bookmarks.length - maxVisible })}
             </button>
           )}
         </div>

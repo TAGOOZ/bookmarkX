@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { FormattedMessage } from 'react-intl';
+import { FormattedMessage, useIntl } from 'react-intl';
 import { useCreateBlockNote } from '@blocknote/react';
 import { BlockNoteView } from '@blocknote/mantine';
 import { Block, PartialBlock, BlockNoteSchema, defaultBlockSpecs, defaultInlineContentSpecs } from '@blocknote/core';
@@ -101,6 +101,7 @@ const BookmarkEditor: React.FC<BookmarkEditorProps> = ({
   onBlocksChange,
   onBookmarkChange,
 }) => {
+  const intl = useIntl();
   const editor = useCreateBlockNote({ initialContent, schema });
   const isExternalUpdate = useRef(true);
   const lastBookmarkId = useRef<string | null>(null);
@@ -119,7 +120,7 @@ const BookmarkEditor: React.FC<BookmarkEditorProps> = ({
   const getSections = useCallback(() => {
     return SECTION_IDS.map((id) => ({
       id,
-      label: id.charAt(0).toUpperCase() + id.slice(1),
+      label: intl.formatMessage({ id }),
       visible: true,
     }));
   }, []);
@@ -353,12 +354,12 @@ const BookmarkEditor: React.FC<BookmarkEditorProps> = ({
       />
       {enhancedText && (
         <div className={styles.enhancedBanner}>
-          <span className={styles.enhancedLabel}>Enhanced:</span>
+          <span className={styles.enhancedLabel}>{intl.formatMessage({ id: 'enhanced' })}</span>
           <span className={styles.enhancedContent}>{enhancedText}</span>
           <button
             className={styles.enhancedClose}
             onClick={() => setEnhancedText(null)}
-            aria-label="Dismiss enhanced text"
+            aria-label={intl.formatMessage({ id: 'dismissEnhanced' })}
           >
             ×
           </button>
@@ -367,7 +368,7 @@ const BookmarkEditor: React.FC<BookmarkEditorProps> = ({
       {isParsing && (
         <div className={styles.parsingBanner}>
           <span className={styles.spinner} />
-          <span>Parsing article...</span>
+          <span>{intl.formatMessage({ id: 'parsingArticle' })}</span>
         </div>
       )}
       <div ref={scrollRef} className={styles.editorScroll}>

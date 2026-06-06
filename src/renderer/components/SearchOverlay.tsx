@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
+import { useIntl } from 'react-intl';
 import { Bookmark } from '../App';
 
 interface SearchOverlayProps {
@@ -12,6 +13,7 @@ const SearchOverlay: React.FC<SearchOverlayProps> = ({
   onSelectBookmark,
   onClose,
 }) => {
+  const intl = useIntl();
   const [query, setQuery] = useState('');
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -77,7 +79,7 @@ const SearchOverlay: React.FC<SearchOverlayProps> = ({
             ref={inputRef}
             type="text"
             className="search-overlay-input"
-            placeholder="بحث في الإشارات المرجعية..."
+            placeholder={intl.formatMessage({ id: 'searchBookmarksPlaceholder' })}
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             onKeyDown={handleKeyDown}
@@ -89,7 +91,7 @@ const SearchOverlay: React.FC<SearchOverlayProps> = ({
         <div className="search-overlay-results">
           {filteredBookmarks.length === 0 ? (
             <div className="search-overlay-empty">
-              لا توجد نتائج
+              {intl.formatMessage({ id: 'noResults' })}
             </div>
           ) : (
             filteredBookmarks.map((bookmark) => (

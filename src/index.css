@@ -55,7 +55,6 @@ body {
   display: flex;
   height: 100%;
   width: 100%;
-  direction: rtl;
   padding-top: 36px;
 }
 
@@ -80,7 +79,7 @@ body {
 .nav-panel {
   width: var(--nav-panel-width);
   background-color: var(--bg-secondary);
-  border-left: 1px solid var(--border-color);
+  border-inline-start: 1px solid var(--border-color);
   display: flex;
   flex-direction: column;
   overflow: hidden;
@@ -156,7 +155,7 @@ body {
 
 .topic-group-name {
   flex: 1;
-  text-align: left;
+  text-align: start;
 }
 
 .topic-group-count {
@@ -168,7 +167,7 @@ body {
 }
 
 .topic-group-items {
-  padding-left: var(--space-l);
+  padding-inline-start: var(--space-l);
 }
 
 .topic-bookmark-item {
@@ -227,7 +226,7 @@ body {
   color: var(--text-secondary);
   font-size: var(--font-ui-small);
   cursor: pointer;
-  text-align: left;
+  text-align: start;
   border-radius: var(--radius-m);
   transition: background-color var(--transition-fast);
 }
@@ -595,11 +594,11 @@ body {
 }
 
 .option-divider::before {
-  left: 0;
+  inset-inline-start: 0;
 }
 
 .option-divider::after {
-  right: 0;
+  inset-inline-end: 0;
 }
 
 .detect-input-row {
@@ -674,7 +673,7 @@ body {
   position: absolute;
   height: 18px;
   width: 18px;
-  left: 3px;
+  inset-inline-start: 3px;
   bottom: 3px;
   background-color: var(--text-primary);
   border-radius: 50%;
@@ -687,6 +686,10 @@ body {
 
 .toggle-input:checked + .toggle-switch::before {
   transform: translateX(20px);
+}
+
+[dir="rtl"] .toggle-input:checked + .toggle-switch::before {
+  transform: translateX(-20px);
 }
 
 .pref-row {
@@ -714,7 +717,7 @@ body {
   color: var(--text-primary);
   font-size: 0.85rem;
   min-width: 140px;
-  text-align: right;
+  text-align: end;
 }
 
 .error-banner {
@@ -815,8 +818,8 @@ body {
 
   .nav-panel {
     width: 100%;
-    border-left: none;
-    border-top: 1px solid var(--border-color);
+    border-inline-start: none;
+    border-block-start: 1px solid var(--border-color);
     max-height: 40vh;
   }
 

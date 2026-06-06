@@ -1,14 +1,18 @@
-import React, { useState, useCallback, useMemo, useEffect } from 'react';
+import React, { useState, useCallback, useMemo, useEffect, createContext, useContext } from 'react';
 import { IntlProvider, useIntl } from 'react-intl';
 import NavPanel from './components/NavPanel';
 import BookmarkDetail from './components/bookmark-detail/BookmarkDetail';
 import BookmarkTabs from './components/bookmark-detail/BookmarkTabs';
 import Settings from './components/Settings';
 import { mockBookmarks } from './mockData';
+import arMessages from '../../locales/ar.json';
+import enMessages from '../../locales/en.json';
 
 export interface Bookmark {
   id: string;
   title: string;
+  titleAr: string | null;
+  titleEn: string | null;
   url: string;
   topic: string;
   priority: 'high' | 'medium' | 'low';
@@ -18,70 +22,31 @@ export interface Bookmark {
 }
 
 const MOCK_MODE_KEY = 'bookmarkx-mock-mode';
+const LOCALE_KEY = 'bookmarkx-locale';
 
-const messages = {
-  appName: 'بوكماركس',
-  bookmarks: 'الإشارات المرجعية',
-  settings: 'الإعدادات',
-  search: 'بحث...',
-  save: 'حفظ',
-  cancel: 'إلغاء',
-  apiKey: 'مفتاح API',
-  authToken: 'رمز المصادقة',
-  ct0: 'CT0 Cookie',
-  chromeProfile: 'ملف Chrome الشخصي',
-  selectBookmark: 'اختر إشارة مرجعية',
-  selectBookmarkDescription: 'اختر إشارة مرجعية من القائمة لعرض التفاصيل',
-  openLink: 'فتح الرابط',
-  noBookmarks: 'لا توجد إشارات مرجعية',
-  noBookmarksDescription: 'لم يتم العثور على إشارات مرجعية تطابق البحث',
-  fetchNow: 'جلب الآن',
-  fetching: 'جاري الجلب...',
-  classifyNow: 'تصنيف الآن',
-  classifying: 'جاري التصنيف...',
-  userProfile: 'الملف الشخصي',
-  name: 'الاسم',
-  namePlaceholder: 'اسمك',
-  twitterHandle: 'حساب تويتر',
-  twitterHandlePlaceholder: '@اسم المستخدم',
-  xAuth: 'مصادقة X/Twitter',
-  authTokenPlaceholder: 'أدخل auth_token',
-  ct0Placeholder: 'أدخل ct0 cookie',
-  chromeProfilePlaceholder: 'اسم ملف Chrome الشخصي',
-  geminiApi: 'مفتاح Gemini API',
-  apiKeyPlaceholder: 'أدخل مفتاح Gemini API',
-  preferences: 'التفضيلات',
-  theme: 'المظهر',
-  language: 'اللغة',
-  notifications: 'الإشعارات',
-  fetchFrequency: 'تكرار الجلب',
-  aiModel: 'نموذج الذكاء الاصطناعي',
-  loginWithTwitter: 'تسجيل الدخول بحساب تويتر',
-  loggingIn: 'جاري تسجيل الدخول...',
-  detectedFromChrome: 'تم الكشف من Chrome',
-  or: 'أو',
-  detect: 'كشف',
-  enteredManually: 'أُدخل يدوياً',
-  dark: 'داكن',
-  light: 'فاتح',
-  every3Hours: 'كل 3 ساعات',
-  every6Hours: 'كل 6 ساعات',
-  every12Hours: 'كل 12 ساعة',
-  daily: 'يومياً',
-  loading: 'جاري التحميل...',
-  errorOccurred: 'حدث خطأ',
-  missingCredentials: 'بيانات اعتماد X/Twitter مفقودة. افتح الإعدادات وقم بـ:\n• النقر على "تسجيل الدخول بحساب تويتر" للمصادقة، أو\n• إدخال auth_token و ct0 يدوياً من أدوات مطور Chrome',
-  mockMode: 'وضع التجريب',
-  mockModeDescription: 'عرض بيانات تجريبية بدلاً من البيانات الحقيقية',
-  تكنولوجيا: 'تكنولوجيا',
-  تصميم: 'تصميم',
-  أعمال: 'أعمال',
-  علوم: 'علوم',
-  مقال: 'مقال',
-  فيديو: 'فيديو',
-  صورة: 'صورة',
-  رابط: 'رابط',
+const messages: Record<string, Record<string, string>> = {
+  ar: arMessages,
+  en: enMessages,
 };
+
+export type Locale = 'ar' | 'en';
+
+interface LocaleContextValue {
+  locale: Locale;
+  setLocale: (locale: Locale) => void;
+}
+
+export const LocaleContext = createContext<LocaleContextValue>({
+  locale: 'ar',
+  setLocale: () => {},
+});
+
+export const useLocale = () => useContext(LocaleContext);
+
+function Titlebar() {
+  const intl = useIntl();
+  return <div className="titlebar">{intl.formatMessage({ id: 'appTitle' })}</div>;
+}
 
 function AppContent() {
   const { locale } = useIntl();
@@ -168,9 +133,16 @@ function AppContent() {
 
       const mappedBookmarks: Bookmark[] = dbBookmarks.map((dbBookmark) => {
         const classification = classificationMap.get(dbBookmark.id);
+        const titleAr = dbBookmark.title_ar || dbBookmark.title || dbBookmark.tweet_text || null;
+        const titleEn = dbBookmark.title_en || dbBookmark.title || dbBookmark.tweet_text || null;
+        const displayTitle = locale === 'ar'
+          ? (titleAr || titleEn || 'Untitled')
+          : (titleEn || titleAr || 'Untitled');
         return {
           id: dbBookmark.id,
-          title: dbBookmark.title || dbBookmark.tweet_text || 'Untitled',
+          title: displayTitle,
+          titleAr,
+          titleEn,
           url: dbBookmark.url,
           topic: classification?.priority || 'medium',
           priority:
@@ -193,7 +165,7 @@ function AppContent() {
 
   return (
     <>
-      <div className="titlebar">bookmarkx</div>
+      <Titlebar />
       <div className="app-container">
         <div
           style={{
@@ -231,10 +203,32 @@ function AppContent() {
 }
 
 function App() {
+  const [locale, setLocaleState] = useState<Locale>(() => {
+    try {
+      const stored = localStorage.getItem(LOCALE_KEY);
+      if (stored === 'ar' || stored === 'en') return stored;
+    } catch {}
+    return 'ar';
+  });
+
+  const setLocale = useCallback((newLocale: Locale) => {
+    setLocaleState(newLocale);
+    try {
+      localStorage.setItem(LOCALE_KEY, newLocale);
+    } catch {}
+  }, []);
+
+  useEffect(() => {
+    document.documentElement.dir = locale === 'ar' ? 'rtl' : 'ltr';
+    document.documentElement.lang = locale;
+  }, [locale]);
+
   return (
-    <IntlProvider messages={messages} locale="ar" defaultLocale="ar">
-      <AppContent />
-    </IntlProvider>
+    <LocaleContext.Provider value={{ locale, setLocale }}>
+      <IntlProvider messages={messages[locale]} locale={locale} defaultLocale="ar">
+        <AppContent />
+      </IntlProvider>
+    </LocaleContext.Provider>
   );
 }
 

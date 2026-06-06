@@ -15,7 +15,7 @@
   cursor: pointer;
   color: var(--text-normal);
   font-size: 13px;
-  text-align: left;
+  text-align: start;
 }
 
 .header:hover {
@@ -37,7 +37,7 @@
 }
 
 .headerMeta {
-  margin-left: auto;
+  margin-inline-start: auto;
   color: var(--text-muted);
   font-size: 12px;
   display: flex;
@@ -90,7 +90,7 @@ h3.heading { font-size: 15px; }
 
 .listItem {
   margin: 0 0 4px;
-  padding-left: 20px;
+  padding-inline-start: 20px;
   position: relative;
   list-style: disc;
 }
@@ -137,8 +137,8 @@ ol .listItem {
 
 .blockquote {
   margin: 0 0 12px;
-  padding-left: 16px;
-  border-left: 3px solid var(--background-modifier-border);
+  padding-inline-start: 16px;
+  border-inline-start: 3px solid var(--background-modifier-border);
   font-style: italic;
   color: var(--text-muted);
 }

@@ -1,6 +1,7 @@
 import { createReactBlockSpec } from '@blocknote/react';
 import { defaultProps } from '@blocknote/core';
 import React, { useState, useCallback, useEffect, useRef } from 'react';
+import { useIntl } from 'react-intl';
 import hljs from 'highlight.js';
 import 'highlight.js/styles/github.css';
 import styles from './ArticleReaderBlock.module.css';
@@ -92,6 +93,7 @@ export const createArticleReaderBlock = createReactBlockSpec(
   },
   {
     render: (props) => {
+      const intl = useIntl();
       const blocksJson = props.block.props.blocksJson as string;
       const wordCount = props.block.props.wordCount as number;
       const readingTime = props.block.props.readingTime as number;
@@ -133,10 +135,10 @@ export const createArticleReaderBlock = createReactBlockSpec(
             <span className={styles.chevron} data-expanded={expanded}>
               ▶
             </span>
-            <span className={styles.headerTitle}>Article</span>
+            <span className={styles.headerTitle}>{intl.formatMessage({ id: 'article' })}</span>
             <span className={styles.headerMeta}>
-              {wordCount > 0 && <span>{wordCount.toLocaleString()} words</span>}
-              {readingTime > 0 && <span> · {readingTime} min read</span>}
+              {wordCount > 0 && <span>{wordCount.toLocaleString()} {intl.formatMessage({ id: 'words' })}</span>}
+              {readingTime > 0 && <span> · {readingTime} {intl.formatMessage({ id: 'minRead' })}</span>}
             </span>
           </button>
           {expanded && (
@@ -151,7 +153,7 @@ export const createArticleReaderBlock = createReactBlockSpec(
               <div className={styles.content}>
                 {blocks.length > 0
                   ? blocks.map((block, i) => renderBlock(block, i))
-                  : <p className={styles.empty}>No article content</p>}
+                  : <p className={styles.empty}>{intl.formatMessage({ id: 'noArticleContent' })}</p>}
               </div>
             </div>
           )}

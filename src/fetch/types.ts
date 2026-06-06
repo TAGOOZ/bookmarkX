@@ -4,6 +4,8 @@ export interface Bookmark {
   url: string;
   content_type: 'outer_link' | 'thread' | 'x_article' | 'video';
   title: string | null;
+  title_ar: string | null;
+  title_en: string | null;
   author_name: string | null;
   author_handle: string | null;
   tweet_text: string | null;

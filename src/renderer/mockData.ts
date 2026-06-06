@@ -4,6 +4,8 @@ export const mockBookmarks: Bookmark[] = [
   {
     id: 'mock-1',
     title: 'Introducing Command A+: Making sovereign agentic capabilities available to all',
+    titleAr: null,
+    titleEn: 'Introducing Command A+: Making sovereign agentic capabilities available to all',
     url: 'https://cohere.com/blog/command-a-plus',
     topic: 'تكنولوجيا',
     priority: 'high',
@@ -23,6 +25,8 @@ Snapshot:
   {
     id: 'mock-2',
     title: 'The Future of AI in Software Development',
+    titleAr: null,
+    titleEn: 'The Future of AI in Software Development',
     url: 'https://example.com/ai-future-dev',
     topic: 'تكنولوجيا',
     priority: 'high',
@@ -33,6 +37,8 @@ Snapshot:
   {
     id: 'mock-3',
     title: 'React Server Components — A Deep Dive',
+    titleAr: null,
+    titleEn: 'React Server Components — A Deep Dive',
     url: 'https://example.com/rsc-deep-dive',
     topic: 'تكنولوجيا',
     priority: 'medium',
@@ -43,6 +49,8 @@ Snapshot:
   {
     id: 'mock-4',
     title: 'Minimal Design Principles for Clean UIs',
+    titleAr: null,
+    titleEn: 'Minimal Design Principles for Clean UIs',
     url: 'https://example.com/minimal-design',
     topic: 'تصميم',
     priority: 'medium',
@@ -53,6 +61,8 @@ Snapshot:
   {
     id: 'mock-5',
     title: 'The Psychology of Color in UI Design',
+    titleAr: null,
+    titleEn: 'The Psychology of Color in UI Design',
     url: 'https://example.com/color-psychology',
     topic: 'تصميم',
     priority: 'low',
@@ -63,6 +73,8 @@ Snapshot:
   {
     id: 'mock-6',
     title: 'Understanding Venture Capital Funding Rounds',
+    titleAr: null,
+    titleEn: 'Understanding Venture Capital Funding Rounds',
     url: 'https://example.com/vc-funding',
     topic: 'أعمال',
     priority: 'medium',
@@ -73,6 +85,8 @@ Snapshot:
   {
     id: 'mock-7',
     title: 'Stripe CEO on Scaling a Fintech Company',
+    titleAr: null,
+    titleEn: 'Stripe CEO on Scaling a Fintech Company',
     url: 'https://example.com/stripe-scaling',
     topic: 'أعمال',
     priority: 'high',
@@ -83,6 +97,8 @@ Snapshot:
   {
     id: 'mock-8',
     title: 'Quantum Computing Explained in 10 Minutes',
+    titleAr: null,
+    titleEn: 'Quantum Computing Explained in 10 Minutes',
     url: 'https://example.com/quantum-101',
     topic: 'علوم',
     priority: 'low',
@@ -93,6 +109,8 @@ Snapshot:
   {
     id: 'mock-9',
     title: 'Thread: How to Build habits that stick',
+    titleAr: null,
+    titleEn: 'Thread: How to Build habits that stick',
     url: 'https://x.com/user/status/123456',
     topic: 'علوم',
     priority: 'high',
@@ -103,6 +121,8 @@ Snapshot:
   {
     id: 'mock-10',
     title: 'New Breakthrough in CRISPR Gene Editing',
+    titleAr: null,
+    titleEn: 'New Breakthrough in CRISPR Gene Editing',
     url: 'https://example.com/crispr-2026',
     topic: 'علوم',
     priority: 'medium',
@@ -113,6 +133,8 @@ Snapshot:
   {
     id: 'mock-11',
     title: 'Building a Design System from Scratch',
+    titleAr: null,
+    titleEn: 'Building a Design System from Scratch',
     url: 'https://example.com/design-system',
     topic: 'تصميم',
     priority: 'high',

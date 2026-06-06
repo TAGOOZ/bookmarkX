@@ -7,6 +7,8 @@ const SCHEMA_SQL = `
     url TEXT NOT NULL,
     content_type TEXT CHECK(content_type IN ('outer_link', 'thread', 'x_article', 'video')),
     title TEXT,
+    title_ar TEXT,
+    title_en TEXT,
     author_name TEXT,
     author_handle TEXT,
     tweet_text TEXT,
@@ -104,6 +106,24 @@ export async function initializeSchema(db: Client): Promise<void> {
   try {
     await db.execute({
       sql: 'ALTER TABLE article_content ADD COLUMN blocks_json TEXT',
+      args: [],
+    });
+  } catch {
+    // Column already exists — ignore
+  }
+
+  // Migration: add title_ar and title_en if missing (existing databases)
+  try {
+    await db.execute({
+      sql: 'ALTER TABLE bookmarks ADD COLUMN title_ar TEXT',
+      args: [],
+    });
+  } catch {
+    // Column already exists — ignore
+  }
+  try {
+    await db.execute({
+      sql: 'ALTER TABLE bookmarks ADD COLUMN title_en TEXT',
       args: [],
     });
   } catch {

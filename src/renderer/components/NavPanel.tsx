@@ -1,4 +1,5 @@
 import React, { useState, useCallback, useEffect, useMemo } from 'react';
+import { useIntl } from 'react-intl';
 import { Search, Download, Tag, FlaskConical, FlaskConicalOff, Settings } from 'lucide-react';
 import { Bookmark } from '../App';
 import TopicGroup from './TopicGroup';
@@ -27,6 +28,7 @@ const NavPanel: React.FC<NavPanelProps> = ({
   mockMode,
   onToggleMockMode,
 }) => {
+  const intl = useIntl();
   const [showSearch, setShowSearch] = useState(false);
   const [expandedTopics, setExpandedTopics] = useState<Record<string, boolean>>(
     () => {
@@ -81,7 +83,7 @@ const NavPanel: React.FC<NavPanelProps> = ({
       <div className="nav-panel-content">
         {topicNames.length === 0 ? (
           <div className="nav-panel-empty">
-            لا توجد إشارات مرجعية
+            {intl.formatMessage({ id: 'noBookmarks' })}
           </div>
         ) : (
           topicNames.map((topic) => (
@@ -102,7 +104,7 @@ const NavPanel: React.FC<NavPanelProps> = ({
         <button
           className="nav-panel-tab"
           onClick={handleOpenSearch}
-          title="بحث"
+          title={intl.formatMessage({ id: 'searchTooltip' })}
         >
           <Search size={18} />
         </button>
@@ -111,14 +113,14 @@ const NavPanel: React.FC<NavPanelProps> = ({
             <button
               className="nav-panel-tab"
               onClick={onFetchClick}
-              title="جلب الآن"
+              title={intl.formatMessage({ id: 'fetchNowTooltip' })}
             >
               <Download size={18} />
             </button>
             <button
               className="nav-panel-tab"
               onClick={onClassifyClick}
-              title="تصنيف الآن"
+              title={intl.formatMessage({ id: 'classifyNowTooltip' })}
             >
               <Tag size={18} />
             </button>
@@ -127,14 +129,14 @@ const NavPanel: React.FC<NavPanelProps> = ({
         <button
           className={`nav-panel-tab ${mockMode ? 'mock-mode-active' : ''}`}
           onClick={onToggleMockMode}
-          title={mockMode ? 'إيقاف وضع التجريب' : 'وضع التجريب'}
+          title={mockMode ? intl.formatMessage({ id: 'stopMockModeTooltip' }) : intl.formatMessage({ id: 'mockModeTooltip' })}
         >
           {mockMode ? <FlaskConicalOff size={18} /> : <FlaskConical size={18} />}
         </button>
         <button
           className="nav-panel-tab"
           onClick={onSettingsClick}
-          title="الإعدادات"
+          title={intl.formatMessage({ id: 'settingsTooltip' })}
         >
           <Settings size={18} />
         </button>
