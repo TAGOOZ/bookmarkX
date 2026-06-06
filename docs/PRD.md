@@ -42,6 +42,51 @@
 
 **Agent-ready note:** User config module (`user-config.ts`) must expose typed read/write functions. No UI coupling. Config is the single source of truth for auth tokens and preferences.
 
+### Phase 0.5: Internationalization (i18n) & Bidirectional Layout
+
+**User Stories:**
+- As a user, I can switch the app language between Arabic and English in Settings
+- As a user, when I switch language, the entire app chrome (labels, headings, buttons, navigation, tabs) updates to the selected language
+- As a user, the layout direction mirrors automatically — Arabic shows RTL (nav panel right), English shows LTR (nav panel left)
+- As a user, every bookmark displays a title in the current UI language, falling back to the other language if unavailable
+- As a user, I see a restart prompt after changing language, with Restart Now / Later options
+- As a user, the titlebar text follows the UI language (بوكماركس / BookmarkX)
+- As a user, bookmark content direction (editor, tabs) follows the UI language, not content detection
+
+**Acceptance Criteria:**
+- Separate translation files: `locales/ar.json` and `locales/en.json` with all UI strings
+- ALL hardcoded strings converted to `intl.formatMessage()` (NavPanel, SearchOverlay, TopicGroup, ArticleReaderBlock, titlebar)
+- CSS uses logical properties (`padding-inline-start`, `margin-inline-end`, `border-inline-start`, `text-align: start`) instead of physical properties
+- Global `.app-container` direction switches dynamically via React context (not hardcoded CSS)
+- `<html>` element `dir` and `lang` attributes managed by React component reading locale context
+- Locale state stored in React context, persisted to `user.json`
+- Language setting change triggers restart prompt (toast/modal with Restart/Later)
+- App restarts cleanly on language change (reloads window)
+- `bookmarks` table gains `title_ar TEXT` and `title_en TEXT` columns (replaces single `title` column)
+- Bookmark title display: show preferred language title, fall back to other language if NULL
+- NavPanel position flips: Arabic → right, English → left
+- BookmarkTabs direction follows UI language
+- All 53 existing translation keys have both Arabic and English values
+- New keys added for all previously hardcoded strings
+- `react-intl` remains the i18n framework (no new dependencies)
+
+**Components to modify:**
+1. `App.tsx` — extract `messages` to `locales/ar.json`, add `locales/en.json`, pass locale from context to `IntlProvider`, manage `<html>` dir/lang
+2. `Settings.tsx` — language selector triggers save + restart prompt
+3. `NavPanel.tsx` — convert 5 hardcoded Arabic strings to `intl.formatMessage()`
+4. `SearchOverlay.tsx` — convert 2 hardcoded strings to `intl.formatMessage()`
+5. `TopicGroup.tsx` — convert 2 hardcoded strings to `intl.formatMessage()`
+6. `ArticleReaderBlock.tsx` — convert "Article" label to `intl.formatMessage()`
+7. `index.html` — remove hardcoded `dir="rtl" lang="ar"`, set dynamically
+8. `index.css` — remove hardcoded `direction: rtl` from `.app-container`, convert physical CSS properties to logical
+9. All CSS Modules — convert `padding-left/right`, `margin-left/right`, `border-left/right` to logical equivalents
+10. Database migration — add `title_ar`, `title_en` columns to `bookmarks` table
+
+**Architecture decisions:**
+- See [ADR-0018: Internationalization & Bidirectional Layout](docs/adr/0018-i18n-bidirectional-layout.md)
+
+**Agent-ready note:** Translation files are data, not logic. The i18n service (`getLocale()`, `setLocale()`) must be a pure service function with typed I/O. Agent can call the same function to read/write locale preference.
+
 ### Phase 1: MVP — Fetch & Classify
 
 **User Stories:**
@@ -398,7 +443,9 @@ CREATE TABLE bookmarks (
   tweet_id TEXT UNIQUE,
   url TEXT NOT NULL,
   content_type TEXT CHECK(content_type IN ('outer_link', 'thread', 'x_article', 'video')),
-  title TEXT,
+  title TEXT,  -- DEPRECATED: use title_ar / title_en
+  title_ar TEXT,
+  title_en TEXT,
   author_name TEXT,
   author_handle TEXT,
   tweet_text TEXT,
@@ -540,6 +587,7 @@ CREATE TABLE agent_actions (
 - [0015: Article Parser — Structured Content Extraction](docs/adr/0015-article-parser.md)
 - [0016: User Config & Authentication](docs/adr/0016-user-config-auth.md)
 - [0017: Two-Panel Layout Redesign](docs/adr/0017-two-panel-layout-redesign.md)
+- [0018: Internationalization & Bidirectional Layout](docs/adr/0018-i18n-bidirectional-layout.md)
 
 ## 9. Success Metrics
 
@@ -572,6 +620,7 @@ CREATE TABLE agent_actions (
 - **Twitter login**: Electron BrowserWindow approach. Opens `x.com/login` in a session-partitioned window, captures cookies after login. Equal option alongside manual token entry.
 - **First-run experience**: App works immediately with empty config. Subtle prompt banner guides user to complete setup in Settings.
 - **Settings UI**: Profile section in Settings modal (not sidebar). Two equal auth options: "Login with Twitter" button + manual token entry. Auto-detect button for Chrome profile.
+- **i18n architecture**: Separate JSON translation files (`locales/ar.json`, `locales/en.json`). All hardcoded strings converted to `intl.formatMessage()`. CSS uses logical properties. Locale state in React context + user.json. Language change triggers app restart with prompt. Bookmark titles stored as dual columns (`title_ar`, `title_en`) with fallback. NavPanel and layout mirror with language. See [ADR-0018](docs/adr/0018-i18n-bidirectional-layout.md).
 
 ## 11. Open Questions
 
@@ -581,7 +630,7 @@ CREATE TABLE agent_actions (
 - [x] Settings storage format — solved: user.json replaces .env (ADR-0016)
 - [x] User account model — solved: single-user, config file approach (ADR-0016)
 - [ ] Chrome profile detection for macOS/Windows (encrypted cookies — needs keytar)
-- [ ] Language support: English UI alongside Arabic (LTR mode)
+- [x] Language support: English UI alongside Arabic (LTR mode) — solved: separate JSON files, logical CSS, React-managed direction, app restart on language change (Phase 0.5)
 - [x] Notes editor: BlockNote (`@blocknote/react`) — decided, same as Docmost
 
 ## 12. Agent-Ready Architecture

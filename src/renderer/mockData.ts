@@ -1,0 +1,133 @@
+import { Bookmark } from './App';
+
+export const mockBookmarks: Bookmark[] = [
+  {
+    id: 'mock-1',
+    title: 'Introducing Command A+: Making sovereign agentic capabilities available to all',
+    url: 'https://cohere.com/blog/command-a-plus',
+    topic: 'تكنولوجيا',
+    priority: 'high',
+    contentType: 'article',
+    content: `Our fastest and most powerful language model yet. Command A+ is an open-source enterprise workhorse built for complex reasoning, multimodal and multilingual agentic tasks — all while running on as little as two H100 GPUs.
+
+Today, we're releasing Command A+ open-source. A mixture-of-experts (MoE) model, Command A+ is an efficient, versatile, and privately deployable LLM built for high-performance agentic tasks with minimal compute overhead.
+
+Snapshot:
+- Model: command-a-plus-05-2026
+- License: Apache 2.0
+- Architecture: Sparse / MoE
+- Model size: 218B total; 25B active
+- Context length: 128K input context; 64K max generation`,
+    createdAt: '2026-06-01T10:00:00Z',
+  },
+  {
+    id: 'mock-2',
+    title: 'The Future of AI in Software Development',
+    url: 'https://example.com/ai-future-dev',
+    topic: 'تكنولوجيا',
+    priority: 'high',
+    contentType: 'article',
+    content: 'How artificial intelligence is transforming the way we write and maintain code. From AI-powered code completion to automated testing and deployment pipelines.',
+    createdAt: '2026-06-02T14:30:00Z',
+  },
+  {
+    id: 'mock-3',
+    title: 'React Server Components — A Deep Dive',
+    url: 'https://example.com/rsc-deep-dive',
+    topic: 'تكنولوجيا',
+    priority: 'medium',
+    contentType: 'article',
+    content: 'Understanding React Server Components, how they work, and when to use them. A comprehensive guide to the future of React development.',
+    createdAt: '2026-06-05T08:00:00Z',
+  },
+  {
+    id: 'mock-4',
+    title: 'Minimal Design Principles for Clean UIs',
+    url: 'https://example.com/minimal-design',
+    topic: 'تصميم',
+    priority: 'medium',
+    contentType: 'article',
+    content: 'Exploring minimalism in digital design and how less can truly be more. White space, typography, and visual hierarchy.',
+    createdAt: '2026-06-03T09:15:00Z',
+  },
+  {
+    id: 'mock-5',
+    title: 'The Psychology of Color in UI Design',
+    url: 'https://example.com/color-psychology',
+    topic: 'تصميم',
+    priority: 'low',
+    contentType: 'image',
+    content: 'How color choices affect user perception and behavior in digital interfaces. A visual guide to color theory for designers.',
+    createdAt: '2026-06-05T12:30:00Z',
+  },
+  {
+    id: 'mock-6',
+    title: 'Understanding Venture Capital Funding Rounds',
+    url: 'https://example.com/vc-funding',
+    topic: 'أعمال',
+    priority: 'medium',
+    contentType: 'article',
+    content: 'A breakdown of seed, Series A, B, C and what each round means for startups. Valuation metrics and investor expectations.',
+    createdAt: '2026-06-03T11:00:00Z',
+  },
+  {
+    id: 'mock-7',
+    title: 'Stripe CEO on Scaling a Fintech Company',
+    url: 'https://example.com/stripe-scaling',
+    topic: 'أعمال',
+    priority: 'high',
+    contentType: 'video',
+    content: 'Patrick Collison shares insights on building and scaling Stripe. Culture, engineering, and global expansion.',
+    createdAt: '2026-06-06T09:00:00Z',
+  },
+  {
+    id: 'mock-8',
+    title: 'Quantum Computing Explained in 10 Minutes',
+    url: 'https://example.com/quantum-101',
+    topic: 'علوم',
+    priority: 'low',
+    contentType: 'video',
+    content: 'A quick visual introduction to quantum computing concepts. Qubits, entanglement, and quantum advantage.',
+    createdAt: '2026-06-04T16:45:00Z',
+  },
+  {
+    id: 'mock-9',
+    title: 'Thread: How to Build habits that stick',
+    url: 'https://x.com/user/status/123456',
+    topic: 'علوم',
+    priority: 'high',
+    contentType: 'link',
+    content: 'A thread about neuroscience-backed strategies for building lasting habits. The habit loop, cue-routine-reward, and environment design.',
+    createdAt: '2026-06-04T18:20:00Z',
+  },
+  {
+    id: 'mock-10',
+    title: 'New Breakthrough in CRISPR Gene Editing',
+    url: 'https://example.com/crispr-2026',
+    topic: 'علوم',
+    priority: 'medium',
+    contentType: 'article',
+    content: 'Scientists achieve precision gene editing with zero off-target effects. A new era for therapeutic gene editing.',
+    createdAt: '2026-06-06T14:15:00Z',
+  },
+  {
+    id: 'mock-11',
+    title: 'Building a Design System from Scratch',
+    url: 'https://example.com/design-system',
+    topic: 'تصميم',
+    priority: 'high',
+    contentType: 'article',
+    content: 'A step-by-step guide to creating a scalable design system. Tokens, components, documentation, and adoption strategies.',
+    createdAt: '2026-06-07T08:00:00Z',
+  },
+  {
+    id: 'mock-12',
+    title: 'The Art of Negotiation in Business',
+    url: 'https://example.com/negotiation',
+    topic: 'أعمال',
+    priority: 'low',
+    contentType: 'article',
+    content: 'Key principles of effective negotiation. Win-win strategies, BATNA, and building long-term business relationships.',
+    createdAt: '2026-06-07T10:30:00Z',
+  },
+];

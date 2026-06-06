@@ -105,6 +105,20 @@ _Avoid_: improve, rewrite, AI edit
 An inline link from a user note to a specific part of an agent section (e.g., "see summary about X"). Rendered as a clickable chip that jumps to that section.
 _Avoid_: cross-reference, backlink
 
+## i18n
+
+**Locale**:
+The active UI language setting (Arabic or English). Stored in `user.json`, managed via React context. Drives layout direction and all UI text.
+_Avoid_: language setting, lang preference
+
+**App Chrome**:
+All non-content UI elements: labels, headings, buttons, navigation, tabs, titlebar. These follow the locale. Content (bookmark titles, editor) is handled separately.
+_Avoid_: UI, interface
+
+**Dual Titles**:
+Bookmarks store two title columns: `title_ar` and `title_en`. The displayed title follows the current locale, falling back to the other language if the preferred one is NULL.
+_Avoid_: translated title, alternate title
+
 ## Editor Decision
 
 **BlockNote** (`@blocknote/react`, `@blocknote/core`, `@blocknote/mantine`) — Notion-style block editor, same as Docmost. Replaces the plain textarea in NotesEditor. Store content as JSON string in DB (`JSON.stringify(blocks)`). Props change from `(content: string, onChange: (s: string) => void)` to `(initialContent: string, onChange: (blocks: Block[]) => void)`.

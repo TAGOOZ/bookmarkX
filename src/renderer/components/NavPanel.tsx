@@ -10,6 +10,8 @@ interface NavPanelProps {
   onClassifyClick: () => void;
   onSelectBookmark: (bookmark: Bookmark) => void;
   selectedBookmarkId: string | null;
+  mockMode: boolean;
+  onToggleMockMode: () => void;
 }
 
 const STORAGE_KEY = 'navPanel-expandedTopics';
@@ -21,6 +23,8 @@ const NavPanel: React.FC<NavPanelProps> = ({
   onClassifyClick,
   onSelectBookmark,
   selectedBookmarkId,
+  mockMode,
+  onToggleMockMode,
 }) => {
   const [showSearch, setShowSearch] = useState(false);
   const [expandedTopics, setExpandedTopics] = useState<Record<string, boolean>>(
@@ -81,19 +85,30 @@ const NavPanel: React.FC<NavPanelProps> = ({
         >
           🔍
         </button>
+        {!mockMode && (
+          <>
+            <button
+              className="nav-panel-icon"
+              onClick={onFetchClick}
+              title="جلب الآن"
+            >
+              📥
+            </button>
+            <button
+              className="nav-panel-icon"
+              onClick={onClassifyClick}
+              title="تصنيف الآن"
+            >
+              🏷
+            </button>
+          </>
+        )}
         <button
-          className="nav-panel-icon"
-          onClick={onFetchClick}
-          title="جلب الآن"
+          className={`nav-panel-icon ${mockMode ? 'mock-mode-active' : ''}`}
+          onClick={onToggleMockMode}
+          title={mockMode ? 'إيقاف وضع التجريب' : 'وضع التجريب'}
         >
-          📥
-        </button>
-        <button
-          className="nav-panel-icon"
-          onClick={onClassifyClick}
-          title="تصنيف الآن"
-        >
-          🏷
+          {mockMode ? '🎭' : '🧪'}
         </button>
         <button
           className="nav-panel-icon"
@@ -103,6 +118,12 @@ const NavPanel: React.FC<NavPanelProps> = ({
           ⚙
         </button>
       </div>
+
+      {mockMode && (
+        <div className="mock-mode-banner">
+          وضع التجريب
+        </div>
+      )}
 
       <div className="nav-panel-content">
         {topicNames.length === 0 ? (

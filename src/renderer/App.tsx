@@ -4,6 +4,7 @@ import NavPanel from './components/NavPanel';
 import BookmarkDetail from './components/bookmark-detail/BookmarkDetail';
 import BookmarkTabs from './components/bookmark-detail/BookmarkTabs';
 import Settings from './components/Settings';
+import { mockBookmarks } from './mockData';
 
 export interface Bookmark {
   id: string;
@@ -15,6 +16,8 @@ export interface Bookmark {
   content: string;
   createdAt: string;
 }
+
+const MOCK_MODE_KEY = 'bookmarkx-mock-mode';
 
 const messages = {
   appName: 'بوكماركس',
@@ -68,6 +71,8 @@ const messages = {
   loading: 'جاري التحميل...',
   errorOccurred: 'حدث خطأ',
   missingCredentials: 'بيانات اعتماد X/Twitter مفقودة. افتح الإعدادات وقم بـ:\n• النقر على "تسجيل الدخول بحساب تويتر" للمصادقة، أو\n• إدخال auth_token و ct0 يدوياً من أدوات مطور Chrome',
+  mockMode: 'وضع التجريب',
+  mockModeDescription: 'عرض بيانات تجريبية بدلاً من البيانات الحقيقية',
   تكنولوجيا: 'تكنولوجيا',
   تصميم: 'تصميم',
   أعمال: 'أعمال',
@@ -87,6 +92,21 @@ function AppContent() {
   const [showSettings, setShowSettings] = useState(false);
   const [bookmarks, setBookmarks] = useState<Bookmark[]>([]);
   const [refreshKey, setRefreshKey] = useState(0);
+  const [mockMode, setMockMode] = useState(() => {
+    try {
+      return localStorage.getItem(MOCK_MODE_KEY) === 'true';
+    } catch {
+      return false;
+    }
+  });
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(MOCK_MODE_KEY, String(mockMode));
+    } catch {
+      // localStorage not available
+    }
+  }, [mockMode]);
 
   const activeBookmark = useMemo(
     () => openBookmarks.find((b) => b.id === activeBookmarkId) ?? null,
@@ -115,16 +135,27 @@ function AppContent() {
   }, []);
 
   const handleFetch = useCallback(async () => {
+    if (mockMode) return;
     await window.api.fetchBookmarks();
     setRefreshKey((k) => k + 1);
-  }, []);
+  }, [mockMode]);
 
   const handleClassify = useCallback(async () => {
+    if (mockMode) return;
     await window.api.classifyAndNotify();
     setRefreshKey((k) => k + 1);
+  }, [mockMode]);
+
+  const toggleMockMode = useCallback(() => {
+    setMockMode((prev) => !prev);
   }, []);
 
   const fetchBookmarks = useCallback(async () => {
+    if (mockMode) {
+      setBookmarks(mockBookmarks);
+      return;
+    }
+
     try {
       const [dbBookmarks, classifications] = await Promise.all([
         window.api.getBookmarks(),
@@ -154,11 +185,11 @@ function AppContent() {
     } catch {
       setBookmarks([]);
     }
-  }, []);
+  }, [mockMode]);
 
   useEffect(() => {
     fetchBookmarks();
-  }, [refreshKey]);
+  }, [refreshKey, fetchBookmarks]);
 
   return (
     <>
@@ -188,9 +219,11 @@ function AppContent() {
           onClassifyClick={handleClassify}
           onSelectBookmark={handleBookmarkSelect}
           selectedBookmarkId={activeBookmarkId}
+          mockMode={mockMode}
+          onToggleMockMode={toggleMockMode}
         />
         {showSettings && (
-          <Settings onClose={() => setShowSettings(false)} />
+          <Settings onClose={() => setShowSettings(false)} mockMode={mockMode} />
         )}
       </div>
     </>

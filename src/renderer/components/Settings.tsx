@@ -3,6 +3,7 @@ import { FormattedMessage, useIntl } from 'react-intl';
 
 interface SettingsProps {
   onClose: () => void;
+  mockMode?: boolean;
 }
 
 interface SettingsFormData {
@@ -33,7 +34,7 @@ const DEFAULT_FORM: SettingsFormData = {
   aiModel: 'gemini-2.0-flash',
 };
 
-const Settings: React.FC<SettingsProps> = ({ onClose }) => {
+const Settings: React.FC<SettingsProps> = ({ onClose, mockMode = false }) => {
   const [formData, setFormData] = useState<SettingsFormData>(DEFAULT_FORM);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -75,6 +76,12 @@ const Settings: React.FC<SettingsProps> = ({ onClose }) => {
   }, [loading]);
 
   useEffect(() => {
+    if (mockMode) {
+      setFormData(DEFAULT_FORM);
+      setLoading(false);
+      return;
+    }
+
     window.api.getSettings()
       .then((settings) => {
         setFormData(settings);
@@ -84,7 +91,7 @@ const Settings: React.FC<SettingsProps> = ({ onClose }) => {
         setError(err instanceof Error ? err.message : 'Failed to load settings');
         setLoading(false);
       });
-  }, []);
+  }, [mockMode]);
 
   const handleInputChange = (field: keyof SettingsFormData, value: string | boolean) => {
     setFormData((prev) => ({
@@ -144,6 +151,10 @@ const Settings: React.FC<SettingsProps> = ({ onClose }) => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (mockMode) {
+      onClose();
+      return;
+    }
     setError(null);
     try {
       await window.api.saveSettings(formData);
@@ -175,6 +186,12 @@ const Settings: React.FC<SettingsProps> = ({ onClose }) => {
           </button>
         </div>
 
+        {mockMode && (
+          <div className="mock-mode-notice">
+           وضع التجريب مفعّل — الإعدادات غير متاحة
+          </div>
+        )}
+
         <form className="settings-form" onSubmit={handleSubmit}>
           {error && (
             <div className="error-banner">
@@ -198,6 +215,7 @@ const Settings: React.FC<SettingsProps> = ({ onClose }) => {
                 value={formData.name}
                 onChange={(e) => handleInputChange('name', e.target.value)}
                 placeholder={intl.formatMessage({ id: 'namePlaceholder', defaultMessage: 'Your name' })}
+                disabled={mockMode}
               />
             </div>
             <div className="form-group">
@@ -210,97 +228,100 @@ const Settings: React.FC<SettingsProps> = ({ onClose }) => {
                 value={formData.twitterHandle}
                 onChange={(e) => handleInputChange('twitterHandle', e.target.value)}
                 placeholder={intl.formatMessage({ id: 'twitterHandlePlaceholder', defaultMessage: '@username' })}
+                disabled={mockMode}
               />
             </div>
           </div>
 
-          {/* X/Twitter Auth Section */}
-          <div className="settings-section">
-            <h3 className="settings-section-title">
-              <FormattedMessage id="xAuth" />
-            </h3>
-            <div className="auth-options">
-              <div className="auth-option">
-                <button
-                  type="button"
-                  className="twitter-login-button"
-                  onClick={handleTwitterLogin}
-                  disabled={twitterLogging}
-                >
-                  {twitterLogging
-                    ? intl.formatMessage({ id: 'loggingIn', defaultMessage: 'Logging in...' })
-                    : intl.formatMessage({ id: 'loginWithTwitter', defaultMessage: 'Login with Twitter' })}
-                </button>
-                {authStatus === 'detected' && (
-                  <span className="auth-status auth-status-detected">
-                    <FormattedMessage id="detectedFromChrome" />
-                  </span>
-                )}
-              </div>
-              <div className="option-divider">
-                <FormattedMessage id="or" />
-              </div>
-              <div className="auth-option">
-                <div className="form-group">
-                  <label className="form-label">
-                    <FormattedMessage id="authToken" />
-                  </label>
-                  <input
-                    type="password"
-                    className="form-input"
-                    value={formData.birdAuthToken}
-                    onChange={(e) => {
-                      handleInputChange('birdAuthToken', e.target.value);
-                      setAuthStatus('manual');
-                    }}
-                    placeholder={intl.formatMessage({ id: 'authTokenPlaceholder', defaultMessage: 'Enter auth_token' })}
-                  />
+          {/* X/Twitter Auth Section - Hidden in mock mode */}
+          {!mockMode && (
+            <div className="settings-section">
+              <h3 className="settings-section-title">
+                <FormattedMessage id="xAuth" />
+              </h3>
+              <div className="auth-options">
+                <div className="auth-option">
+                  <button
+                    type="button"
+                    className="twitter-login-button"
+                    onClick={handleTwitterLogin}
+                    disabled={twitterLogging}
+                  >
+                    {twitterLogging
+                      ? intl.formatMessage({ id: 'loggingIn', defaultMessage: 'Logging in...' })
+                      : intl.formatMessage({ id: 'loginWithTwitter', defaultMessage: 'Login with Twitter' })}
+                  </button>
+                  {authStatus === 'detected' && (
+                    <span className="auth-status auth-status-detected">
+                      <FormattedMessage id="detectedFromChrome" />
+                    </span>
+                  )}
                 </div>
-                <div className="form-group">
-                  <label className="form-label">
-                    <FormattedMessage id="ct0" />
-                  </label>
-                  <input
-                    type="password"
-                    className="form-input"
-                    value={formData.birdCt0}
-                    onChange={(e) => {
-                      handleInputChange('birdCt0', e.target.value);
-                      setAuthStatus('manual');
-                    }}
-                    placeholder={intl.formatMessage({ id: 'ct0Placeholder', defaultMessage: 'Enter ct0 cookie' })}
-                  />
+                <div className="option-divider">
+                  <FormattedMessage id="or" />
                 </div>
-                <div className="form-group">
-                  <label className="form-label">
-                    <FormattedMessage id="chromeProfile" />
-                  </label>
-                  <div className="detect-input-row">
+                <div className="auth-option">
+                  <div className="form-group">
+                    <label className="form-label">
+                      <FormattedMessage id="authToken" />
+                    </label>
                     <input
-                      type="text"
+                      type="password"
                       className="form-input"
-                      value={formData.birdChromeProfile}
-                      onChange={(e) => handleInputChange('birdChromeProfile', e.target.value)}
-                      placeholder={intl.formatMessage({ id: 'chromeProfilePlaceholder', defaultMessage: 'Chrome profile name' })}
+                      value={formData.birdAuthToken}
+                      onChange={(e) => {
+                        handleInputChange('birdAuthToken', e.target.value);
+                        setAuthStatus('manual');
+                      }}
+                      placeholder={intl.formatMessage({ id: 'authTokenPlaceholder', defaultMessage: 'Enter auth_token' })}
                     />
-                    <button
-                      type="button"
-                      className="detect-button"
-                      onClick={handleDetectChrome}
-                      disabled={detecting}
-                    >
-                      {detecting ? '...' : intl.formatMessage({ id: 'detect', defaultMessage: 'Detect' })}
-                    </button>
                   </div>
+                  <div className="form-group">
+                    <label className="form-label">
+                      <FormattedMessage id="ct0" />
+                    </label>
+                    <input
+                      type="password"
+                      className="form-input"
+                      value={formData.birdCt0}
+                      onChange={(e) => {
+                        handleInputChange('birdCt0', e.target.value);
+                        setAuthStatus('manual');
+                      }}
+                      placeholder={intl.formatMessage({ id: 'ct0Placeholder', defaultMessage: 'Enter ct0 cookie' })}
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label className="form-label">
+                      <FormattedMessage id="chromeProfile" />
+                    </label>
+                    <div className="detect-input-row">
+                      <input
+                        type="text"
+                        className="form-input"
+                        value={formData.birdChromeProfile}
+                        onChange={(e) => handleInputChange('birdChromeProfile', e.target.value)}
+                        placeholder={intl.formatMessage({ id: 'chromeProfilePlaceholder', defaultMessage: 'Chrome profile name' })}
+                      />
+                      <button
+                        type="button"
+                        className="detect-button"
+                        onClick={handleDetectChrome}
+                        disabled={detecting}
+                      >
+                        {detecting ? '...' : intl.formatMessage({ id: 'detect', defaultMessage: 'Detect' })}
+                      </button>
+                    </div>
+                  </div>
+                  {authStatus === 'manual' && (
+                    <span className="auth-status auth-status-manual">
+                      <FormattedMessage id="enteredManually" />
+                    </span>
+                  )}
                 </div>
-                {authStatus === 'manual' && (
-                  <span className="auth-status auth-status-manual">
-                    <FormattedMessage id="enteredManually" />
-                  </span>
-                )}
               </div>
             </div>
-          </div>
+          )}
 
           {/* Gemini API Key Section */}
           <div className="settings-section">
@@ -317,6 +338,7 @@ const Settings: React.FC<SettingsProps> = ({ onClose }) => {
                 value={formData.geminiApiKey}
                 onChange={(e) => handleInputChange('geminiApiKey', e.target.value)}
                 placeholder={intl.formatMessage({ id: 'apiKeyPlaceholder', defaultMessage: 'Enter Gemini API key' })}
+                disabled={mockMode}
               />
             </div>
           </div>
@@ -334,6 +356,7 @@ const Settings: React.FC<SettingsProps> = ({ onClose }) => {
                 className="pref-select"
                 value={formData.theme}
                 onChange={(e) => handleInputChange('theme', e.target.value)}
+                disabled={mockMode}
               >
                 <option value="dark">{intl.formatMessage({ id: 'dark', defaultMessage: 'Dark' })}</option>
                 <option value="light">{intl.formatMessage({ id: 'light', defaultMessage: 'Light' })}</option>
@@ -347,6 +370,7 @@ const Settings: React.FC<SettingsProps> = ({ onClose }) => {
                 className="pref-select"
                 value={formData.language}
                 onChange={(e) => handleInputChange('language', e.target.value)}
+                disabled={mockMode}
               >
                 <option value="ar">العربية</option>
                 <option value="en">English</option>
@@ -362,6 +386,7 @@ const Settings: React.FC<SettingsProps> = ({ onClose }) => {
                   className="toggle-input"
                   checked={formData.notifications}
                   onChange={(e) => handleInputChange('notifications', e.target.checked)}
+                  disabled={mockMode}
                 />
                 <span className="toggle-switch" />
               </label>
@@ -374,6 +399,7 @@ const Settings: React.FC<SettingsProps> = ({ onClose }) => {
                 className="pref-select"
                 value={formData.fetchFrequency}
                 onChange={(e) => handleInputChange('fetchFrequency', e.target.value)}
+                disabled={mockMode}
               >
                 <option value="0 */3 * * *">{intl.formatMessage({ id: 'every3Hours', defaultMessage: 'Every 3 hours' })}</option>
                 <option value="0 */6 * * *">{intl.formatMessage({ id: 'every6Hours', defaultMessage: 'Every 6 hours' })}</option>
@@ -389,6 +415,7 @@ const Settings: React.FC<SettingsProps> = ({ onClose }) => {
                 className="pref-select"
                 value={formData.aiModel}
                 onChange={(e) => handleInputChange('aiModel', e.target.value)}
+                disabled={mockMode}
               >
                 <option value="gemini-2.0-flash">Gemini 2.0 Flash</option>
                 <option value="gemini-2.5-flash">Gemini 2.5 Flash</option>
@@ -405,7 +432,7 @@ const Settings: React.FC<SettingsProps> = ({ onClose }) => {
             >
               <FormattedMessage id="cancel" />
             </button>
-            <button type="submit" className="action-button primary-button">
+            <button type="submit" className="action-button primary-button" disabled={mockMode}>
               <FormattedMessage id="save" />
             </button>
           </div>
