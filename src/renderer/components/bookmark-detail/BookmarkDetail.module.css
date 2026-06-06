@@ -39,7 +39,7 @@
 
 .editor .bn-editor {
   font-family: 'Thmanyah', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif !important;
-  padding-inline: 0 !important;
+  padding-inline: 20px !important;
 }
 
 .editor[dir="rtl"] .bn-editor {
