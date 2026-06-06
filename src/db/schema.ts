@@ -32,6 +32,68 @@ const SCHEMA_SQL = `
     topic_id TEXT REFERENCES topics(id),
     PRIMARY KEY (bookmark_id, topic_id)
   );
+
+  CREATE TABLE IF NOT EXISTS summaries (
+    id TEXT PRIMARY KEY,
+    bookmark_id TEXT REFERENCES bookmarks(id),
+    content_en TEXT,
+    content_ar TEXT,
+    model_used TEXT,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  );
+
+  CREATE TABLE IF NOT EXISTS article_content (
+    id TEXT PRIMARY KEY,
+    bookmark_id TEXT REFERENCES bookmarks(id),
+    extracted_text TEXT,
+    word_count INTEGER,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  );
+
+  CREATE TABLE IF NOT EXISTS highlights (
+    id TEXT PRIMARY KEY,
+    bookmark_id TEXT REFERENCES bookmarks(id),
+    selected_text TEXT NOT NULL,
+    note TEXT,
+    color TEXT,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  );
+
+  CREATE TABLE IF NOT EXISTS notes (
+    id TEXT PRIMARY KEY,
+    bookmark_id TEXT REFERENCES bookmarks(id),
+    title TEXT,
+    content TEXT,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  );
+
+  CREATE TABLE IF NOT EXISTS chat_sessions (
+    id TEXT PRIMARY KEY,
+    bookmark_id TEXT REFERENCES bookmarks(id),
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  );
+
+  CREATE TABLE IF NOT EXISTS chat_messages (
+    id TEXT PRIMARY KEY,
+    session_id TEXT REFERENCES chat_sessions(id),
+    role TEXT CHECK(role IN ('user', 'assistant')),
+    content TEXT NOT NULL,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  );
+
+  CREATE TABLE IF NOT EXISTS glossary_terms (
+    id TEXT PRIMARY KEY,
+    term TEXT UNIQUE NOT NULL,
+    definition TEXT NOT NULL,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  );
+
+  CREATE TABLE IF NOT EXISTS bookmark_glossary (
+    bookmark_id TEXT REFERENCES bookmarks(id),
+    term_id TEXT REFERENCES glossary_terms(id),
+    PRIMARY KEY (bookmark_id, term_id)
+  );
 `;
 
 export async function initializeSchema(db: Client): Promise<void> {

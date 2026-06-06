@@ -118,4 +118,146 @@ describe('Database Schema', () => {
     const { rows } = await db.execute({ sql: 'SELECT COUNT(*) as count FROM classifications' });
     expect((rows[0] as any).count).toBe(3);
   });
+
+  describe('Phase 2 tables', () => {
+    it('creates summaries table', async () => {
+      const { rows } = await db.execute({ sql: 'PRAGMA table_info(summaries)' });
+      const names = rows.map((c: any) => c.name);
+
+      expect(names).toContain('id');
+      expect(names).toContain('bookmark_id');
+      expect(names).toContain('content_en');
+      expect(names).toContain('content_ar');
+      expect(names).toContain('model_used');
+      expect(names).toContain('created_at');
+    });
+
+    it('creates article_content table', async () => {
+      const { rows } = await db.execute({ sql: 'PRAGMA table_info(article_content)' });
+      const names = rows.map((c: any) => c.name);
+
+      expect(names).toContain('id');
+      expect(names).toContain('bookmark_id');
+      expect(names).toContain('extracted_text');
+      expect(names).toContain('word_count');
+      expect(names).toContain('created_at');
+    });
+
+    it('creates highlights table', async () => {
+      const { rows } = await db.execute({ sql: 'PRAGMA table_info(highlights)' });
+      const names = rows.map((c: any) => c.name);
+
+      expect(names).toContain('id');
+      expect(names).toContain('bookmark_id');
+      expect(names).toContain('selected_text');
+      expect(names).toContain('note');
+      expect(names).toContain('color');
+      expect(names).toContain('created_at');
+    });
+
+    it('creates notes table', async () => {
+      const { rows } = await db.execute({ sql: 'PRAGMA table_info(notes)' });
+      const names = rows.map((c: any) => c.name);
+
+      expect(names).toContain('id');
+      expect(names).toContain('bookmark_id');
+      expect(names).toContain('title');
+      expect(names).toContain('content');
+      expect(names).toContain('created_at');
+      expect(names).toContain('updated_at');
+    });
+
+    it('creates chat_sessions table', async () => {
+      const { rows } = await db.execute({ sql: 'PRAGMA table_info(chat_sessions)' });
+      const names = rows.map((c: any) => c.name);
+
+      expect(names).toContain('id');
+      expect(names).toContain('bookmark_id');
+      expect(names).toContain('created_at');
+    });
+
+    it('creates chat_messages table', async () => {
+      const { rows } = await db.execute({ sql: 'PRAGMA table_info(chat_messages)' });
+      const names = rows.map((c: any) => c.name);
+
+      expect(names).toContain('id');
+      expect(names).toContain('session_id');
+      expect(names).toContain('role');
+      expect(names).toContain('content');
+      expect(names).toContain('created_at');
+    });
+
+    it('creates glossary_terms table', async () => {
+      const { rows } = await db.execute({ sql: 'PRAGMA table_info(glossary_terms)' });
+      const names = rows.map((c: any) => c.name);
+
+      expect(names).toContain('id');
+      expect(names).toContain('term');
+      expect(names).toContain('definition');
+      expect(names).toContain('created_at');
+    });
+
+    it('creates bookmark_glossary junction table', async () => {
+      const { rows } = await db.execute({ sql: 'PRAGMA table_info(bookmark_glossary)' });
+      const names = rows.map((c: any) => c.name);
+
+      expect(names).toContain('bookmark_id');
+      expect(names).toContain('term_id');
+    });
+
+    it('enforces unique glossary terms', async () => {
+      await db.execute({
+        sql: 'INSERT INTO glossary_terms (id, term, definition) VALUES (?, ?, ?)',
+        args: ['g1', 'API', 'Application Programming Interface'],
+      });
+      await expect(
+        db.execute({
+          sql: 'INSERT INTO glossary_terms (id, term, definition) VALUES (?, ?, ?)',
+          args: ['g2', 'API', 'Duplicate term'],
+        })
+      ).rejects.toThrow();
+    });
+
+    it('enforces chat message role check constraint', async () => {
+      const sessionId = 's1';
+      await db.execute({
+        sql: 'INSERT INTO bookmarks (id, url, content_type) VALUES (?, ?, ?)',
+        args: ['b1', 'https://example.com', 'outer_link'],
+      });
+      await db.execute({
+        sql: 'INSERT INTO chat_sessions (id, bookmark_id) VALUES (?, ?)',
+        args: [sessionId, 'b1'],
+      });
+
+      await expect(
+        db.execute({
+          sql: 'INSERT INTO chat_messages (id, session_id, role, content) VALUES (?, ?, ?, ?)',
+          args: ['m1', sessionId, 'invalid_role', 'Hello'],
+        })
+      ).rejects.toThrow();
+    });
+
+    it('allows valid chat message roles', async () => {
+      const sessionId = 's1';
+      await db.execute({
+        sql: 'INSERT INTO bookmarks (id, url, content_type) VALUES (?, ?, ?)',
+        args: ['b1', 'https://example.com', 'outer_link'],
+      });
+      await db.execute({
+        sql: 'INSERT INTO chat_sessions (id, bookmark_id) VALUES (?, ?)',
+        args: [sessionId, 'b1'],
+      });
+
+      const roles = ['user', 'assistant'];
+      for (const [i, role] of roles.entries()) {
+        await db.execute({
+          sql: 'INSERT INTO chat_messages (id, session_id, role, content) VALUES (?, ?, ?, ?)',
+          args: [`m${i}`, sessionId, role, `Message ${i}`],
+        });
+      }
+
+      const { rows } = await db.execute({ sql: 'SELECT COUNT(*) as count FROM chat_messages' });
+      expect((rows[0] as any).count).toBe(2);
+    });
+  });
 });
