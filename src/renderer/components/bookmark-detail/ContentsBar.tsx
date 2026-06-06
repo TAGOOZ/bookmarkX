@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import styles from './ContentsSidebar.module.css';
+import styles from './ContentsBar.module.css';
 
 interface Section {
   id: string;
@@ -7,13 +7,13 @@ interface Section {
   visible: boolean;
 }
 
-interface ContentsSidebarProps {
+interface ContentsBarProps {
   sections: Section[];
   activeSection: string;
   onNavigate: (sectionId: string) => void;
 }
 
-const ContentsSidebar: React.FC<ContentsSidebarProps> = ({
+const ContentsBar: React.FC<ContentsBarProps> = ({
   sections,
   activeSection,
   onNavigate,
@@ -22,7 +22,7 @@ const ContentsSidebar: React.FC<ContentsSidebarProps> = ({
   const visibleSections = sections.filter((s) => s.visible);
 
   return (
-    <nav className={styles.sidebar} aria-label="Contents">
+    <nav className={styles.bar} aria-label="Contents">
       {visibleSections.map((section) => (
         <button
           key={section.id}
@@ -42,4 +42,4 @@ const ContentsSidebar: React.FC<ContentsSidebarProps> = ({
   );
 };
 
-export default ContentsSidebar;
+export default ContentsBar;

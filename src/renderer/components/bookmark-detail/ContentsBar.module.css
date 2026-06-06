@@ -1,12 +1,15 @@
-.sidebar {
+.bar {
   display: flex;
   flex-direction: row;
   align-items: center;
   justify-content: center;
   gap: var(--space-m);
-  padding: var(--space-s) var(--space-l);
+  padding: var(--space-xs) var(--space-l);
   width: 100%;
   position: relative;
+  min-height: 28px;
+  border-bottom: 1px solid var(--background-modifier-border);
+  flex-shrink: 0;
 }
 
 .dash {
@@ -24,7 +27,7 @@
 .dashLine {
   display: block;
   width: 2px;
-  height: 20px;
+  height: 16px;
   background-color: var(--text-faint);
   border-radius: var(--radius-xs);
   transition: background-color var(--transition-fast);
@@ -49,6 +52,7 @@
   color: var(--text-muted);
   white-space: nowrap;
   pointer-events: none;
+  z-index: 10;
 }
 
 .dash:hover .label {

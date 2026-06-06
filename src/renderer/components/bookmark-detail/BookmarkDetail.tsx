@@ -8,7 +8,7 @@ import styles from './BookmarkDetail.module.css';
 import { BookmarkDetailData } from './types';
 import { bookmarkToBlocks } from './bookmarkToBlocks';
 import { blocksToBookmark } from './blocksToBookmark';
-import ContentsSidebar from './ContentsSidebar';
+import ContentsBar from './ContentsBar';
 import { isArabic, detectDir } from './rtl-detect';
 import {
   createDualLangBlock,
@@ -213,7 +213,7 @@ const BookmarkEditor: React.FC<BookmarkEditorProps> = ({
           outline-offset: 2px;
         }
       `}</style>
-      <ContentsSidebar
+      <ContentsBar
         sections={getSections()}
         activeSection={activeSection}
         onNavigate={handleNavigate}
