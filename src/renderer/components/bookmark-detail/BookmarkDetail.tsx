@@ -105,6 +105,7 @@ const BookmarkEditor: React.FC<BookmarkEditorProps> = ({
   const scrollRef = useRef<HTMLDivElement>(null);
   const [activeSection, setActiveSection] = useState('summary');
   const sectionRefs = useRef<Map<string, HTMLElement>>(new Map());
+  const [chatSessionId, setChatSessionId] = useState<string | null>(null);
 
   const getSections = useCallback(() => {
     return SECTION_IDS.map((id) => ({
@@ -131,15 +132,35 @@ const BookmarkEditor: React.FC<BookmarkEditorProps> = ({
   }, []);
 
   useEffect(() => {
+    const createSession = async () => {
+      if (bookmark.chatSessionId) {
+        setChatSessionId(bookmark.chatSessionId);
+      } else if (bookmark.id && !chatSessionId) {
+        try {
+          const sessionId = await (window as any).api?.createChatSession?.(bookmark.id);
+          if (sessionId) {
+            setChatSessionId(sessionId);
+            onBookmarkChange?.({ chatSessionId: sessionId });
+          }
+        } catch {
+          // Failed to create chat session
+        }
+      }
+    };
+    createSession();
+  }, [bookmark.id, bookmark.chatSessionId, chatSessionId, onBookmarkChange]);
+
+  useEffect(() => {
     if (bookmark.id === lastBookmarkId.current) return;
     lastBookmarkId.current = bookmark.id;
     isExternalUpdate.current = true;
-    const newBlocks = parseStoredBlocks(bookmark.blocks) || bookmarkToBlocks(bookmark);
+    const bookmarkWithSession = chatSessionId ? { ...bookmark, chatSessionId } : bookmark;
+    const newBlocks = parseStoredBlocks(bookmark.blocks) || bookmarkToBlocks(bookmarkWithSession);
     editor.replaceBlocks(editor.document, newBlocks);
     isExternalUpdate.current = false;
     detectDirection();
     stripEditorPadding(editorRef.current);
-  }, [bookmark, editor, detectDirection]);
+  }, [bookmark, editor, detectDirection, chatSessionId]);
 
   useEffect(() => {
     const scrollEl = scrollRef.current;

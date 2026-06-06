@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import Sidebar from '../components/Sidebar';
 import BookmarkList from '../components/BookmarkList';
-import BookmarkDetail from '../components/BookmarkDetail';
+import BookmarkDetail from '../components/bookmark-detail/BookmarkDetail';
 import Settings from '../components/Settings';
 
 describe('UI Components', () => {

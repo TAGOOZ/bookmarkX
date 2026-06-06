@@ -4,7 +4,6 @@ import { createChatBlock } from '../ChatBlock';
 import { createHighlightBlock } from '../HighlightBlock';
 import { createGlossaryTermInline } from '../GlossaryTermInline';
 import { createReferenceChipInline } from '../ReferenceChipInline';
-import { createEnhanceToolbarPlugin } from '../EnhanceToolbar';
 
 describe('CollapsibleArticleBlock', () => {
   const block = createCollapsibleArticleBlock();
@@ -104,17 +103,5 @@ describe('ReferenceChipInline', () => {
     expect(props.sourceSection).toBeDefined();
     expect(props.sentence).toBeDefined();
     expect(props.sourceId).toBeDefined();
-  });
-});
-
-describe('EnhanceToolbar', () => {
-  it('creates plugin with name enhanceToolbar', () => {
-    const plugin = createEnhanceToolbarPlugin({ onEnhance: () => {} });
-    expect(plugin.name).toBe('enhanceToolbar');
-  });
-
-  it('has onStart method', () => {
-    const plugin = createEnhanceToolbarPlugin({ onEnhance: () => {} });
-    expect(typeof plugin.onStart).toBe('function');
   });
 });

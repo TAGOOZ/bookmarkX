@@ -25,6 +25,7 @@ export interface BookmarkDetailData extends Bookmark {
   highlights?: Highlight[];
   notes?: string;
   chatMessages?: ChatMessage[];
+  chatSessionId?: string;
   readingTime?: number;
   blocks?: string;
 }

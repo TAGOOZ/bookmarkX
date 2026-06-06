@@ -104,7 +104,18 @@ export function bookmarkToBlocks(bookmark: BookmarkDetailData): PartialBlock[] {
   if (bookmark.glossaryTerms && bookmark.glossaryTerms.length > 0) {
     blocks.push(heading('Glossary', 2));
     for (const term of bookmark.glossaryTerms) {
-      blocks.push(bulletListItem(`${term.term}: ${term.definition}`));
+      blocks.push({
+        type: 'paragraph',
+        content: [
+          {
+            type: 'glossaryTerm',
+            props: {
+              term: term.term,
+              definition: term.definition,
+            },
+          } as any,
+        ],
+      });
     }
   }
 
@@ -139,12 +150,9 @@ export function bookmarkToBlocks(bookmark: BookmarkDetailData): PartialBlock[] {
     }
   }
 
-  if (bookmark.chatMessages && bookmark.chatMessages.length > 0) {
+  if (bookmark.chatSessionId) {
     blocks.push(heading('Chat', 2));
-    for (const msg of bookmark.chatMessages) {
-      const label = msg.role === 'user' ? 'You' : 'Assistant';
-      blocks.push(paragraph(`**${label}:** ${msg.content}`));
-    }
+    blocks.push(customBlock('chat', { sessionId: bookmark.chatSessionId }));
   }
 
   if (blocks.length === 0) {

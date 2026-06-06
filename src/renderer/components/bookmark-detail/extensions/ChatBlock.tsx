@@ -43,7 +43,7 @@ export const createChatBlock = createReactBlockSpec(
         setIsLoading(true);
 
         try {
-          const response = await (window as any).api?.sendMessage?.(sessionId, userMsg.content);
+          const response = await (window as any).api?.sendChatMessage?.(sessionId, userMsg.content);
           const assistantMsg: ChatMessage = {
             id: `msg-${Date.now()}-assistant`,
             role: 'assistant',
