@@ -43,8 +43,9 @@
   font-size: var(--font-ui-small);
 }
 
-.input:focus {
-  outline: none;
+.input:focus-visible {
+  outline: 2px solid var(--accent-color);
+  outline-offset: 2px;
   border-color: var(--accent-color);
 }
 

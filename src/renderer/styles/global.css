@@ -56,7 +56,9 @@ body {
 
 /* Override BlockNote's blue selection outline with app accent color */
 .ProseMirror-selectednode > .bn-block-content > *,
-.bn-block-content.ProseMirror-selectednode > * {
+.ProseMirror-selectednode > .bn-block-content > *:not(.bn-block-group),
+.bn-block-content.ProseMirror-selectednode > *,
+.bn-block-content.ProseMirror-selectednode > *:not(.bn-block-group) {
   outline: 2px solid var(--accent-color) !important;
   outline-offset: 2px;
 }
@@ -64,7 +66,8 @@ body {
 /* Focus indicators */
 button:focus-visible,
 input:focus-visible,
-a:focus-visible {
+a:focus-visible,
+div[role="button"]:focus-visible {
   outline: 2px solid var(--accent-color);
   outline-offset: 2px;
 }
