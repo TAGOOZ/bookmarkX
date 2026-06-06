@@ -4,14 +4,13 @@ import fs from 'node:fs';
 import started from 'electron-squirrel-startup';
 import { createClient, type Client } from '@libsql/client';
 
-// Disable GPU acceleration on Linux/Wayland to avoid crashes
+// Disable GPU acceleration on Linux to avoid crashes
+// NOTE: --no-sandbox MUST be passed as CLI arg, not appendSwitch (see electron/electron#47650)
+// Use: pnpm start:linux
 if (process.platform === 'linux') {
   app.commandLine.appendSwitch('disable-gpu');
   app.commandLine.appendSwitch('disable-gpu-compositing');
   app.commandLine.appendSwitch('disable-dev-shm-usage');
-  app.commandLine.appendSwitch('no-sandbox');
-  app.commandLine.appendSwitch('disable-software-rasterizer');
-  app.commandLine.appendSwitch('use-gl', 'swiftshader');
   app.commandLine.appendSwitch('in-process-gpu');
 }
 import { initializeSchema } from './db/schema';
