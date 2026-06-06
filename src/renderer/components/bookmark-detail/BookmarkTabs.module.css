@@ -14,7 +14,7 @@
 }
 
 .tabBar.rtl {
-  flex-direction: row-reverse;
+  flex-direction: row;
 }
 
 .tabBar::-webkit-scrollbar {
