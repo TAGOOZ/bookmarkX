@@ -45,4 +45,7 @@ contextBridge.exposeInMainWorld('api', {
   // Phase 2: Enhance
   enhanceNote: (selectedText: string, context?: string) =>
     ipcRenderer.invoke('enhance-note', selectedText, context),
+  // Phase 2: Glossary generation
+  generateGlossary: (bookmarkId: string, content: string, title?: string) =>
+    ipcRenderer.invoke('generate-glossary', bookmarkId, content, title),
 });

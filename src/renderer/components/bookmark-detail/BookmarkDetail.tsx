@@ -9,6 +9,7 @@ import { BookmarkDetailData } from './types';
 import { bookmarkToBlocks } from './bookmarkToBlocks';
 import { blocksToBookmark } from './blocksToBookmark';
 import ContentsBar from './ContentsBar';
+import EnhanceToolbar from './EnhanceToolbar';
 import { isArabic, detectDir } from './rtl-detect';
 import {
   createDualLangBlock,
@@ -106,6 +107,11 @@ const BookmarkEditor: React.FC<BookmarkEditorProps> = ({
   const [activeSection, setActiveSection] = useState('summary');
   const sectionRefs = useRef<Map<string, HTMLElement>>(new Map());
   const [chatSessionId, setChatSessionId] = useState<string | null>(null);
+  const [selectionToolbar, setSelectionToolbar] = useState<{
+    text: string;
+    position: { top: number; left: number };
+  } | null>(null);
+  const [enhancedText, setEnhancedText] = useState<string | null>(null);
 
   const getSections = useCallback(() => {
     return SECTION_IDS.map((id) => ({
@@ -227,6 +233,67 @@ const BookmarkEditor: React.FC<BookmarkEditorProps> = ({
     onBookmarkChange?.(updated);
   }, [editor, onBlocksChange, onBookmarkChange, bookmark, detectDirection]);
 
+  const handleSelectionChange = useCallback(() => {
+    const selection = window.getSelection();
+    if (!selection || selection.isCollapsed || !selection.rangeCount) {
+      setSelectionToolbar(null);
+      return;
+    }
+    const text = selection.toString().trim();
+    if (text.length < 2) {
+      setSelectionToolbar(null);
+      return;
+    }
+    const range = selection.getRangeAt(0);
+    const rect = range.getBoundingClientRect();
+    setSelectionToolbar({
+      text,
+      position: { top: rect.top - 44, left: rect.left + rect.width / 2 - 120 },
+    });
+  }, []);
+
+  useEffect(() => {
+    const editorEl = editorRef.current;
+    if (!editorEl) return;
+    editorEl.addEventListener('mouseup', handleSelectionChange);
+    editorEl.addEventListener('keyup', handleSelectionChange);
+    return () => {
+      editorEl.removeEventListener('mouseup', handleSelectionChange);
+      editorEl.removeEventListener('keyup', handleSelectionChange);
+    };
+  }, [handleSelectionChange]);
+
+  const handleEnhance = useCallback(async (text: string) => {
+    setSelectionToolbar(null);
+    try {
+      const result = await (window as any).api?.enhanceNote?.(text, bookmark.title || undefined);
+      if (result?.enhanced_text) {
+        setEnhancedText(result.enhanced_text);
+      }
+    } catch {
+      // enhance failed silently
+    }
+  }, [bookmark.title]);
+
+  const handleHighlight = useCallback(async (text: string) => {
+    setSelectionToolbar(null);
+    try {
+      await (window as any).api?.saveHighlight?.(bookmark.id, {
+        selected_text: text,
+        note: null,
+        color: '#e69819',
+      });
+    } catch {
+      // save failed silently
+    }
+  }, [bookmark.id]);
+
+  const handleReference = useCallback((text: string) => {
+    setSelectionToolbar(null);
+    const ref = `[[ref:${bookmark.title || 'section'}|${text}]]`;
+    navigator.clipboard.writeText(ref).catch(() => { /* clipboard unavailable */ });
+  }, [bookmark.title]);
+
   return (
     <div ref={editorRef} dir="ltr" className={styles.pageLayout}>
       <style>{`
@@ -241,6 +308,27 @@ const BookmarkEditor: React.FC<BookmarkEditorProps> = ({
         activeSection={activeSection}
         onNavigate={handleNavigate}
       />
+      <EnhanceToolbar
+        selectedText={selectionToolbar?.text || ''}
+        position={selectionToolbar?.position || null}
+        onEnhance={handleEnhance}
+        onHighlight={handleHighlight}
+        onReference={handleReference}
+        onClose={() => setSelectionToolbar(null)}
+      />
+      {enhancedText && (
+        <div className={styles.enhancedBanner}>
+          <span className={styles.enhancedLabel}>Enhanced:</span>
+          <span className={styles.enhancedContent}>{enhancedText}</span>
+          <button
+            className={styles.enhancedClose}
+            onClick={() => setEnhancedText(null)}
+            aria-label="Dismiss enhanced text"
+          >
+            ×
+          </button>
+        </div>
+      )}
       <div ref={scrollRef} className={styles.editorScroll}>
         <BlockNoteView
           editor={editor}

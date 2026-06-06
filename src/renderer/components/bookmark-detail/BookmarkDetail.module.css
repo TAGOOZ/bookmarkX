@@ -56,3 +56,41 @@
 .editor[dir="rtl"] .bn-block-group > .bn-block-outer > div {
   text-align: right;
 }
+
+.enhancedBanner {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  margin: 0 40px 8px;
+  background: var(--background-secondary);
+  border: 1px solid var(--accent-color);
+  border-radius: var(--radius-m);
+  font-size: 13px;
+}
+
+.enhancedLabel {
+  font-weight: 600;
+  color: var(--accent-color);
+  flex-shrink: 0;
+}
+
+.enhancedContent {
+  color: var(--text-normal);
+  flex: 1;
+  line-height: 1.4;
+}
+
+.enhancedClose {
+  border: none;
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+  font-size: 16px;
+  padding: 0 4px;
+  flex-shrink: 0;
+}
+
+.enhancedClose:hover {
+  color: var(--text-normal);
+}

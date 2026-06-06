@@ -263,6 +263,26 @@ app.whenReady().then(async () => {
     return getChatMessages(db, sessionId);
   });
 
+  // Phase 2 IPC handlers: Glossary generation
+  ipcMain.handle('generate-glossary', async (_event, bookmarkId: string, content: string, title?: string) => {
+    const { generateGlossary } = await import('./services/glossary');
+    const { addTerm, linkTermToBookmark } = await import('./db/glossary');
+    const envContent = fs.existsSync(envPath) ? fs.readFileSync(envPath, 'utf-8') : '';
+    const parse = (key: string): string => {
+      const match = envContent.match(new RegExp(`^${key}=(.*)$`, 'm'));
+      return match ? match[1] : '';
+    };
+    const terms = await generateGlossary(content, {
+      apiKey: parse('GEMINI_API_KEY') || undefined,
+      title,
+    });
+    for (const t of terms) {
+      const termId = await addTerm(db, t.term, t.definition);
+      await linkTermToBookmark(db, bookmarkId, termId);
+    }
+    return terms;
+  });
+
   // Start cron scheduler: fetch every 6 hours, then classify
   const cronJob = startCronScheduler(db, '0 */6 * * *');
   app.on('before-quit', () => {
