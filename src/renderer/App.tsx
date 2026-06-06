@@ -2,7 +2,7 @@ import React, { useState, useCallback } from 'react';
 import { IntlProvider } from 'react-intl';
 import Sidebar from './components/Sidebar';
 import BookmarkList from './components/BookmarkList';
-import BookmarkDetail from './components/BookmarkDetail';
+import BookmarkDetail from './components/bookmark-detail/BookmarkDetail';
 import Settings from './components/Settings';
 
 export interface Bookmark {

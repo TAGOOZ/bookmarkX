@@ -27,6 +27,9 @@ const LAYOUT_LABELS: Record<LayoutMode, string> = {
   collapsible: 'Collapsible',
 };
 
+// eslint-disable-next-line @typescript-eslint/no-empty-function
+const noop = () => {};
+
 const BookmarkDetail: React.FC<BookmarkDetailProps> = ({
   bookmark,
   onNotesChange,
@@ -95,7 +98,7 @@ const BookmarkDetail: React.FC<BookmarkDetailProps> = ({
       visible: true,
       owner: 'user',
       render: () => (
-        <NotesEditor content={bookmark.notes || ''} onChange={onNotesChange || (() => {})} />
+        <NotesEditor content={bookmark.notes || ''} onChange={onNotesChange || noop} />
       ),
     },
     {
@@ -106,7 +109,7 @@ const BookmarkDetail: React.FC<BookmarkDetailProps> = ({
       render: () => (
         <ChatPanel
           messages={bookmark.chatMessages || []}
-          onSend={onChatSend || (() => {})}
+          onSend={onChatSend || noop}
           loading={chatLoading}
         />
       ),
