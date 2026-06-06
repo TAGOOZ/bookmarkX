@@ -32,8 +32,11 @@ function isArabic(text: string): boolean {
   return ARABIC_RE.test(text);
 }
 
-function getBlocksText(blocks: PartialBlock[]): string {
-  return JSON.stringify(blocks);
+function detectDir(bookmark: BookmarkDetailData): string {
+  if (bookmark.title && isArabic(bookmark.title)) return 'rtl';
+  if (bookmark.content && isArabic(bookmark.content)) return 'rtl';
+  if (bookmark.summary && isArabic(bookmark.summary)) return 'rtl';
+  return 'ltr';
 }
 
 const BookmarkDetail: React.FC<BookmarkDetailProps> = ({
@@ -80,12 +83,11 @@ const BookmarkEditor: React.FC<BookmarkEditorProps> = ({
   const editorRef = useRef<HTMLDivElement>(null);
 
   const detectDirection = useCallback(() => {
-    const text = getBlocksText(editor.document);
-    const dir = isArabic(text) ? 'rtl' : 'ltr';
+    const dir = detectDir(bookmark);
     if (editorRef.current) {
       editorRef.current.setAttribute('dir', dir);
     }
-  }, [editor]);
+  }, [bookmark]);
 
   useEffect(() => {
     if (bookmark.id === lastBookmarkId.current) return;
