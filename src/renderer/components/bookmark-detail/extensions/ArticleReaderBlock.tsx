@@ -1,6 +1,8 @@
 import { createReactBlockSpec } from '@blocknote/react';
 import { defaultProps } from '@blocknote/core';
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect, useRef } from 'react';
+import hljs from 'highlight.js';
+import 'highlight.js/styles/github.css';
 import styles from './ArticleReaderBlock.module.css';
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
@@ -97,6 +99,7 @@ export const createArticleReaderBlock = createReactBlockSpec(
       const [expanded, setExpanded] = useState(
         () => props.block.props.isExpanded as boolean,
       );
+      const bodyRef = useRef<HTMLDivElement>(null);
 
       const toggle = useCallback(() => {
         const next = !expanded;
@@ -105,6 +108,12 @@ export const createArticleReaderBlock = createReactBlockSpec(
           props: { isExpanded: next },
         });
       }, [expanded, props]);
+
+      useEffect(() => {
+        if (!expanded || !bodyRef.current) return;
+        const codes = bodyRef.current.querySelectorAll('pre code');
+        codes.forEach((el) => hljs.highlightElement(el as HTMLElement));
+      }, [expanded, blocksJson]);
 
       let blocks: any[] = [];
       try {
@@ -131,7 +140,7 @@ export const createArticleReaderBlock = createReactBlockSpec(
             </span>
           </button>
           {expanded && (
-            <div className={styles.body}>
+            <div className={styles.body} ref={bodyRef}>
               {sourceUrl && (
                 <div className={styles.sourceUrl}>
                   <a href={sourceUrl} target="_blank" rel="noopener noreferrer">

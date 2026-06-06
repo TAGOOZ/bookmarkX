@@ -4,6 +4,7 @@ import { createChatBlock } from '../ChatBlock';
 import { createHighlightBlock } from '../HighlightBlock';
 import { createGlossaryTermInline } from '../GlossaryTermInline';
 import { createReferenceChipInline } from '../ReferenceChipInline';
+import { createArticleReaderBlock } from '../ArticleReaderBlock';
 
 describe('CollapsibleArticleBlock', () => {
   const block = createCollapsibleArticleBlock();
@@ -103,5 +104,31 @@ describe('ReferenceChipInline', () => {
     expect(props.sourceSection).toBeDefined();
     expect(props.sentence).toBeDefined();
     expect(props.sourceId).toBeDefined();
+  });
+});
+
+describe('ArticleReaderBlock', () => {
+  const block = createArticleReaderBlock();
+
+  it('has correct type', () => {
+    expect(block.config.type).toBe('articleReader');
+  });
+
+  it('has content mode none', () => {
+    expect(block.config.content).toBe('none');
+  });
+
+  it('has blocksJson, wordCount, readingTime, sourceUrl, isExpanded props', () => {
+    const props = block.config.propSchema;
+    expect(props.blocksJson).toBeDefined();
+    expect(props.wordCount).toBeDefined();
+    expect(props.readingTime).toBeDefined();
+    expect(props.sourceUrl).toBeDefined();
+    expect(props.isExpanded).toBeDefined();
+    expect((props.blocksJson as any).default).toBe('[]');
+    expect((props.wordCount as any).default).toBe(0);
+    expect((props.readingTime as any).default).toBe(0);
+    expect((props.sourceUrl as any).default).toBe('');
+    expect((props.isExpanded as any).default).toBe(false);
   });
 });
