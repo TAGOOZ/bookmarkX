@@ -7,9 +7,10 @@ interface BookmarkTabsProps {
   activeBookmarkId: string | null;
   onTabSelect: (bookmarkId: string) => void;
   onTabClose: (bookmarkId: string) => void;
+  dir?: 'ltr' | 'rtl';
 }
 
-function truncateTitle(title: string, maxLen = 24): string {
+function truncateTitle(title: string, maxLen = 32): string {
   if (title.length <= maxLen) return title;
   return title.slice(0, maxLen) + '…';
 }
@@ -19,11 +20,17 @@ const BookmarkTabs: React.FC<BookmarkTabsProps> = ({
   activeBookmarkId,
   onTabSelect,
   onTabClose,
+  dir = 'ltr',
 }) => {
   if (openBookmarks.length === 0) return null;
 
   return (
-    <div className={styles.tabBar} role="tablist" aria-label="Open bookmarks">
+    <div
+      className={`${styles.tabBar} ${dir === 'rtl' ? styles.rtl : ''}`}
+      role="tablist"
+      aria-label="Open bookmarks"
+      dir={dir}
+    >
       {openBookmarks.map((bookmark) => {
         const isActive = bookmark.id === activeBookmarkId;
         return (

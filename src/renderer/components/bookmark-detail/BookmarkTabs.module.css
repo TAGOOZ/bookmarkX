@@ -13,6 +13,10 @@
   min-height: 36px;
 }
 
+.tabBar.rtl {
+  flex-direction: row-reverse;
+}
+
 .tabBar::-webkit-scrollbar {
   height: 3px;
 }
@@ -30,8 +34,9 @@
   transition: background-color var(--transition-fast), color var(--transition-fast);
   border: 1px solid transparent;
   border-bottom: none;
-  max-width: 180px;
+  max-width: 280px;
   min-width: 0;
+  flex-shrink: 0;
 }
 
 .tab:hover {

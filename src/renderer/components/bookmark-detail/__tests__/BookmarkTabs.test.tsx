@@ -14,7 +14,7 @@ afterEach(() => {
 const bookmarks = [
   { id: '1', title: 'First Bookmark', url: 'https://a.com', topic: 'tech', priority: 'high' as const, contentType: 'article', content: '', createdAt: '' },
   { id: '2', title: 'Second Bookmark', url: 'https://b.com', topic: 'design', priority: 'medium' as const, contentType: 'video', content: '', createdAt: '' },
-  { id: '3', title: 'A Very Long Bookmark Title That Should Be Truncated', url: 'https://c.com', topic: 'science', priority: 'low' as const, contentType: 'article', content: '', createdAt: '' },
+  { id: '3', title: 'A Very Long Bookmark Title That Should Be Truncated Someday', url: 'https://c.com', topic: 'science', priority: 'low' as const, contentType: 'article', content: '', createdAt: '' },
 ];
 
 describe('BookmarkTabs', () => {
@@ -33,12 +33,12 @@ describe('BookmarkTabs', () => {
     expect(screen.getByText('Second Bookmark')).toBeDefined();
   });
 
-  it('truncates long titles', () => {
+  it('truncates long titles beyond 32 chars', () => {
     render(
       <BookmarkTabs openBookmarks={bookmarks} activeBookmarkId="1" onTabSelect={vi.fn()} onTabClose={vi.fn()} />
     );
     const longTab = screen.getAllByRole('tab')[2];
-    expect(longTab.textContent).toContain('A Very Long Bookmark');
+    expect(longTab.textContent).toContain('A Very Long Bookmark Title');
     expect(longTab.textContent!.length).toBeLessThan(bookmarks[2].title.length);
   });
 
@@ -79,5 +79,23 @@ describe('BookmarkTabs', () => {
     const tabs = screen.getAllByRole('tab');
     expect(tabs[0].className).toContain('active');
     expect(tabs[1].className).not.toContain('active');
+  });
+
+  it('applies rtl class when dir=rtl', () => {
+    const { container } = render(
+      <BookmarkTabs openBookmarks={bookmarks} activeBookmarkId="1" onTabSelect={vi.fn()} onTabClose={vi.fn()} dir="rtl" />
+    );
+    const tabBar = container.querySelector('[role="tablist"]');
+    expect(tabBar?.className).toContain('rtl');
+    expect(tabBar?.getAttribute('dir')).toBe('rtl');
+  });
+
+  it('does not apply rtl class when dir=ltr', () => {
+    const { container } = render(
+      <BookmarkTabs openBookmarks={bookmarks} activeBookmarkId="1" onTabSelect={vi.fn()} onTabClose={vi.fn()} dir="ltr" />
+    );
+    const tabBar = container.querySelector('[role="tablist"]');
+    expect(tabBar?.className).not.toContain('rtl');
+    expect(tabBar?.getAttribute('dir')).toBe('ltr');
   });
 });

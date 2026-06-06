@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useMemo } from 'react';
-import { IntlProvider } from 'react-intl';
+import { IntlProvider, useIntl } from 'react-intl';
 import Sidebar from './components/Sidebar';
 import BookmarkList from './components/BookmarkList';
 import BookmarkDetail from './components/bookmark-detail/BookmarkDetail';
@@ -62,7 +62,10 @@ const messages = {
   classifying: 'جاري التصنيف...',
 };
 
-function App() {
+function AppContent() {
+  const { locale } = useIntl();
+  const dir = locale === 'ar' ? 'rtl' : 'ltr';
+
   const [openBookmarks, setOpenBookmarks] = useState<Bookmark[]>([]);
   const [activeBookmarkId, setActiveBookmarkId] = useState<string | null>(null);
   const [showSettings, setShowSettings] = useState(false);
@@ -115,7 +118,7 @@ function App() {
   }, []);
 
   return (
-    <IntlProvider messages={messages} locale="ar" defaultLocale="ar">
+    <>
       <div className="titlebar">bookmarkx</div>
       <div className="app-container">
         <Sidebar
@@ -131,6 +134,7 @@ function App() {
             activeBookmarkId={activeBookmarkId}
             onTabSelect={handleTabSelect}
             onTabClose={handleTabClose}
+            dir={dir}
           />
           <BookmarkDetail bookmark={activeBookmark} />
         </div>
@@ -146,6 +150,14 @@ function App() {
           <Settings onClose={() => setShowSettings(false)} />
         )}
       </div>
+    </>
+  );
+}
+
+function App() {
+  return (
+    <IntlProvider messages={messages} locale="ar" defaultLocale="ar">
+      <AppContent />
     </IntlProvider>
   );
 }
