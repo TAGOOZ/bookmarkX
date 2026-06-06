@@ -1,4 +1,4 @@
-import Database from 'better-sqlite3';
+import type { Client } from '@libsql/client';
 import { fetchBookmarks } from '../fetch/bird';
 import { storeBookmarks } from '../db/bookmarks';
 import type { FetchOptions } from '../fetch/types';
@@ -9,19 +9,21 @@ interface FetchAndStoreResult {
 }
 
 export async function fetchAndStore(
-  db: Database.Database,
+  db: Client,
   options: FetchOptions = {}
 ): Promise<FetchAndStoreResult> {
   const bookmarks = await fetchBookmarks(options);
-  
-  const countBefore = db.prepare('SELECT COUNT(*) as count FROM bookmarks').get() as any;
-  
-  storeBookmarks(db, bookmarks);
-  
-  const countAfter = db.prepare('SELECT COUNT(*) as count FROM bookmarks').get() as any;
-  
+
+  const { rows: beforeRows } = await db.execute({ sql: 'SELECT COUNT(*) as count FROM bookmarks' });
+  const countBefore = (beforeRows[0] as any).count;
+
+  await storeBookmarks(db, bookmarks);
+
+  const { rows: afterRows } = await db.execute({ sql: 'SELECT COUNT(*) as count FROM bookmarks' });
+  const countAfter = (afterRows[0] as any).count;
+
   return {
-    stored: countAfter.count - countBefore.count,
-    skipped: bookmarks.length - (countAfter.count - countBefore.count),
+    stored: countAfter - countBefore,
+    skipped: bookmarks.length - (countAfter - countBefore),
   };
 }

@@ -1,4 +1,4 @@
-import Database from 'better-sqlite3';
+import type { Client } from '@libsql/client';
 import { classifyBookmark } from '../classify/classifier';
 import { storeClassification, getClassification } from '../db/classifications';
 import { getStoredBookmarks } from '../db/bookmarks';
@@ -13,21 +13,21 @@ interface ClassifyResult {
 }
 
 export async function classifyAndNotify(
-  db: Database.Database,
+  db: Client,
   options: ClassifierOptions = {}
 ): Promise<ClassifyResult> {
-  const bookmarks = getStoredBookmarks(db);
+  const bookmarks = await getStoredBookmarks(db);
   let classified = 0;
   let notified = 0;
   let errors = 0;
 
   for (const bookmark of bookmarks) {
-    const existing = getClassification(db, bookmark.id);
+    const existing = await getClassification(db, bookmark.id);
     if (existing) continue;
 
     try {
       const result = await classifyBookmark(bookmark, options);
-      storeClassification(db, bookmark.id, result);
+      await storeClassification(db, bookmark.id, result);
       classified++;
 
       if (result.priority === 'high') {

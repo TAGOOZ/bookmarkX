@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import Database from 'better-sqlite3';
-import { initializeSchema } from '../../db/schema';
+import type { Client } from '@libsql/client';
+import { createTestDb } from '../../db/__tests__/test-client';
 import { classifyAndNotify } from '../classify-and-notify';
 import { storeBookmarks } from '../../db/bookmarks';
 
@@ -21,11 +21,10 @@ const mockClassifyBookmark = vi.mocked(classifyBookmark);
 const mockSendNotification = vi.mocked(sendHighPriorityNotification);
 
 describe('classifyAndNotify pipeline', () => {
-  let db: Database.Database;
+  let db: Client;
 
-  beforeEach(() => {
-    db = new Database(':memory:');
-    initializeSchema(db);
+  beforeEach(async () => {
+    db = await createTestDb();
     vi.clearAllMocks();
   });
 
@@ -58,8 +57,8 @@ describe('classifyAndNotify pipeline', () => {
     },
   ];
 
-  beforeEach(() => {
-    storeBookmarks(db, mockBookmarks);
+  beforeEach(async () => {
+    await storeBookmarks(db, mockBookmarks);
   });
 
   it('classifies bookmarks and sends notification for high priority', async () => {

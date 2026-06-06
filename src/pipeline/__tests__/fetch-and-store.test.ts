@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import Database from 'better-sqlite3';
-import { initializeSchema } from '../../db/schema';
+import type { Client } from '@libsql/client';
+import { createTestDb } from '../../db/__tests__/test-client';
 import { fetchAndStore } from '../fetch-and-store';
 import { getStoredBookmarks } from '../../db/bookmarks';
 
@@ -14,11 +14,10 @@ import type { Bookmark } from '../../fetch/types';
 const mockFetchBookmarks = vi.mocked(fetchBookmarks);
 
 describe('fetchAndStore pipeline', () => {
-  let db: Database.Database;
+  let db: Client;
 
-  beforeEach(() => {
-    db = new Database(':memory:');
-    initializeSchema(db);
+  beforeEach(async () => {
+    db = await createTestDb();
     vi.clearAllMocks();
   });
 
@@ -60,7 +59,7 @@ describe('fetchAndStore pipeline', () => {
     expect(result.skipped).toBe(0);
     expect(mockFetchBookmarks).toHaveBeenCalledWith({ count: 10 });
 
-    const stored = getStoredBookmarks(db);
+    const stored = await getStoredBookmarks(db);
     expect(stored).toHaveLength(2);
   });
 
@@ -73,7 +72,7 @@ describe('fetchAndStore pipeline', () => {
     expect(result.stored).toBe(0);
     expect(result.skipped).toBe(2);
 
-    const stored = getStoredBookmarks(db);
+    const stored = await getStoredBookmarks(db);
     expect(stored).toHaveLength(2);
   });
 
