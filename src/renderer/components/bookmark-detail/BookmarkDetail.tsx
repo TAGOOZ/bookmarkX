@@ -26,6 +26,16 @@ function parseStoredBlocks(blocksJson: string | undefined): PartialBlock[] | und
   }
 }
 
+const ARABIC_RE = /[\u0600-\u06FF\u0750-\u077F\u08A0-\u08FF\uFB50-\uFDFF\uFE70-\uFEFF]/;
+
+function isArabic(text: string): boolean {
+  return ARABIC_RE.test(text);
+}
+
+function getBlocksText(blocks: PartialBlock[]): string {
+  return JSON.stringify(blocks);
+}
+
 const BookmarkDetail: React.FC<BookmarkDetailProps> = ({
   bookmark,
   onBlocksChange,
@@ -67,6 +77,15 @@ const BookmarkEditor: React.FC<BookmarkEditorProps> = ({
   const editor = useCreateBlockNote({ initialContent });
   const isExternalUpdate = useRef(true);
   const lastBookmarkId = useRef<string | null>(null);
+  const editorRef = useRef<HTMLDivElement>(null);
+
+  const detectDirection = useCallback(() => {
+    const text = getBlocksText(editor.document);
+    const dir = isArabic(text) ? 'rtl' : 'ltr';
+    if (editorRef.current) {
+      editorRef.current.setAttribute('dir', dir);
+    }
+  }, [editor]);
 
   useEffect(() => {
     if (bookmark.id === lastBookmarkId.current) return;
@@ -75,24 +94,28 @@ const BookmarkEditor: React.FC<BookmarkEditorProps> = ({
     const newBlocks = parseStoredBlocks(bookmark.blocks) || bookmarkToBlocks(bookmark);
     editor.replaceBlocks(editor.document, newBlocks);
     isExternalUpdate.current = false;
-  }, [bookmark, editor]);
+    detectDirection();
+  }, [bookmark, editor, detectDirection]);
 
   const handleChange = useCallback(() => {
     if (isExternalUpdate.current) return;
+    detectDirection();
     const blocks = editor.document;
     const serialized = JSON.stringify(blocks);
     onBlocksChange?.(serialized);
     const updated = blocksToBookmark(blocks as Block[], bookmark);
     onBookmarkChange?.(updated);
-  }, [editor, onBlocksChange, onBookmarkChange, bookmark]);
+  }, [editor, onBlocksChange, onBookmarkChange, bookmark, detectDirection]);
 
   return (
-    <BlockNoteView
-      editor={editor}
-      onChange={handleChange}
-      className={styles.editor}
-      theme="dark"
-    />
+    <div ref={editorRef} dir="ltr">
+      <BlockNoteView
+        editor={editor}
+        onChange={handleChange}
+        className={styles.editor}
+        theme="dark"
+      />
+    </div>
   );
 };
 

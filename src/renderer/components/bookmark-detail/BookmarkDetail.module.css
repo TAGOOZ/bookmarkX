@@ -11,6 +11,7 @@
 .editor {
   flex: 1;
   height: 100%;
+  font-family: 'Thmanyah', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif !important;
   --bn-colors-editor-text: var(--text-normal) !important;
   --bn-colors-editor-background: var(--background-primary) !important;
   --bn-colors-menu-text: var(--text-normal) !important;
@@ -26,4 +27,16 @@
   --bn-colors-shadow: rgba(0, 0, 0, 0.4) !important;
   --bn-colors-border: var(--background-modifier-border) !important;
   --bn-colors-side-menu: var(--text-muted) !important;
+}
+
+.editor .bn-editor {
+  font-family: 'Thmanyah', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif !important;
+}
+
+.editor[dir="rtl"] .bn-editor {
+  text-align: right;
+}
+
+.editor[dir="rtl"] .bn-block-group > .bn-block-outer > div {
+  text-align: right;
 }
