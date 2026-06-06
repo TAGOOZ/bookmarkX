@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useRef } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { FormattedMessage } from 'react-intl';
 import { useCreateBlockNote } from '@blocknote/react';
 import { BlockNoteView } from '@blocknote/mantine';
@@ -8,6 +8,7 @@ import styles from './BookmarkDetail.module.css';
 import { BookmarkDetailData } from './types';
 import { bookmarkToBlocks } from './bookmarkToBlocks';
 import { blocksToBookmark } from './blocksToBookmark';
+import ContentsSidebar from './ContentsSidebar';
 
 interface BookmarkDetailProps {
   bookmark: BookmarkDetailData | null;
@@ -78,6 +79,8 @@ interface BookmarkEditorProps {
   onBookmarkChange?: (updated: Partial<BookmarkDetailData>) => void;
 }
 
+const SECTION_IDS = ['summary', 'glossary', 'article', 'highlights', 'notes', 'chat'];
+
 const BookmarkEditor: React.FC<BookmarkEditorProps> = ({
   bookmark,
   initialContent,
@@ -88,6 +91,17 @@ const BookmarkEditor: React.FC<BookmarkEditorProps> = ({
   const isExternalUpdate = useRef(true);
   const lastBookmarkId = useRef<string | null>(null);
   const editorRef = useRef<HTMLDivElement>(null);
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const [activeSection, setActiveSection] = useState('summary');
+  const sectionRefs = useRef<Map<string, HTMLElement>>(new Map());
+
+  const getSections = useCallback(() => {
+    return SECTION_IDS.map((id) => ({
+      id,
+      label: id.charAt(0).toUpperCase() + id.slice(1),
+      visible: true,
+    }));
+  }, []);
 
   const detectDirection = useCallback(() => {
     const dir = detectDir(bookmark);
@@ -116,6 +130,59 @@ const BookmarkEditor: React.FC<BookmarkEditorProps> = ({
     stripEditorPadding(editorRef.current);
   }, [bookmark, editor, detectDirection]);
 
+  useEffect(() => {
+    const scrollEl = scrollRef.current;
+    if (!scrollEl) return;
+
+    const findSections = () => {
+      const editorEl = editorRef.current;
+      if (!editorEl) return;
+      const headings = editorEl.querySelectorAll('h2');
+      headings.forEach((h) => {
+        const text = h.textContent?.toLowerCase().trim() || '';
+        if (SECTION_IDS.includes(text)) {
+          sectionRefs.current.set(text, h);
+        }
+      });
+    };
+
+    findSections();
+    const mutationObs = new MutationObserver(findSections);
+    mutationObs.observe(editorRef.current!, { childList: true, subtree: true });
+
+    let intersectionObs: IntersectionObserver | null = null;
+
+    if (typeof IntersectionObserver !== 'undefined') {
+      intersectionObs = new IntersectionObserver(
+        (entries) => {
+          for (const entry of entries) {
+            if (entry.isIntersecting) {
+              const text = entry.target.textContent?.toLowerCase().trim() || '';
+              if (SECTION_IDS.includes(text)) {
+                setActiveSection(text);
+              }
+            }
+          }
+        },
+        { root: scrollEl, threshold: 0.3 },
+      );
+
+      sectionRefs.current.forEach((el) => intersectionObs!.observe(el));
+    }
+
+    return () => {
+      mutationObs.disconnect();
+      intersectionObs?.disconnect();
+    };
+  }, [editor]);
+
+  const handleNavigate = useCallback((sectionId: string) => {
+    const el = sectionRefs.current.get(sectionId);
+    if (el) {
+      el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  }, []);
+
   const handleChange = useCallback(() => {
     if (isExternalUpdate.current) return;
     detectDirection();
@@ -127,13 +194,22 @@ const BookmarkEditor: React.FC<BookmarkEditorProps> = ({
   }, [editor, onBlocksChange, onBookmarkChange, bookmark, detectDirection]);
 
   return (
-    <div ref={editorRef} dir="ltr" className={styles.editorWrapper}>
-      <BlockNoteView
-        editor={editor}
-        onChange={handleChange}
-        className={styles.editor}
-        theme="dark"
+    <div ref={editorRef} dir="ltr" className={styles.pageLayout}>
+      <ContentsSidebar
+        sections={getSections()}
+        activeSection={activeSection}
+        onNavigate={handleNavigate}
       />
+      <div className={styles.editorColumn}>
+        <div ref={scrollRef} className={styles.editorScroll}>
+          <BlockNoteView
+            editor={editor}
+            onChange={handleChange}
+            className={styles.editor}
+            theme="dark"
+          />
+        </div>
+      </div>
     </div>
   );
 };

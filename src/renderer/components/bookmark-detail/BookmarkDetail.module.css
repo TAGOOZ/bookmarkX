@@ -8,18 +8,27 @@
   font-size: var(--font-h4);
 }
 
-.editorWrapper {
+.pageLayout {
+  flex: 1;
+  display: flex;
+  overflow: hidden;
+}
+
+.editorColumn {
   flex: 1;
   display: flex;
   flex-direction: column;
+  overflow: hidden;
+}
+
+.editorScroll {
+  flex: 1;
+  overflow-y: auto;
   padding-inline: 40px;
   padding-top: 24px;
 }
 
 .editor {
-  flex: 1;
-  height: 100%;
-  overflow: auto;
   width: 100%;
   font-family: 'Thmanyah', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif !important;
   --bn-colors-editor-text: var(--text-normal) !important;
