@@ -53,13 +53,10 @@ body {
 
 .app-container {
   display: flex;
+  direction: ltr;
   height: 100%;
   width: 100%;
   padding-top: 36px;
-}
-
-[dir="rtl"] .app-container {
-  flex-direction: row-reverse;
 }
 
 .titlebar {

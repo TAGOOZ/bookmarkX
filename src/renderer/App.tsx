@@ -166,7 +166,7 @@ function AppContent() {
   return (
     <>
       <Titlebar />
-      <div className="app-container">
+      <div className="app-container" style={{ flexDirection: dir === 'rtl' ? 'row' : 'row-reverse' }}>
         <div
           style={{
             flex: 1,
