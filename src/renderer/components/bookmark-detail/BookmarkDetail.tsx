@@ -218,6 +218,13 @@ const BookmarkEditor: React.FC<BookmarkEditorProps> = ({
 
   return (
     <div ref={editorRef} dir="ltr" className={styles.pageLayout}>
+      <style>{`
+        .ProseMirror-selectednode > .bn-block-content > *,
+        .bn-block-content.ProseMirror-selectednode > * {
+          outline: 2px solid var(--accent-color) !important;
+          outline-offset: 2px;
+        }
+      `}</style>
       <ContentsSidebar
         sections={getSections()}
         activeSection={activeSection}

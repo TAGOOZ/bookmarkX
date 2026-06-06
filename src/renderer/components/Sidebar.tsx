@@ -47,7 +47,7 @@ const Sidebar: React.FC<SidebarProps> = ({
       </div>
 
       <nav className="sidebar-nav" aria-label="Main navigation">
-        <div className="nav-item active" role="button" tabIndex={0} aria-current="page">
+        <div className="nav-item active" aria-current="page">
           <FormattedMessage id="bookmarks" />
         </div>
         <div className="nav-item" role="button" tabIndex={0} onClick={onFetchClick} onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && (e.preventDefault(), onFetchClick())}>

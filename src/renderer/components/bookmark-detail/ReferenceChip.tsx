@@ -13,6 +13,7 @@ const ReferenceChip: React.FC<ReferenceChipProps> = ({ sourceSection, sentence, 
       className={styles.chip}
       onClick={() => onJump(sourceSection, sentence)}
       title={sentence}
+      aria-label={`Jump to ${sourceSection}: ${sentence}`}
     >
       {sourceSection}
     </button>

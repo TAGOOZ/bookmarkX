@@ -72,6 +72,7 @@ const ChatPanel: React.FC<ChatPanelProps> = ({ messages, onSend, loading }) => {
           className={styles.sendBtn}
           onClick={handleSend}
           disabled={!input.trim() || loading}
+          aria-label="Send message"
         >
           Send
         </button>

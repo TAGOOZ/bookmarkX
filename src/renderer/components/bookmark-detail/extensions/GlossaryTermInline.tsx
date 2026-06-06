@@ -1,5 +1,5 @@
 import { createReactInlineContentSpec } from '@blocknote/react';
-import React, { useState } from 'react';
+import React, { useId, useState } from 'react';
 
 export const createGlossaryTermInline = () =>
   createReactInlineContentSpec(
@@ -16,6 +16,7 @@ export const createGlossaryTermInline = () =>
         const term = props.inlineContent.props.term as string;
         const definition = props.inlineContent.props.definition as string;
         const [showTooltip, setShowTooltip] = useState(false);
+        const tooltipId = useId();
 
         return (
           <span
@@ -31,12 +32,12 @@ export const createGlossaryTermInline = () =>
             tabIndex={0}
             onFocus={() => setShowTooltip(true)}
             onBlur={() => setShowTooltip(false)}
-            aria-describedby={showTooltip ? 'glossary-tooltip' : undefined}
+            aria-describedby={showTooltip ? tooltipId : undefined}
           >
             {term}
             {showTooltip && definition && (
               <span
-                id="glossary-tooltip"
+                id={tooltipId}
                 role="tooltip"
                 style={{
                   position: 'absolute',

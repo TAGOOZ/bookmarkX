@@ -53,7 +53,7 @@ describe('BookmarkList error handling', () => {
     );
 
     await waitFor(() => {
-      expect(screen.getByText('Building a Personal Knowledge Management System')).toBeDefined();
+      expect(screen.getByText('Introducing Command A+: Making sovereign agentic capabilities available to all')).toBeDefined();
     });
   });
 
@@ -72,7 +72,7 @@ describe('BookmarkList error handling', () => {
     );
 
     await waitFor(() => {
-      expect(screen.getByText('Building a Personal Knowledge Management System')).toBeDefined();
+      expect(screen.getByText('Introducing Command A+: Making sovereign agentic capabilities available to all')).toBeDefined();
     });
   });
 });

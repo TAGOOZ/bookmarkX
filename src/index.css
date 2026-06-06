@@ -453,3 +453,71 @@ body {
   padding: 20px;
   color: var(--text-secondary);
 }
+
+/* Responsive breakpoints */
+@media (max-width: 1200px) {
+  :root {
+    --sidebar-width: 200px;
+    --list-width: 280px;
+  }
+}
+
+@media (max-width: 900px) {
+  :root {
+    --sidebar-width: 180px;
+    --list-width: 240px;
+  }
+
+  .sidebar-header {
+    font-size: 1.2rem;
+    padding: 15px;
+  }
+
+  .detail-title {
+    font-size: 1.4rem;
+  }
+}
+
+@media (max-width: 600px) {
+  .app-container {
+    flex-direction: column;
+  }
+
+  .sidebar {
+    width: 100%;
+    flex-direction: row;
+    overflow-x: auto;
+    overflow-y: hidden;
+    border-left: none;
+    border-bottom: 1px solid var(--border-color);
+  }
+
+  .sidebar-header {
+    display: none;
+  }
+
+  .sidebar-nav {
+    display: flex;
+    gap: 4px;
+    padding: 8px;
+  }
+
+  .nav-item {
+    white-space: nowrap;
+    padding: 8px 12px;
+  }
+
+  .filter-section {
+    display: none;
+  }
+
+  .bookmark-list {
+    width: 100%;
+    border-left: none;
+    max-height: 40vh;
+  }
+
+  .bookmark-detail {
+    padding: 15px;
+  }
+}
