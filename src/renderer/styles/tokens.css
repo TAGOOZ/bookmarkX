@@ -1,7 +1,6 @@
 :root {
   /* Layout */
-  --sidebar-width: 250px;
-  --list-width: 350px;
+  --nav-panel-width: 350px;
   --contents-sidebar-width: 200px;
 
   /* Border Radius (Obsidian scale) */

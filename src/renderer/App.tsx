@@ -1,7 +1,6 @@
-import React, { useState, useCallback, useMemo } from 'react';
+import React, { useState, useCallback, useMemo, useEffect } from 'react';
 import { IntlProvider, useIntl } from 'react-intl';
-import Sidebar from './components/Sidebar';
-import BookmarkList from './components/BookmarkList';
+import NavPanel from './components/NavPanel';
 import BookmarkDetail from './components/bookmark-detail/BookmarkDetail';
 import BookmarkTabs from './components/bookmark-detail/BookmarkTabs';
 import Settings from './components/Settings';
@@ -17,34 +16,11 @@ export interface Bookmark {
   createdAt: string;
 }
 
-export interface FilterState {
-  priority: string;
-  topic: string;
-  contentType: string;
-}
-
 const messages = {
   appName: 'بوكماركس',
   bookmarks: 'الإشارات المرجعية',
   settings: 'الإعدادات',
   search: 'بحث...',
-  priority: 'الأولوية',
-  topics: 'المواضيع',
-  contentTypes: 'أنواع المحتوى',
-  all: 'الكل',
-  high: 'عالي',
-  medium: 'متوسط',
-  low: 'منخفض',
-  allTopics: 'جميع المواضيع',
-  allTypes: 'جميع الأنواع',
-  تكنولوجيا: 'تكنولوجيا',
-  تصميم: 'تصميم',
-  أعمال: 'أعمال',
-  علوم: 'علوم',
-  مقال: 'مقال',
-  فيديو: 'فيديو',
-  صورة: 'صورة',
-  رابط: 'رابط',
   save: 'حفظ',
   cancel: 'إلغاء',
   apiKey: 'مفتاح API',
@@ -92,6 +68,14 @@ const messages = {
   loading: 'جاري التحميل...',
   errorOccurred: 'حدث خطأ',
   missingCredentials: 'بيانات اعتماد X/Twitter مفقودة. افتح الإعدادات وقم بـ:\n• النقر على "تسجيل الدخول بحساب تويتر" للمصادقة، أو\n• إدخال auth_token و ct0 يدوياً من أدوات مطور Chrome',
+  تكنولوجيا: 'تكنولوجيا',
+  تصميم: 'تصميم',
+  أعمال: 'أعمال',
+  علوم: 'علوم',
+  مقال: 'مقال',
+  فيديو: 'فيديو',
+  صورة: 'صورة',
+  رابط: 'رابط',
 };
 
 function AppContent() {
@@ -101,12 +85,7 @@ function AppContent() {
   const [openBookmarks, setOpenBookmarks] = useState<Bookmark[]>([]);
   const [activeBookmarkId, setActiveBookmarkId] = useState<string | null>(null);
   const [showSettings, setShowSettings] = useState(false);
-  const [filters, setFilters] = useState<FilterState>({
-    priority: '',
-    topic: '',
-    contentType: '',
-  });
-  const [searchQuery, setSearchQuery] = useState('');
+  const [bookmarks, setBookmarks] = useState<Bookmark[]>([]);
   const [refreshKey, setRefreshKey] = useState(0);
 
   const activeBookmark = useMemo(
@@ -135,10 +114,6 @@ function AppContent() {
     });
   }, []);
 
-  const handleFilterChange = (newFilters: FilterState) => {
-    setFilters(newFilters);
-  };
-
   const handleFetch = useCallback(async () => {
     await window.api.fetchBookmarks();
     setRefreshKey((k) => k + 1);
@@ -149,18 +124,54 @@ function AppContent() {
     setRefreshKey((k) => k + 1);
   }, []);
 
+  const fetchBookmarks = useCallback(async () => {
+    try {
+      const [dbBookmarks, classifications] = await Promise.all([
+        window.api.getBookmarks(),
+        window.api.getClassifications(),
+      ]);
+
+      const classificationMap = new Map(
+        classifications.map((c) => [c.bookmark_id, c]),
+      );
+
+      const mappedBookmarks: Bookmark[] = dbBookmarks.map((dbBookmark) => {
+        const classification = classificationMap.get(dbBookmark.id);
+        return {
+          id: dbBookmark.id,
+          title: dbBookmark.title || dbBookmark.tweet_text || 'Untitled',
+          url: dbBookmark.url,
+          topic: classification?.priority || 'medium',
+          priority:
+            (classification?.priority as 'high' | 'medium' | 'low') || 'medium',
+          contentType: dbBookmark.content_type,
+          content: dbBookmark.tweet_text || '',
+          createdAt: dbBookmark.fetched_at,
+        };
+      });
+
+      setBookmarks(mappedBookmarks);
+    } catch {
+      setBookmarks([]);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchBookmarks();
+  }, [refreshKey]);
+
   return (
     <>
       <div className="titlebar">bookmarkx</div>
       <div className="app-container">
-        <Sidebar
-          onSettingsClick={() => setShowSettings(true)}
-          filters={filters}
-          onFilterChange={handleFilterChange}
-          onFetchClick={handleFetch}
-          onClassifyClick={handleClassify}
-        />
-        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+        <div
+          style={{
+            flex: 1,
+            display: 'flex',
+            flexDirection: 'column',
+            overflow: 'hidden',
+          }}
+        >
           <BookmarkTabs
             openBookmarks={openBookmarks}
             activeBookmarkId={activeBookmarkId}
@@ -170,13 +181,13 @@ function AppContent() {
           />
           <BookmarkDetail bookmark={activeBookmark} />
         </div>
-        <BookmarkList
-          selectedBookmark={activeBookmark}
-          onBookmarkSelect={handleBookmarkSelect}
-          filters={filters}
-          searchQuery={searchQuery}
-          onSearchChange={setSearchQuery}
-          refreshKey={refreshKey}
+        <NavPanel
+          bookmarks={bookmarks}
+          onSettingsClick={() => setShowSettings(true)}
+          onFetchClick={handleFetch}
+          onClassifyClick={handleClassify}
+          onSelectBookmark={handleBookmarkSelect}
+          selectedBookmarkId={activeBookmarkId}
         />
         {showSettings && (
           <Settings onClose={() => setShowSettings(false)} />

@@ -6,8 +6,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, cleanup } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { IntlProvider } from 'react-intl';
-import Sidebar from '../components/Sidebar';
-import { FilterState } from '../App';
+import NavPanel from '../components/NavPanel';
 
 const messages = {
   appName: 'بوكماركس',
@@ -15,26 +14,24 @@ const messages = {
   settings: 'الإعدادات',
   fetchNow: 'جلب الآن',
   classifyNow: 'تصنيف الآن',
-  priority: 'الأولوية',
-  topics: 'المواضيع',
-  contentTypes: 'أنواع المحتوى',
-  all: 'الكل',
-  high: 'عالي',
-  medium: 'متوسط',
-  low: 'منخفض',
-  allTopics: 'جميع المواضيع',
-  allTypes: 'جميع الأنواع',
   تكنولوجيا: 'تكنولوجيا',
   تصميم: 'تصميم',
   أعمال: 'أعمال',
   علوم: 'علوم',
-  مقال: 'مقال',
-  فيديو: 'فيديو',
-  صورة: 'صورة',
-  رابط: 'رابط',
 };
 
-const defaultFilters: FilterState = { priority: '', topic: '', contentType: '' };
+const mockBookmarks = [
+  {
+    id: '1',
+    title: 'Test Bookmark',
+    url: 'https://example.com',
+    topic: 'تكنولوجيا',
+    priority: 'high' as const,
+    contentType: 'article',
+    content: 'Test content',
+    createdAt: '2024-01-01',
+  },
+];
 
 beforeEach(() => {
   vi.clearAllMocks();
@@ -56,32 +53,89 @@ afterEach(() => {
 const renderWithIntl = (ui: React.ReactElement) =>
   render(<IntlProvider locale="ar" messages={messages}>{ui}</IntlProvider>);
 
-describe('Fetch trigger', () => {
-  it('shows Fetch Now button in sidebar', () => {
+describe('NavPanel', () => {
+  it('shows action buttons', () => {
     renderWithIntl(
-      <Sidebar
+      <NavPanel
+        bookmarks={mockBookmarks}
         onSettingsClick={vi.fn()}
-        filters={defaultFilters}
-        onFilterChange={vi.fn()}
         onFetchClick={vi.fn()}
+        onClassifyClick={vi.fn()}
+        onSelectBookmark={vi.fn()}
+        selectedBookmarkId={null}
       />
     );
 
-    expect(screen.getByText('جلب الآن')).toBeDefined();
+    expect(screen.getByTitle('جلب الآن')).toBeDefined();
+    expect(screen.getByTitle('تصنيف الآن')).toBeDefined();
+    expect(screen.getByTitle('الإعدادات')).toBeDefined();
+    expect(screen.getByTitle('بحث')).toBeDefined();
   });
 
-  it('calls onFetchClick when button is clicked', async () => {
+  it('calls onFetchClick when fetch button is clicked', async () => {
     const onFetchClick = vi.fn();
     renderWithIntl(
-      <Sidebar
+      <NavPanel
+        bookmarks={mockBookmarks}
         onSettingsClick={vi.fn()}
-        filters={defaultFilters}
-        onFilterChange={vi.fn()}
         onFetchClick={onFetchClick}
+        onClassifyClick={vi.fn()}
+        onSelectBookmark={vi.fn()}
+        selectedBookmarkId={null}
       />
     );
 
-    await userEvent.click(screen.getByText('جلب الآن'));
+    await userEvent.click(screen.getByTitle('جلب الآن'));
     expect(onFetchClick).toHaveBeenCalledTimes(1);
+  });
+
+  it('calls onClassifyClick when classify button is clicked', async () => {
+    const onClassifyClick = vi.fn();
+    renderWithIntl(
+      <NavPanel
+        bookmarks={mockBookmarks}
+        onSettingsClick={vi.fn()}
+        onFetchClick={vi.fn()}
+        onClassifyClick={onClassifyClick}
+        onSelectBookmark={vi.fn()}
+        selectedBookmarkId={null}
+      />
+    );
+
+    await userEvent.click(screen.getByTitle('تصنيف الآن'));
+    expect(onClassifyClick).toHaveBeenCalledTimes(1);
+  });
+
+  it('calls onSettingsClick when settings button is clicked', async () => {
+    const onSettingsClick = vi.fn();
+    renderWithIntl(
+      <NavPanel
+        bookmarks={mockBookmarks}
+        onSettingsClick={onSettingsClick}
+        onFetchClick={vi.fn()}
+        onClassifyClick={vi.fn()}
+        onSelectBookmark={vi.fn()}
+        selectedBookmarkId={null}
+      />
+    );
+
+    await userEvent.click(screen.getByTitle('الإعدادات'));
+    expect(onSettingsClick).toHaveBeenCalledTimes(1);
+  });
+
+  it('displays bookmark grouped by topic', () => {
+    renderWithIntl(
+      <NavPanel
+        bookmarks={mockBookmarks}
+        onSettingsClick={vi.fn()}
+        onFetchClick={vi.fn()}
+        onClassifyClick={vi.fn()}
+        onSelectBookmark={vi.fn()}
+        selectedBookmarkId={null}
+      />
+    );
+
+    expect(screen.getByText('تكنولوجيا')).toBeDefined();
+    expect(screen.getByText('Test Bookmark')).toBeDefined();
   });
 });
