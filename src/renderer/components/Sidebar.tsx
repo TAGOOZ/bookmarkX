@@ -46,17 +46,17 @@ const Sidebar: React.FC<SidebarProps> = ({
         <FormattedMessage id="appName" />
       </div>
 
-      <nav className="sidebar-nav">
-        <div className="nav-item active" role="button" tabIndex={0}>
+      <nav className="sidebar-nav" aria-label="Main navigation">
+        <div className="nav-item active" role="button" tabIndex={0} aria-current="page">
           <FormattedMessage id="bookmarks" />
         </div>
-        <div className="nav-item" role="button" tabIndex={0} onClick={onFetchClick} onKeyDown={(e) => e.key === 'Enter' && onFetchClick()}>
+        <div className="nav-item" role="button" tabIndex={0} onClick={onFetchClick} onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && (e.preventDefault(), onFetchClick())}>
           <FormattedMessage id="fetchNow" />
         </div>
-        <div className="nav-item" role="button" tabIndex={0} onClick={onClassifyClick} onKeyDown={(e) => e.key === 'Enter' && onClassifyClick()}>
+        <div className="nav-item" role="button" tabIndex={0} onClick={onClassifyClick} onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && (e.preventDefault(), onClassifyClick())}>
           <FormattedMessage id="classifyNow" />
         </div>
-        <div className="nav-item" role="button" tabIndex={0} onClick={onSettingsClick} onKeyDown={(e) => e.key === 'Enter' && onSettingsClick()}>
+        <div className="nav-item" role="button" tabIndex={0} onClick={onSettingsClick} onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && (e.preventDefault(), onSettingsClick())}>
           <FormattedMessage id="settings" />
         </div>
       </nav>
@@ -71,8 +71,9 @@ const Sidebar: React.FC<SidebarProps> = ({
             className={`filter-item ${filters.priority === p.value ? 'active' : ''}`}
             role="button"
             tabIndex={0}
+            aria-pressed={filters.priority === p.value}
             onClick={() => onFilterChange({ ...filters, priority: p.value })}
-            onKeyDown={(e) => e.key === 'Enter' && onFilterChange({ ...filters, priority: p.value })}
+            onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && (e.preventDefault(), onFilterChange({ ...filters, priority: p.value }))}
           >
             <FormattedMessage id={p.label} />
           </div>
@@ -89,8 +90,9 @@ const Sidebar: React.FC<SidebarProps> = ({
             className={`filter-item ${filters.topic === t.value ? 'active' : ''}`}
             role="button"
             tabIndex={0}
+            aria-pressed={filters.topic === t.value}
             onClick={() => onFilterChange({ ...filters, topic: t.value })}
-            onKeyDown={(e) => e.key === 'Enter' && onFilterChange({ ...filters, topic: t.value })}
+            onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && (e.preventDefault(), onFilterChange({ ...filters, topic: t.value }))}
           >
             <FormattedMessage id={t.label} />
           </div>
@@ -107,8 +109,9 @@ const Sidebar: React.FC<SidebarProps> = ({
             className={`filter-item ${filters.contentType === ct.value ? 'active' : ''}`}
             role="button"
             tabIndex={0}
+            aria-pressed={filters.contentType === ct.value}
             onClick={() => onFilterChange({ ...filters, contentType: ct.value })}
-            onKeyDown={(e) => e.key === 'Enter' && onFilterChange({ ...filters, contentType: ct.value })}
+            onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && (e.preventDefault(), onFilterChange({ ...filters, contentType: ct.value }))}
           >
             <FormattedMessage id={ct.label} />
           </div>

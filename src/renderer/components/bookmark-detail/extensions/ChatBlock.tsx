@@ -73,7 +73,7 @@ export const createChatBlock = createReactBlockSpec(
           style={{
             display: 'flex',
             flexDirection: 'column',
-            border: '1px solid #333',
+            border: '1px solid var(--background-modifier-border)',
             borderRadius: '6px',
             overflow: 'hidden',
             maxHeight: '400px',
@@ -90,7 +90,7 @@ export const createChatBlock = createReactBlockSpec(
             }}
           >
             {messages.length === 0 && (
-              <div style={{ color: '#666', fontSize: '13px', padding: '8px 0' }}>
+              <div style={{ color: 'var(--text-muted)', fontSize: '13px', padding: '8px 0' }}>
                 Ask a question about this bookmark...
               </div>
             )}
@@ -101,19 +101,19 @@ export const createChatBlock = createReactBlockSpec(
                   marginBottom: '8px',
                   padding: '6px 10px',
                   borderRadius: '6px',
-                  background: msg.role === 'user' ? '#1a3a5c' : '#1a2a1a',
+                  background: msg.role === 'user' ? 'var(--section-agent-bg)' : 'var(--section-user-bg)',
                   fontSize: '13px',
                   lineHeight: '1.5',
                 }}
               >
-                <span style={{ fontWeight: 600, color: msg.role === 'user' ? '#5b9bd5' : '#6aa84f' }}>
+                <span style={{ fontWeight: 600, color: msg.role === 'user' ? 'var(--accent-color)' : 'var(--priority-low)' }}>
                   {msg.role === 'user' ? 'You' : 'Assistant'}:
                 </span>{' '}
                 {msg.content}
               </div>
             ))}
             {isLoading && (
-              <div style={{ color: '#666', fontSize: '12px', padding: '4px 0' }}>
+              <div style={{ color: 'var(--text-muted)', fontSize: '12px', padding: '4px 0' }}>
                 Thinking...
               </div>
             )}
@@ -121,7 +121,7 @@ export const createChatBlock = createReactBlockSpec(
           <div
             style={{
               display: 'flex',
-              borderTop: '1px solid #333',
+              borderTop: '1px solid var(--background-modifier-border)',
               padding: '6px 8px',
               gap: '6px',
             }}
@@ -131,24 +131,25 @@ export const createChatBlock = createReactBlockSpec(
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={handleKeyDown}
               placeholder="Type a message..."
+              aria-label="Chat message input"
               disabled={isLoading}
               style={{
                 flex: 1,
-                background: '#0d0d0d',
-                border: '1px solid #333',
+                background: 'var(--background-primary)',
+                border: '1px solid var(--background-modifier-border)',
                 borderRadius: '4px',
                 padding: '6px 8px',
-                color: '#ddd',
+                color: 'var(--text-normal)',
                 fontSize: '13px',
-                outline: 'none',
               }}
             />
             <button
               onClick={sendMessage}
               disabled={isLoading || !input.trim()}
+              aria-label="Send message"
               style={{
-                background: '#2563eb',
-                color: '#fff',
+                background: 'var(--accent-color)',
+                color: 'var(--text-on-accent)',
                 border: 'none',
                 borderRadius: '4px',
                 padding: '6px 12px',

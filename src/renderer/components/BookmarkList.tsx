@@ -276,8 +276,9 @@ const BookmarkList: React.FC<BookmarkListProps> = ({
             }`}
             role="button"
             tabIndex={0}
+            aria-selected={selectedBookmark?.id === bookmark.id}
             onClick={() => onBookmarkSelect(bookmark)}
-            onKeyDown={(e) => e.key === 'Enter' && onBookmarkSelect(bookmark)}
+            onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && (e.preventDefault(), onBookmarkSelect(bookmark))}
           >
             <div className="bookmark-title">{bookmark.title}</div>
             <div className="bookmark-url">{bookmark.url}</div>

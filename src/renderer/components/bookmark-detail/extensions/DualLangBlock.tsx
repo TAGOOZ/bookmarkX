@@ -31,9 +31,7 @@ export const createDualLangBlock = createReactBlockSpec(
               style={{
                 fontSize: '11px',
                 fontWeight: 600,
-                textTransform: 'uppercase',
-                letterSpacing: '0.05em',
-                color: '#888',
+                color: 'var(--text-muted)',
                 marginBottom: '4px',
               }}
               contentEditable={false}
@@ -43,7 +41,7 @@ export const createDualLangBlock = createReactBlockSpec(
             <div
               style={{ direction: 'ltr', minHeight: '24px' }}
             >
-              {contentEn || <span style={{ color: '#555' }}>No English summary</span>}
+              {contentEn || <span style={{ color: 'var(--text-faint)' }}>No English summary</span>}
             </div>
           </div>
           <div>
@@ -51,9 +49,7 @@ export const createDualLangBlock = createReactBlockSpec(
               style={{
                 fontSize: '11px',
                 fontWeight: 600,
-                textTransform: 'uppercase',
-                letterSpacing: '0.05em',
-                color: '#888',
+                color: 'var(--text-muted)',
                 marginBottom: '4px',
               }}
               contentEditable={false}
@@ -63,7 +59,7 @@ export const createDualLangBlock = createReactBlockSpec(
             <div
               style={{ direction: 'rtl', minHeight: '24px' }}
             >
-              {contentAr || <span style={{ color: '#555' }}>لا يوجد ملخص عربي</span>}
+              {contentAr || <span style={{ color: 'var(--text-faint)' }}>لا يوجد ملخص عربي</span>}
             </div>
           </div>
         </div>

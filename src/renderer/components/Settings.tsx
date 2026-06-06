@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { FormattedMessage } from 'react-intl';
 
 interface SettingsProps {
@@ -14,6 +14,31 @@ const Settings: React.FC<SettingsProps> = ({ onClose }) => {
   });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
+    if (e.key === 'Escape') {
+      onClose();
+      return;
+    }
+    if (e.key !== 'Tab' || !containerRef.current) return;
+    const focusable = containerRef.current.querySelectorAll<HTMLElement>(
+      'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+    );
+    const first = focusable[0];
+    const last = focusable[focusable.length - 1];
+    if (e.shiftKey && document.activeElement === first) {
+      e.preventDefault();
+      last.focus();
+    } else if (!e.shiftKey && document.activeElement === last) {
+      e.preventDefault();
+      first.focus();
+    }
+  }, [onClose]);
+
+  useEffect(() => {
+    containerRef.current?.querySelector<HTMLElement>('input, button')?.focus();
+  }, [loading]);
 
   useEffect(() => {
     window.api.getSettings()
@@ -47,7 +72,7 @@ const Settings: React.FC<SettingsProps> = ({ onClose }) => {
 
   if (loading) {
     return (
-      <div className="settings-panel">
+      <div className="settings-panel" role="dialog" aria-modal="true" aria-label="Settings">
         <div className="settings-container">
           <p>Loading...</p>
         </div>
@@ -56,13 +81,13 @@ const Settings: React.FC<SettingsProps> = ({ onClose }) => {
   }
 
   return (
-    <div className="settings-panel">
-      <div className="settings-container">
+    <div className="settings-panel" role="dialog" aria-modal="true" aria-label="Settings">
+      <div className="settings-container" ref={containerRef} onKeyDown={handleKeyDown}>
         <div className="settings-header">
           <h2 className="settings-title">
             <FormattedMessage id="settings" />
           </h2>
-          <button className="close-button" onClick={onClose}>
+          <button className="close-button" onClick={onClose} aria-label="Close settings">
             ×
           </button>
         </div>

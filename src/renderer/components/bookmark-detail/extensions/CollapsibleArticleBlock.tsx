@@ -32,13 +32,14 @@ export const createCollapsibleArticleBlock = createReactBlockSpec(
       return (
         <div
           style={{
-            border: '1px solid #333',
+            border: '1px solid var(--background-modifier-border)',
             borderRadius: '6px',
             overflow: 'hidden',
           }}
         >
           <button
             onClick={toggle}
+            aria-expanded={expanded}
             contentEditable={false}
             style={{
               display: 'flex',
@@ -46,10 +47,10 @@ export const createCollapsibleArticleBlock = createReactBlockSpec(
               gap: '8px',
               width: '100%',
               padding: '8px 12px',
-              background: '#1a1a1a',
+              background: 'var(--background-secondary)',
               border: 'none',
               cursor: 'pointer',
-              color: '#ccc',
+              color: 'var(--text-normal)',
               fontSize: '13px',
               textAlign: 'left',
             }}
@@ -59,7 +60,7 @@ export const createCollapsibleArticleBlock = createReactBlockSpec(
             </span>
             <span>Article</span>
             {wordCount > 0 && (
-              <span style={{ color: '#666', marginLeft: 'auto' }}>
+              <span style={{ color: 'var(--text-muted)', marginLeft: 'auto' }}>
                 {wordCount.toLocaleString()} words
               </span>
             )}
@@ -73,7 +74,7 @@ export const createCollapsibleArticleBlock = createReactBlockSpec(
                 whiteSpace: 'pre-wrap',
                 lineHeight: '1.6',
                 fontSize: '14px',
-                color: '#ddd',
+                color: 'var(--text-normal)',
               }}
             >
               {content || 'No article content'}

@@ -176,7 +176,8 @@ body {
 }
 
 .search-input:focus {
-  outline: none;
+  outline: 2px solid var(--accent-color);
+  outline-offset: 2px;
   border-color: var(--accent-color);
 }
 
@@ -343,7 +344,8 @@ body {
   background-color: var(--bg-secondary);
   border-radius: 12px;
   padding: 30px;
-  width: 500px;
+  width: 90%;
+  max-width: 500px;
   max-height: 80vh;
   overflow-y: auto;
   border: 1px solid var(--border-color);
@@ -400,7 +402,8 @@ body {
 }
 
 .form-input:focus {
-  outline: none;
+  outline: 2px solid var(--accent-color);
+  outline-offset: 2px;
   border-color: var(--accent-color);
 }
 

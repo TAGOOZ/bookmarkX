@@ -31,18 +31,22 @@ export const createReferenceChipInline = () =>
         return (
           <span
             onClick={handleCopy}
+            onKeyDown={(e) => e.key === 'Enter' && handleCopy()}
             title={sentence}
             contentEditable={false}
+            role="button"
+            tabIndex={0}
+            aria-label={`Copy reference from ${sourceSection}`}
             style={{
               display: 'inline-flex',
               alignItems: 'center',
               gap: '4px',
-              background: '#2a2a2a',
-              border: '1px solid #444',
+              background: 'var(--background-tertiary)',
+              border: '1px solid var(--background-modifier-border)',
               borderRadius: '4px',
               padding: '1px 6px',
               fontSize: '11px',
-              color: '#aaa',
+              color: 'var(--text-muted)',
               cursor: 'pointer',
               verticalAlign: 'middle',
             }}

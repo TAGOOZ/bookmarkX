@@ -20,35 +20,42 @@ export const createGlossaryTermInline = () =>
         return (
           <span
             style={{
-              borderBottom: '1px dashed #5b9bd5',
+              borderBottom: '1px dashed var(--accent-color)',
               cursor: 'help',
               position: 'relative',
-              color: '#5b9bd5',
+              color: 'var(--accent-color)',
             }}
             onMouseEnter={() => setShowTooltip(true)}
             onMouseLeave={() => setShowTooltip(false)}
+            role="button"
+            tabIndex={0}
+            onFocus={() => setShowTooltip(true)}
+            onBlur={() => setShowTooltip(false)}
+            aria-describedby={showTooltip ? 'glossary-tooltip' : undefined}
           >
             {term}
             {showTooltip && definition && (
               <span
+                id="glossary-tooltip"
+                role="tooltip"
                 style={{
                   position: 'absolute',
                   bottom: '100%',
                   left: '50%',
                   transform: 'translateX(-50%)',
-                  background: '#1a1a1a',
-                  border: '1px solid #444',
+                  background: 'var(--background-secondary)',
+                  border: '1px solid var(--background-modifier-border)',
                   borderRadius: '4px',
                   padding: '6px 10px',
                   fontSize: '12px',
-                  color: '#ddd',
+                  color: 'var(--text-normal)',
                   whiteSpace: 'nowrap',
                   maxWidth: '250px',
                   overflow: 'hidden',
                   textOverflow: 'ellipsis',
                   zIndex: 1000,
                   pointerEvents: 'none',
-                  boxShadow: '0 2px 8px rgba(0,0,0,0.3)',
+                  boxShadow: 'var(--shadow-m)',
                 }}
               >
                 {definition}
