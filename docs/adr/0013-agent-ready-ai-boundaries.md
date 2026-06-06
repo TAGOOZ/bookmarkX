@@ -1,0 +1,3 @@
+# Agent-Ready AI Boundaries
+
+All AI-related code must use service-layer abstraction with typed I/O, event emission, and no UI coupling. Current AI (stateless LLM calls for classify/summarize/chat/enhance) and future Agent (autonomous entity with tool access) share the same service functions — the agent just calls them with autonomy and memory on top. AI services write to DB (source of truth), emit events (UI subscribes), and never import React components. When the agent arrives (Phase 4), it calls the same `classifyBookmark()`, `summarizeBookmark()`, `enhanceNote()`, `sendMessage()` functions. No rewrite needed.
