@@ -1,4 +1,3 @@
-import type { PartialBlock } from '@blocknote/core';
 import type { ParserResult, ParseOptions } from './types';
 
 export async function parseArticle(

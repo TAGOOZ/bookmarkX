@@ -1,6 +1,6 @@
 import { createReactBlockSpec } from '@blocknote/react';
 import { defaultProps } from '@blocknote/core';
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useCallback } from 'react';
 import styles from './ArticleReaderBlock.module.css';
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
