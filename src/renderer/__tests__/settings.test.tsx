@@ -75,7 +75,7 @@ describe('Settings IPC Integration', () => {
       expect(mockGetSettings).toHaveBeenCalled();
     });
 
-    const apiKeyInput = screen.getByPlaceholderText('Enter Gemini API Key');
+    const apiKeyInput = screen.getByPlaceholderText('أدخل مفتاح Gemini API');
     await userEvent.clear(apiKeyInput);
     await userEvent.type(apiKeyInput, 'new-api-key');
 

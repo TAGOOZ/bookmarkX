@@ -47,11 +47,11 @@ export function createEnhanceToolbarPlugin(options: EnhanceToolbarOptions) {
           toolbarEl = document.createElement('div');
           toolbarEl.contentEditable = 'false';
           toolbarEl.style.cssText =
-            'position:fixed;z-index:9999;background:#1a1a1a;border:1px solid #444;border-radius:4px;padding:4px 8px;display:flex;gap:4px;box-shadow:0 2px 8px rgba(0,0,0,0.3);';
+            'position:fixed;z-index:9999;background:var(--background-secondary);border:1px solid var(--background-modifier-border);border-radius:4px;padding:4px 8px;display:flex;gap:4px;box-shadow:var(--shadow-m);';
           const btn = document.createElement('button');
           btn.textContent = '✨ Enhance';
           btn.style.cssText =
-            'background:#2563eb;color:#fff;border:none;border-radius:3px;padding:4px 10px;cursor:pointer;font-size:12px;';
+            'background:var(--accent-color);color:var(--text-on-accent);border:none;border-radius:3px;padding:4px 10px;cursor:pointer;font-size:12px;';
           btn.addEventListener('mousedown', (e) => {
             e.preventDefault();
             options.onEnhance(selectedText, block);

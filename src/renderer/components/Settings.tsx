@@ -69,7 +69,7 @@ const Settings: React.FC<SettingsProps> = ({ onClose }) => {
 
         <form className="settings-form" onSubmit={handleSubmit}>
           {error && (
-            <div className="error-message" style={{ color: '#ff6b6b', marginBottom: '12px' }}>
+            <div className="error-message" style={{ color: 'var(--priority-high)', marginBottom: '12px' }}>
               {error}
             </div>
           )}
@@ -82,7 +82,7 @@ const Settings: React.FC<SettingsProps> = ({ onClose }) => {
               className="form-input"
               value={formData.geminiApiKey}
               onChange={(e) => handleInputChange('geminiApiKey', e.target.value)}
-              placeholder="Enter Gemini API Key"
+              placeholder="أدخل مفتاح Gemini API"
             />
           </div>
 
@@ -95,7 +95,7 @@ const Settings: React.FC<SettingsProps> = ({ onClose }) => {
               className="form-input"
               value={formData.birdAuthToken}
               onChange={(e) => handleInputChange('birdAuthToken', e.target.value)}
-              placeholder="Enter Bird Auth Token"
+              placeholder="أدخل رمز المصادقة"
             />
           </div>
 
@@ -108,7 +108,7 @@ const Settings: React.FC<SettingsProps> = ({ onClose }) => {
               className="form-input"
               value={formData.birdCt0}
               onChange={(e) => handleInputChange('birdCt0', e.target.value)}
-              placeholder="Enter CT0 Cookie"
+              placeholder="أدخل ملف تعريف الارتباط CT0"
             />
           </div>
 
@@ -123,7 +123,7 @@ const Settings: React.FC<SettingsProps> = ({ onClose }) => {
               onChange={(e) =>
                 handleInputChange('birdChromeProfile', e.target.value)
               }
-              placeholder="Enter Chrome Profile Path"
+              placeholder="أدخل مسار ملف تعريف Chrome"
             />
           </div>
 
