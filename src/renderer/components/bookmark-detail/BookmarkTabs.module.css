@@ -9,7 +9,7 @@
   overflow-y: hidden;
   flex-shrink: 0;
   border-bottom: 1px solid var(--background-modifier-border);
-  background-color: var(--background-secondary);
+  background-color: var(--background-primary);
   min-height: 36px;
 }
 
@@ -48,6 +48,7 @@
   background-color: var(--background-primary);
   color: var(--text-normal);
   border-color: var(--background-modifier-border);
+  border-bottom-color: transparent;
 }
 
 .tabTitle {
