@@ -91,11 +91,17 @@ typings/
 # Electron-Forge
 out/
 
-# Better SQLite3 native builds
+# Native builds
 *.node
 *.so
 *.dylib
 *.dll
+
+# SQLite / libSQL local database files
+*.db
+*.db-journal
+*.db-wal
+*.db-shm
 
 # Electron
 dist/
