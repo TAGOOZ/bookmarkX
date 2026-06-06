@@ -11,22 +11,19 @@
 .editor {
   flex: 1;
   height: 100%;
-}
-
-.editor {
-  --bn-colors-editor-text: var(--text-normal);
-  --bn-colors-editor-background: var(--background-primary);
-  --bn-colors-menu-text: var(--text-normal);
-  --bn-colors-menu-background: var(--background-secondary);
-  --bn-colors-tooltip-text: var(--text-normal);
-  --bn-colors-tooltip-background: var(--background-tertiary);
-  --bn-colors-hovered-text: var(--text-normal);
-  --bn-colors-hovered-background: var(--background-modifier-hover);
-  --bn-colors-selected-text: var(--text-on-accent);
-  --bn-colors-selected-background: var(--accent-color);
-  --bn-colors-disabled-text: var(--text-faint);
-  --bn-colors-disabled-background: var(--background-modifier-border);
-  --bn-colors-shadow: rgba(0, 0, 0, 0.4);
-  --bn-colors-border: var(--background-modifier-border);
-  --bn-colors-side-menu: var(--text-muted);
+  --bn-colors-editor-text: var(--text-normal) !important;
+  --bn-colors-editor-background: var(--background-primary) !important;
+  --bn-colors-menu-text: var(--text-normal) !important;
+  --bn-colors-menu-background: var(--background-secondary) !important;
+  --bn-colors-tooltip-text: var(--text-normal) !important;
+  --bn-colors-tooltip-background: var(--background-tertiary) !important;
+  --bn-colors-hovered-text: var(--text-normal) !important;
+  --bn-colors-hovered-background: var(--background-modifier-hover) !important;
+  --bn-colors-selected-text: var(--text-on-accent) !important;
+  --bn-colors-selected-background: var(--accent-color) !important;
+  --bn-colors-disabled-text: var(--text-faint) !important;
+  --bn-colors-disabled-background: var(--background-modifier-border) !important;
+  --bn-colors-shadow: rgba(0, 0, 0, 0.4) !important;
+  --bn-colors-border: var(--background-modifier-border) !important;
+  --bn-colors-side-menu: var(--text-muted) !important;
 }
