@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { FormattedMessage } from 'react-intl';
+import { FormattedMessage, useIntl } from 'react-intl';
 
 interface SettingsProps {
   onClose: () => void;
@@ -41,6 +41,14 @@ const Settings: React.FC<SettingsProps> = ({ onClose }) => {
   const [twitterLogging, setTwitterLogging] = useState(false);
   const [authStatus, setAuthStatus] = useState<'detected' | 'manual' | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+  const intl = useIntl();
+
+  // Auto-dismiss error after 5 seconds
+  useEffect(() => {
+    if (!error) return;
+    const timer = setTimeout(() => setError(null), 5000);
+    return () => clearTimeout(timer);
+  }, [error]);
 
   const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
     if (e.key === 'Escape') {
@@ -147,7 +155,7 @@ const Settings: React.FC<SettingsProps> = ({ onClose }) => {
     return (
       <div className="settings-panel" role="dialog" aria-modal="true" aria-label="Settings">
         <div className="settings-container">
-          <p>Loading...</p>
+          <p>{intl.formatMessage({ id: 'loading', defaultMessage: 'Loading...' })}</p>
         </div>
       </div>
     );
@@ -167,8 +175,9 @@ const Settings: React.FC<SettingsProps> = ({ onClose }) => {
 
         <form className="settings-form" onSubmit={handleSubmit}>
           {error && (
-            <div className="error-message" style={{ color: 'var(--priority-high)', marginBottom: '12px' }}>
-              {error}
+            <div className="error-banner">
+              <span className="error-banner-text">{error}</span>
+              <button type="button" className="error-banner-close" onClick={() => setError(null)}>×</button>
             </div>
           )}
 
@@ -186,7 +195,7 @@ const Settings: React.FC<SettingsProps> = ({ onClose }) => {
                 className="form-input"
                 value={formData.name}
                 onChange={(e) => handleInputChange('name', e.target.value)}
-                placeholder="Your name"
+                placeholder={intl.formatMessage({ id: 'namePlaceholder', defaultMessage: 'Your name' })}
               />
             </div>
             <div className="form-group">
@@ -198,7 +207,7 @@ const Settings: React.FC<SettingsProps> = ({ onClose }) => {
                 className="form-input"
                 value={formData.twitterHandle}
                 onChange={(e) => handleInputChange('twitterHandle', e.target.value)}
-                placeholder="@username"
+                placeholder={intl.formatMessage({ id: 'twitterHandlePlaceholder', defaultMessage: '@username' })}
               />
             </div>
           </div>
@@ -216,13 +225,19 @@ const Settings: React.FC<SettingsProps> = ({ onClose }) => {
                   onClick={handleTwitterLogin}
                   disabled={twitterLogging}
                 >
-                  {twitterLogging ? 'Logging in...' : 'Login with Twitter'}
+                  {twitterLogging
+                    ? intl.formatMessage({ id: 'loggingIn', defaultMessage: 'Logging in...' })
+                    : intl.formatMessage({ id: 'loginWithTwitter', defaultMessage: 'Login with Twitter' })}
                 </button>
                 {authStatus === 'detected' && (
-                  <span className="auth-status auth-status-detected">Detected from Chrome</span>
+                  <span className="auth-status auth-status-detected">
+                    <FormattedMessage id="detectedFromChrome" />
+                  </span>
                 )}
               </div>
-              <div className="option-divider">or</div>
+              <div className="option-divider">
+                <FormattedMessage id="or" />
+              </div>
               <div className="auth-option">
                 <div className="form-group">
                   <label className="form-label">
@@ -236,7 +251,7 @@ const Settings: React.FC<SettingsProps> = ({ onClose }) => {
                       handleInputChange('birdAuthToken', e.target.value);
                       setAuthStatus('manual');
                     }}
-                    placeholder="Enter auth_token"
+                    placeholder={intl.formatMessage({ id: 'authTokenPlaceholder', defaultMessage: 'Enter auth_token' })}
                   />
                 </div>
                 <div className="form-group">
@@ -251,7 +266,7 @@ const Settings: React.FC<SettingsProps> = ({ onClose }) => {
                       handleInputChange('birdCt0', e.target.value);
                       setAuthStatus('manual');
                     }}
-                    placeholder="Enter ct0 cookie"
+                    placeholder={intl.formatMessage({ id: 'ct0Placeholder', defaultMessage: 'Enter ct0 cookie' })}
                   />
                 </div>
                 <div className="form-group">
@@ -264,7 +279,7 @@ const Settings: React.FC<SettingsProps> = ({ onClose }) => {
                       className="form-input"
                       value={formData.birdChromeProfile}
                       onChange={(e) => handleInputChange('birdChromeProfile', e.target.value)}
-                      placeholder="Chrome profile name"
+                      placeholder={intl.formatMessage({ id: 'chromeProfilePlaceholder', defaultMessage: 'Chrome profile name' })}
                     />
                     <button
                       type="button"
@@ -272,12 +287,14 @@ const Settings: React.FC<SettingsProps> = ({ onClose }) => {
                       onClick={handleDetectChrome}
                       disabled={detecting}
                     >
-                      {detecting ? '...' : 'Detect'}
+                      {detecting ? '...' : intl.formatMessage({ id: 'detect', defaultMessage: 'Detect' })}
                     </button>
                   </div>
                 </div>
                 {authStatus === 'manual' && (
-                  <span className="auth-status auth-status-manual">Entered manually</span>
+                  <span className="auth-status auth-status-manual">
+                    <FormattedMessage id="enteredManually" />
+                  </span>
                 )}
               </div>
             </div>
@@ -297,7 +314,7 @@ const Settings: React.FC<SettingsProps> = ({ onClose }) => {
                 className="form-input"
                 value={formData.geminiApiKey}
                 onChange={(e) => handleInputChange('geminiApiKey', e.target.value)}
-                placeholder="Enter Gemini API key"
+                placeholder={intl.formatMessage({ id: 'apiKeyPlaceholder', defaultMessage: 'Enter Gemini API key' })}
               />
             </div>
           </div>
@@ -307,25 +324,25 @@ const Settings: React.FC<SettingsProps> = ({ onClose }) => {
             <h3 className="settings-section-title">
               <FormattedMessage id="preferences" />
             </h3>
-            <div className="form-group">
-              <label className="form-label">
+            <div className="pref-row">
+              <span className="pref-label">
                 <FormattedMessage id="theme" />
-              </label>
+              </span>
               <select
-                className="form-input"
+                className="pref-select"
                 value={formData.theme}
                 onChange={(e) => handleInputChange('theme', e.target.value)}
               >
-                <option value="dark">Dark</option>
-                <option value="light">Light</option>
+                <option value="dark">{intl.formatMessage({ id: 'dark', defaultMessage: 'Dark' })}</option>
+                <option value="light">{intl.formatMessage({ id: 'light', defaultMessage: 'Light' })}</option>
               </select>
             </div>
-            <div className="form-group">
-              <label className="form-label">
+            <div className="pref-row">
+              <span className="pref-label">
                 <FormattedMessage id="language" />
-              </label>
+              </span>
               <select
-                className="form-input"
+                className="pref-select"
                 value={formData.language}
                 onChange={(e) => handleInputChange('language', e.target.value)}
               >
@@ -333,10 +350,10 @@ const Settings: React.FC<SettingsProps> = ({ onClose }) => {
                 <option value="en">English</option>
               </select>
             </div>
-            <div className="form-group">
-              <label className="form-label">
+            <div className="pref-row">
+              <span className="pref-label">
                 <FormattedMessage id="notifications" />
-              </label>
+              </span>
               <label className="toggle-label">
                 <input
                   type="checkbox"
@@ -347,27 +364,27 @@ const Settings: React.FC<SettingsProps> = ({ onClose }) => {
                 <span className="toggle-switch" />
               </label>
             </div>
-            <div className="form-group">
-              <label className="form-label">
+            <div className="pref-row">
+              <span className="pref-label">
                 <FormattedMessage id="fetchFrequency" />
-              </label>
+              </span>
               <select
-                className="form-input"
+                className="pref-select"
                 value={formData.fetchFrequency}
                 onChange={(e) => handleInputChange('fetchFrequency', e.target.value)}
               >
-                <option value="0 */3 * * *">Every 3 hours</option>
-                <option value="0 */6 * * *">Every 6 hours</option>
-                <option value="0 */12 * * *">Every 12 hours</option>
-                <option value="0 0 * * *">Daily</option>
+                <option value="0 */3 * * *">{intl.formatMessage({ id: 'every3Hours', defaultMessage: 'Every 3 hours' })}</option>
+                <option value="0 */6 * * *">{intl.formatMessage({ id: 'every6Hours', defaultMessage: 'Every 6 hours' })}</option>
+                <option value="0 */12 * * *">{intl.formatMessage({ id: 'every12Hours', defaultMessage: 'Every 12 hours' })}</option>
+                <option value="0 0 * * *">{intl.formatMessage({ id: 'daily', defaultMessage: 'Daily' })}</option>
               </select>
             </div>
-            <div className="form-group">
-              <label className="form-label">
+            <div className="pref-row">
+              <span className="pref-label">
                 <FormattedMessage id="aiModel" />
-              </label>
+              </span>
               <select
-                className="form-input"
+                className="pref-select"
                 value={formData.aiModel}
                 onChange={(e) => handleInputChange('aiModel', e.target.value)}
               >
@@ -376,7 +393,7 @@ const Settings: React.FC<SettingsProps> = ({ onClose }) => {
                 <option value="gemini-2.5-pro">Gemini 2.5 Pro</option>
               </select>
             </div>
-          </div>
+           </div>
 
           <div className="settings-actions">
             <button
