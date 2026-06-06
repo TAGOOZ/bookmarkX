@@ -52,45 +52,44 @@ Phase 2 delivers the core reading/annotation view AND the AI features that live 
 
 #### 2A: BookmarkDetail Page Architecture
 
-The BookmarkDetail is an Obsidian-style single scrollable page with a Contents sidebar. Built from scratch with lightweight React components + CSS Modules. No Outline code dependency.
+The BookmarkDetail is an Obsidian-style single scrollable page with a horizontal Contents bar above the editor. Built from scratch with lightweight React components + CSS Modules. No Outline code dependency.
 
 **Page Anatomy (top to bottom):**
 
 ```
 ┌──────────────────────────────────────────────────────────┐
-│ [Contents Sidebar]  │  Page Header                       │
-│  (compact minimap)  │  ─────────────────────────────     │
-│                     │  Title (large, bold)               │
-│  ─ dash             │  Metadata line (topic · priority   │
-│  ─ dash             │  · reading time · updated X ago)   │
-│  ─ dash             │                                    │
-│  ─ dash             │  ┌─ Summary (agent) ────────────┐  │
-│  ─ dash             │  │  Dual-language summary        │  │
-│  ─ dash             │  └──────────────────────────────┘  │
-│  (hover → titles)   │                                    │
-│                     │  ┌─ Glossary (agent + user) ────┐  │
-│                     │  │  Term definitions, user can   │  │
-│                     │  │  add custom terms             │  │
-│                     │  └──────────────────────────────┘  │
-│                     │                                    │
-│                     │  ┌─ Article (collapsible) ──────┐  │
-│                     │  │  Readability.js extracted     │  │
-│                     │  │  content, expand/collapse     │  │
-│                     │  └──────────────────────────────┘  │
-│                     │                                    │
-│                     │  ┌─ Highlights (user) ──────────┐  │
-│                     │  │  Selected text with notes     │  │
-│                     │  └──────────────────────────────┘  │
-│                     │                                    │
-│                     │  ┌─ Notes (user) ───────────────┐  │
-│                     │  │  User-written notes           │  │
-│                     │  │  [Enhance] on selection       │  │
-│                     │  └──────────────────────────────┘  │
-│                     │                                    │
-│                     │  ┌─ Chat (agent) ───────────────┐  │
-│                     │  │  Inline AI conversation       │  │
-│                     │  │  with article context         │  │
-│                     │  └──────────────────────────────┘  │
+│            Contents Bar (horizontal minimap)              │
+│     |     |     |     |     |     |                      │
+│   Summary Glossary Article Highlights Notes Chat          │
+│  (hover → titles, click → jump)                          │
+├──────────────────────────────────────────────────────────┤
+│                                                          │
+│  Title (large, bold)                                     │
+│  Metadata line (topic · priority · reading time)         │
+│                                                          │
+│  ┌─ Summary (agent) ──────────────────────────────────┐  │
+│  │  Dual-language summary                              │  │
+│  └────────────────────────────────────────────────────┘  │
+│                                                          │
+│  ┌─ Glossary (agent + user) ──────────────────────────┐  │
+│  │  Term definitions, user can add custom terms        │  │
+│  └────────────────────────────────────────────────────┘  │
+│                                                          │
+│  ┌─ Article (collapsible) ────────────────────────────┐  │
+│  │  Readability.js extracted content, expand/collapse  │  │
+│  └────────────────────────────────────────────────────┘  │
+│                                                          │
+│  ┌─ Highlights (user) ────────────────────────────────┐  │
+│  │  Selected text with notes                           │  │
+│  └────────────────────────────────────────────────────┘  │
+│                                                          │
+│  ┌─ Notes (user) ─────────────────────────────────────┐  │
+│  │  User-written notes, [Enhance] on selection         │  │
+│  └────────────────────────────────────────────────────┘  │
+│                                                          │
+│  ┌─ Chat (agent) ─────────────────────────────────────┐  │
+│  │  Inline AI conversation with article context        │  │
+│  └────────────────────────────────────────────────────┘  │
 └──────────────────────────────────────────────────────────┘
 ```
 
@@ -110,14 +109,14 @@ The BookmarkDetail is an Obsidian-style single scrollable page with a Contents s
 3. **Collapsible** — sections can be collapsed/expanded
 
 **Key interactions:**
-- **Contents sidebar**: Compact minimap with dashes; hover reveals section titles; click to jump
+- **Contents bar**: Horizontal bar above editor with vertical dashes; hover reveals section titles; click to jump; IntersectionObserver tracks active section
 - **Enhance**: User selects text in their notes → floating toolbar → "Enhance" button → agent improves selection without rewriting
 - **Reference links**: User hovers over any sentence in an agent section → link icon appears → click to copy reference → paste in notes → renders as clickable chip → jumps to that sentence
 - **Empty sections**: Hidden entirely when no content exists
 - **Article**: Inline but collapsible — user can expand to read full article, collapse to focus on summary/notes
 
 **Components to build:**
-1. `ContentsSidebar` — compact minimap (~100 lines)
+1. `ContentsBar` — horizontal minimap above editor (~60 lines)
 2. `PageHeader` — title + metadata line (~80 lines)
 3. `SectionRenderer` — renders each section type (custom)
 4. `ArticleView` — readability.js content, collapsible (custom)
@@ -414,7 +413,7 @@ CREATE TABLE agent_actions (
 - **Mobile**: PWA first (quick access), React Native later (full features)
 - **BookmarkDetail**: Obsidian-style page with Outline visual language — built from scratch, no Outline code fork
 - **Notes Editor**: BlockNote (`@blocknote/react`) — Notion-style block editor, same as Docmost uses. No custom textarea. Store as JSON string in DB, parse on load. Props change from `(content: string, onChange: (s: string) => void)` to `(initialContent: string, onChange: (blocks: Block[]) => void)`.
-- **Page layout**: Single scrollable page with Contents sidebar (compact minimap), three layout modes (linear/two-column/collapsible)
+- **Page layout**: Single scrollable page with horizontal Contents bar (vertical dashes above editor), three layout modes (linear/two-column/collapsible)
 - **Section ownership**: Agent owns Summary/Glossary/Chat; User owns Highlights/Notes; Glossary is shared
 - **Enhance**: Selection-based — user selects text in notes, floating toolbar offers "Enhance" button
 - **Reference links**: Hover-to-copy sentence-level references from agent sections into user notes
