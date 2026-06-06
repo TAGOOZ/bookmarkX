@@ -5,9 +5,10 @@
 }
 
 .highlight {
-  border-right: 3px solid var(--accent-color);
-  padding-right: var(--space-m);
+  padding: var(--space-s);
   margin: 0;
+  background-color: var(--section-user-bg);
+  border-radius: var(--radius-m);
 }
 
 .text {

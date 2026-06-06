@@ -23,18 +23,17 @@ export const createHighlightBlock = createReactBlockSpec(
         <div
           contentEditable={false}
           style={{
-            borderLeft: `3px solid ${color}`,
             padding: '8px 12px',
             margin: '4px 0',
-            background: `${color}11`,
-            borderRadius: '0 4px 4px 0',
+            background: `${color}15`,
+            borderRadius: 'var(--radius-m)',
           }}
         >
           <div
             style={{
-              fontSize: '14px',
+              fontSize: 'var(--font-text)',
               lineHeight: '1.5',
-              color: '#ddd',
+              color: 'var(--text-normal)',
               fontStyle: 'italic',
             }}
           >
@@ -44,9 +43,9 @@ export const createHighlightBlock = createReactBlockSpec(
             <div
               style={{
                 marginTop: '6px',
-                fontSize: '12px',
-                color: '#888',
-                borderTop: '1px solid #333',
+                fontSize: 'var(--font-ui-small)',
+                color: 'var(--text-muted)',
+                borderTop: '1px solid var(--background-modifier-border)',
                 paddingTop: '6px',
               }}
             >

@@ -1,9 +1,13 @@
-import React, { useCallback, useEffect, useRef } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useCreateBlockNote } from '@blocknote/react';
 import { BlockNoteView } from '@blocknote/mantine';
 import { PartialBlock } from '@blocknote/core';
 import '@blocknote/mantine/style.css';
 import styles from './NotesEditor.module.css';
+
+function getTheme(): 'light' | 'dark' {
+  return document.documentElement.getAttribute('data-theme') === 'light' ? 'light' : 'dark';
+}
 
 interface NotesEditorProps {
   content: string;
@@ -29,6 +33,13 @@ const NotesEditor: React.FC<NotesEditorProps> = ({ content, onChange }) => {
   const initialContent = parseBlocks(content) || fallbackBlocks(content);
   const editor = useCreateBlockNote({ initialContent });
   const isExternalUpdate = useRef(true);
+  const [theme, setTheme] = useState<'light' | 'dark'>(getTheme);
+
+  useEffect(() => {
+    const observer = new MutationObserver(() => setTheme(getTheme()));
+    observer.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+    return () => observer.disconnect();
+  }, []);
 
   useEffect(() => {
     isExternalUpdate.current = true;
@@ -54,7 +65,7 @@ const NotesEditor: React.FC<NotesEditorProps> = ({ content, onChange }) => {
         editor={editor}
         onChange={handleChange}
         className={styles.editor}
-        theme="light"
+        theme={theme}
       />
     </div>
   );
