@@ -214,3 +214,29 @@ export function parseHTMLToBlocks(html: string): PartialBlock[] {
 
   return blocks;
 }
+
+export async function parseURL(url: string, options: { timeoutMs?: number } = {}): Promise<ParserResult> {
+  const timeoutMs = options.timeoutMs || 15000;
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+
+  try {
+    const response = await fetch(url, {
+      headers: { 'User-Agent': 'BookmarkX/1.0' },
+      signal: controller.signal,
+    });
+    const html = await response.text();
+    const blocks = parseHTMLToBlocks(html);
+
+    const text = blocks
+      .filter((b: any) => typeof b.content === 'string')
+      .map((b: any) => b.content)
+      .join(' ');
+    const wordCount = text.split(/\s+/).filter(Boolean).length;
+    const readingTime = Math.max(1, Math.round(wordCount / 200));
+
+    return { blocks, wordCount, readingTime };
+  } finally {
+    clearTimeout(timer);
+  }
+}
