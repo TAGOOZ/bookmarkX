@@ -2,13 +2,36 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { FormattedMessage } from 'react-intl';
 import { useCreateBlockNote } from '@blocknote/react';
 import { BlockNoteView } from '@blocknote/mantine';
-import { Block, PartialBlock } from '@blocknote/core';
+import { Block, PartialBlock, BlockNoteSchema, defaultBlockSpecs, defaultInlineContentSpecs } from '@blocknote/core';
 import '@blocknote/mantine/style.css';
 import styles from './BookmarkDetail.module.css';
 import { BookmarkDetailData } from './types';
 import { bookmarkToBlocks } from './bookmarkToBlocks';
 import { blocksToBookmark } from './blocksToBookmark';
 import ContentsSidebar from './ContentsSidebar';
+import {
+  createDualLangBlock,
+  createCollapsibleArticleBlock,
+  createChatBlock,
+  createHighlightBlock,
+  createGlossaryTermInline,
+  createReferenceChipInline,
+} from './extensions';
+
+const schema = BlockNoteSchema.create({
+  blockSpecs: {
+    ...defaultBlockSpecs,
+    dualLang: createDualLangBlock(),
+    collapsibleArticle: createCollapsibleArticleBlock(),
+    chat: createChatBlock(),
+    highlight: createHighlightBlock(),
+  },
+  inlineContentSpecs: {
+    ...defaultInlineContentSpecs,
+    glossaryTerm: createGlossaryTermInline(),
+    referenceChip: createReferenceChipInline(),
+  },
+});
 
 interface BookmarkDetailProps {
   bookmark: BookmarkDetailData | null;
@@ -87,7 +110,7 @@ const BookmarkEditor: React.FC<BookmarkEditorProps> = ({
   onBlocksChange,
   onBookmarkChange,
 }) => {
-  const editor = useCreateBlockNote({ initialContent });
+  const editor = useCreateBlockNote({ initialContent, schema });
   const isExternalUpdate = useRef(true);
   const lastBookmarkId = useRef<string | null>(null);
   const editorRef = useRef<HTMLDivElement>(null);
@@ -205,7 +228,7 @@ const BookmarkEditor: React.FC<BookmarkEditorProps> = ({
           editor={editor}
           onChange={handleChange}
           className={styles.editor}
-          theme="dark"
+          theme="light"
         />
       </div>
     </div>

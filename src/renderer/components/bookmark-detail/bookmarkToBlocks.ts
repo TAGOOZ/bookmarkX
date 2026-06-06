@@ -1,6 +1,13 @@
 import { PartialBlock } from '@blocknote/core';
 import { BookmarkDetailData } from './types';
 
+/* eslint-disable @typescript-eslint/no-explicit-any */
+// Helper to create blocks with custom types not in the default BlockNote schema.
+// These types are registered at runtime via editor's blockSpecs/inlineContentSpecs.
+function customBlock(type: string, props: Record<string, unknown> = {}): PartialBlock {
+  return { type, props } as any;
+}
+
 function heading(text: string, level: 1 | 2 | 3 = 2): PartialBlock {
   return { type: 'heading', props: { level }, content: text };
 }
@@ -15,10 +22,6 @@ function styledText(text: string, styles: Record<string, boolean> = {}): { type:
 
 function bulletListItem(text: string): PartialBlock {
   return { type: 'bulletListItem', content: text };
-}
-
-function checkListItem(text: string, checked = false): PartialBlock {
-  return { type: 'checkListItem', props: { checked }, content: text };
 }
 
 function splitParagraphs(text: string): PartialBlock[] {
@@ -87,14 +90,15 @@ export function bookmarkToBlocks(bookmark: BookmarkDetailData): PartialBlock[] {
     });
   }
 
-  if (bookmark.summaryAr) {
+  if (bookmark.summaryAr && bookmark.summary) {
     blocks.push(heading('Summary', 2));
-    blocks.push(paragraph(bookmark.summaryAr));
-  }
-
-  if (bookmark.summary) {
-    if (!bookmark.summaryAr) blocks.push(heading('Summary', 2));
-    blocks.push(paragraph(bookmark.summary));
+    blocks.push(customBlock('dualLang', { contentEn: bookmark.summary, contentAr: bookmark.summaryAr }));
+  } else if (bookmark.summaryAr) {
+    blocks.push(heading('Summary', 2));
+    blocks.push(customBlock('dualLang', { contentEn: '', contentAr: bookmark.summaryAr }));
+  } else if (bookmark.summary) {
+    blocks.push(heading('Summary', 2));
+    blocks.push(customBlock('dualLang', { contentEn: bookmark.summary, contentAr: '' }));
   }
 
   if (bookmark.glossaryTerms && bookmark.glossaryTerms.length > 0) {
@@ -106,16 +110,18 @@ export function bookmarkToBlocks(bookmark: BookmarkDetailData): PartialBlock[] {
 
   if (bookmark.content) {
     blocks.push(heading('Article', 2));
-    blocks.push(...splitParagraphs(bookmark.content));
+    const wordCount = bookmark.content.split(/\s+/).filter(Boolean).length;
+    blocks.push(customBlock('collapsibleArticle', { content: bookmark.content, wordCount, isExpanded: false }));
   }
 
   if (bookmark.highlights && bookmark.highlights.length > 0) {
     blocks.push(heading('Highlights', 2));
     for (const highlight of bookmark.highlights) {
-      blocks.push(checkListItem(highlight.text));
-      if (highlight.note) {
-        blocks.push(paragraph(`Note: ${highlight.note}`));
-      }
+      blocks.push(customBlock('highlight', {
+        selectedText: highlight.text,
+        note: highlight.note || '',
+        color: highlight.color || '#e69819',
+      }));
     }
   }
 

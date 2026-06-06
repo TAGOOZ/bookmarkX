@@ -25,6 +25,46 @@ function getSection(blocks: Block[], startIdx: number): { text: string; endIdx: 
   return { text: lines.join('\n\n'), endIdx: i };
 }
 
+function getDualLangContent(blocks: Block[], startIdx: number): { summaryEn: string; summaryAr: string; endIdx: number } {
+  let summaryEn = '';
+  let summaryAr = '';
+  let i = startIdx + 1;
+  while (i < blocks.length) {
+    const block = blocks[i];
+    if (block.type === 'heading') break;
+    if ((block as Record<string, unknown>).type === 'dualLang') {
+      const props = (block as Record<string, unknown>).props as Record<string, unknown> | undefined;
+      if (props) {
+        summaryEn = (props.contentEn as string) || '';
+        summaryAr = (props.contentAr as string) || '';
+      }
+      i++;
+      break;
+    }
+    i++;
+  }
+  return { summaryEn, summaryAr, endIdx: i };
+}
+
+function getCollapsibleArticleContent(blocks: Block[], startIdx: number): { content: string; endIdx: number } {
+  let content = '';
+  let i = startIdx + 1;
+  while (i < blocks.length) {
+    const block = blocks[i];
+    if (block.type === 'heading') break;
+    if ((block as Record<string, unknown>).type === 'collapsibleArticle') {
+      const props = (block as Record<string, unknown>).props as Record<string, unknown> | undefined;
+      if (props) {
+        content = (props.content as string) || '';
+      }
+      i++;
+      break;
+    }
+    i++;
+  }
+  return { content, endIdx: i };
+}
+
 function getGlossaryItems(blocks: Block[], startIdx: number): { terms: GlossaryTerm[]; endIdx: number } {
   const terms: GlossaryTerm[] = [];
   let i = startIdx + 1;
@@ -52,7 +92,17 @@ function getHighlights(blocks: Block[], startIdx: number): { highlights: Highlig
   while (i < blocks.length) {
     const block = blocks[i];
     if (block.type === 'heading') break;
-    if (block.type === 'checkListItem' || block.type === 'bulletListItem') {
+    if ((block as Record<string, unknown>).type === 'highlight') {
+      const props = (block as Record<string, unknown>).props as Record<string, unknown> | undefined;
+      if (props) {
+        highlights.push({
+          id: `hl-${i}`,
+          text: (props.selectedText as string) || '',
+          note: (props.note as string) || undefined,
+          color: (props.color as string) || undefined,
+        });
+      }
+    } else if (block.type === 'checkListItem' || block.type === 'bulletListItem') {
       const text = getBlockText(block);
       if (text) {
         highlights.push({ id: `hl-${i}`, text });
@@ -128,17 +178,28 @@ function processSection(
   const sectionName = name.toLowerCase();
 
   if (sectionName === 'summary') {
-    const { text } = getSection(blocks, start);
-    if (text) {
-      if (!result.summary) result.summary = text;
-      else result.summaryAr = text;
+    const { summaryEn, summaryAr } = getDualLangContent(blocks, start);
+    if (summaryEn || summaryAr) {
+      if (summaryEn) result.summary = summaryEn;
+      if (summaryAr) result.summaryAr = summaryAr;
+    } else {
+      const { text } = getSection(blocks, start);
+      if (text) {
+        if (!result.summary) result.summary = text;
+        else result.summaryAr = text;
+      }
     }
   } else if (sectionName === 'glossary') {
     const { terms } = getGlossaryItems(blocks, start);
     if (terms.length > 0) result.glossaryTerms = terms;
   } else if (sectionName === 'article') {
-    const { text } = getSection(blocks, start);
-    if (text) result.content = text;
+    const { content } = getCollapsibleArticleContent(blocks, start);
+    if (content) {
+      (result as Record<string, unknown>).content = content;
+    } else {
+      const { text } = getSection(blocks, start);
+      if (text) (result as Record<string, unknown>).content = text;
+    }
   } else if (sectionName === 'highlights') {
     const { highlights } = getHighlights(blocks, start);
     if (highlights.length > 0) result.highlights = highlights;
