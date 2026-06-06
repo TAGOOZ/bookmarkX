@@ -28,6 +28,25 @@ function splitParagraphs(text: string): PartialBlock[] {
 export function bookmarkToBlocks(bookmark: BookmarkDetailData): PartialBlock[] {
   const blocks: PartialBlock[] = [];
 
+  blocks.push(heading(bookmark.title, 1));
+
+  if (bookmark.url) {
+    blocks.push(paragraph(bookmark.url));
+  }
+
+  const meta: string[] = [];
+  if (bookmark.topic) meta.push(`Topic: ${bookmark.topic}`);
+  if (bookmark.contentType) meta.push(`Type: ${bookmark.contentType}`);
+  if (bookmark.priority) meta.push(`Priority: ${bookmark.priority}`);
+  if (bookmark.readingTime) meta.push(`${bookmark.readingTime} min read`);
+  if (bookmark.createdAt) {
+    const date = new Date(bookmark.createdAt);
+    meta.push(date.toLocaleDateString());
+  }
+  if (meta.length > 0) {
+    blocks.push(paragraph(meta.join(' · ')));
+  }
+
   if (bookmark.summaryAr) {
     blocks.push(heading('Summary', 2));
     blocks.push(paragraph(bookmark.summaryAr));
