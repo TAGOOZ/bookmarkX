@@ -47,16 +47,16 @@ const Sidebar: React.FC<SidebarProps> = ({
       </div>
 
       <nav className="sidebar-nav">
-        <div className="nav-item active">
+        <div className="nav-item active" role="button" tabIndex={0}>
           <FormattedMessage id="bookmarks" />
         </div>
-        <div className="nav-item" onClick={onFetchClick}>
+        <div className="nav-item" role="button" tabIndex={0} onClick={onFetchClick} onKeyDown={(e) => e.key === 'Enter' && onFetchClick()}>
           <FormattedMessage id="fetchNow" />
         </div>
-        <div className="nav-item" onClick={onClassifyClick}>
+        <div className="nav-item" role="button" tabIndex={0} onClick={onClassifyClick} onKeyDown={(e) => e.key === 'Enter' && onClassifyClick()}>
           <FormattedMessage id="classifyNow" />
         </div>
-        <div className="nav-item" onClick={onSettingsClick}>
+        <div className="nav-item" role="button" tabIndex={0} onClick={onSettingsClick} onKeyDown={(e) => e.key === 'Enter' && onSettingsClick()}>
           <FormattedMessage id="settings" />
         </div>
       </nav>
@@ -69,7 +69,10 @@ const Sidebar: React.FC<SidebarProps> = ({
           <div
             key={p.value}
             className={`filter-item ${filters.priority === p.value ? 'active' : ''}`}
+            role="button"
+            tabIndex={0}
             onClick={() => onFilterChange({ ...filters, priority: p.value })}
+            onKeyDown={(e) => e.key === 'Enter' && onFilterChange({ ...filters, priority: p.value })}
           >
             <FormattedMessage id={p.label} />
           </div>
@@ -84,7 +87,10 @@ const Sidebar: React.FC<SidebarProps> = ({
           <div
             key={t.value}
             className={`filter-item ${filters.topic === t.value ? 'active' : ''}`}
+            role="button"
+            tabIndex={0}
             onClick={() => onFilterChange({ ...filters, topic: t.value })}
+            onKeyDown={(e) => e.key === 'Enter' && onFilterChange({ ...filters, topic: t.value })}
           >
             <FormattedMessage id={t.label} />
           </div>
@@ -99,7 +105,10 @@ const Sidebar: React.FC<SidebarProps> = ({
           <div
             key={ct.value}
             className={`filter-item ${filters.contentType === ct.value ? 'active' : ''}`}
+            role="button"
+            tabIndex={0}
             onClick={() => onFilterChange({ ...filters, contentType: ct.value })}
+            onKeyDown={(e) => e.key === 'Enter' && onFilterChange({ ...filters, contentType: ct.value })}
           >
             <FormattedMessage id={ct.label} />
           </div>

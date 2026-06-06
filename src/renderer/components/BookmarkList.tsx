@@ -248,12 +248,13 @@ const BookmarkList: React.FC<BookmarkListProps> = ({
       <div className="list-header">
         <FormattedMessage id="bookmarks" />
         <input
-          type="text"
-          className="search-input"
-          placeholder="بحث..."
-          value={searchQuery}
-          onChange={(e) => onSearchChange(e.target.value)}
-        />
+            type="text"
+            className="search-input"
+            placeholder="بحث..."
+            aria-label="بحث في المفضلات"
+            value={searchQuery}
+            onChange={(e) => onSearchChange(e.target.value)}
+          />
       </div>
 
       {filteredBookmarks.length === 0 ? (
@@ -273,7 +274,10 @@ const BookmarkList: React.FC<BookmarkListProps> = ({
             className={`bookmark-item ${
               selectedBookmark?.id === bookmark.id ? 'selected' : ''
             }`}
+            role="button"
+            tabIndex={0}
             onClick={() => onBookmarkSelect(bookmark)}
+            onKeyDown={(e) => e.key === 'Enter' && onBookmarkSelect(bookmark)}
           >
             <div className="bookmark-title">{bookmark.title}</div>
             <div className="bookmark-url">{bookmark.url}</div>
