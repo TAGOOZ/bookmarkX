@@ -132,23 +132,25 @@ const BookmarkEditor: React.FC<BookmarkEditorProps> = ({
   }, []);
 
   useEffect(() => {
+    let cancelled = false;
     const createSession = async () => {
       if (bookmark.chatSessionId) {
         setChatSessionId(bookmark.chatSessionId);
       } else if (bookmark.id && !chatSessionId) {
         try {
           const sessionId = await (window as any).api?.createChatSession?.(bookmark.id);
-          if (sessionId) {
+          if (!cancelled && sessionId) {
             setChatSessionId(sessionId);
             onBookmarkChange?.({ chatSessionId: sessionId });
           }
         } catch {
-          // Failed to create chat session
+          // Failed to create chat session — chat section won't render
         }
       }
     };
     createSession();
-  }, [bookmark.id, bookmark.chatSessionId, chatSessionId, onBookmarkChange]);
+    return () => { cancelled = true; };
+  }, [bookmark.id, bookmark.chatSessionId]);
 
   useEffect(() => {
     if (bookmark.id === lastBookmarkId.current) return;

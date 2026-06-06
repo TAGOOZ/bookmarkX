@@ -249,8 +249,13 @@ app.whenReady().then(async () => {
 
   // Phase 2 IPC handlers: Chat sessions
   ipcMain.handle('create-chat-session', async (_event, bookmarkId: string) => {
-    const { createChatSession } = await import('./db/chat');
-    return createChatSession(db, bookmarkId);
+    try {
+      const { createChatSession } = await import('./db/chat');
+      return await createChatSession(db, bookmarkId);
+    } catch (err) {
+      console.warn('Failed to create chat session:', err);
+      return null;
+    }
   });
 
   ipcMain.handle('get-chat-messages', async (_event, sessionId: string) => {
