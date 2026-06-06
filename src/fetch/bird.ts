@@ -43,6 +43,15 @@ export async function fetchBookmarks(
 ): Promise<Bookmark[]> {
   const { count = 20, authToken, ct0, chromeProfile, firefoxProfile } = options;
 
+  // Validate credentials before calling bird
+  if (!authToken || !ct0) {
+    throw new Error(
+      'Missing X/Twitter credentials. Open Settings and either:\n' +
+      '• Click "Login with Twitter" to authenticate, or\n' +
+      '• Enter auth_token and ct0 manually from Chrome DevTools'
+    );
+  }
+
   const args = ['bookmarks', '--json', '--count', String(count)];
 
   const env: Record<string, string> = {};

@@ -37,9 +37,21 @@ describe('fetchBookmarks', () => {
     vi.clearAllMocks();
   });
 
+  it('throws when authToken is missing', async () => {
+    await expect(fetchBookmarks({ ct0: 'ct0' })).rejects.toThrow('Missing X/Twitter credentials');
+  });
+
+  it('throws when ct0 is missing', async () => {
+    await expect(fetchBookmarks({ authToken: 'token' })).rejects.toThrow('Missing X/Twitter credentials');
+  });
+
+  it('throws when both are missing', async () => {
+    await expect(fetchBookmarks()).rejects.toThrow('Missing X/Twitter credentials');
+  });
+
   it('calls bird bookmarks with correct args', async () => {
     mockBirdOutput([]);
-    await fetchBookmarks({ count: 10 });
+    await fetchBookmarks({ authToken: 'token', ct0: 'ct0', count: 10 });
 
     expect(mockExecFile).toHaveBeenCalledWith(
       'bird',
@@ -51,7 +63,7 @@ describe('fetchBookmarks', () => {
 
   it('returns empty array when no bookmarks', async () => {
     mockBirdOutput([]);
-    const result = await fetchBookmarks();
+    const result = await fetchBookmarks({ authToken: 'token', ct0: 'ct0' });
     expect(result).toEqual([]);
   });
 
@@ -68,7 +80,7 @@ describe('fetchBookmarks', () => {
     ];
     mockBirdOutput(raw);
 
-    const result = await fetchBookmarks();
+    const result = await fetchBookmarks({ authToken: 'token', ct0: 'ct0' });
 
     expect(result).toHaveLength(1);
     expect(result[0]).toMatchObject({
@@ -92,7 +104,7 @@ describe('fetchBookmarks', () => {
     ];
     mockBirdOutput(raw);
 
-    const result = await fetchBookmarks();
+    const result = await fetchBookmarks({ authToken: 'token', ct0: 'ct0' });
     expect(result[0].content_type).toBe('outer_link');
   });
 
@@ -109,11 +121,11 @@ describe('fetchBookmarks', () => {
     ];
     mockBirdOutput(raw);
 
-    const result = await fetchBookmarks();
+    const result = await fetchBookmarks({ authToken: 'token', ct0: 'ct0' });
     expect(result[0].content_type).toBe('thread');
   });
 
-  it('passes auth tokens when provided', async () => {
+  it('passes auth tokens as env vars', async () => {
     mockBirdOutput([]);
     await fetchBookmarks({
       authToken: 'my-token',
@@ -135,7 +147,7 @@ describe('fetchBookmarks', () => {
 
   it('throws on bird CLI errors', async () => {
     mockBirdError('Authentication failed');
-    await expect(fetchBookmarks()).rejects.toThrow('Authentication failed');
+    await expect(fetchBookmarks({ authToken: 'token', ct0: 'ct0' })).rejects.toThrow('Authentication failed');
   });
 
   it('throws on invalid JSON output', async () => {
@@ -146,6 +158,6 @@ describe('fetchBookmarks', () => {
       cb(null, 'not json', '');
     });
 
-    await expect(fetchBookmarks()).rejects.toThrow();
+    await expect(fetchBookmarks({ authToken: 'token', ct0: 'ct0' })).rejects.toThrow();
   });
 });

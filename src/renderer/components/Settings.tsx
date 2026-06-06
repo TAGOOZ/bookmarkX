@@ -107,6 +107,8 @@ const Settings: React.FC<SettingsProps> = ({ onClose }) => {
         }));
         if (result.authToken && result.ct0) {
           setAuthStatus('detected');
+        } else if (result.warning) {
+          setError(result.warning);
         }
       }
     } catch (err) {

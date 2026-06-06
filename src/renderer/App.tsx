@@ -91,6 +91,7 @@ const messages = {
   daily: 'يومياً',
   loading: 'جاري التحميل...',
   errorOccurred: 'حدث خطأ',
+  missingCredentials: 'بيانات اعتماد X/Twitter مفقودة. افتح الإعدادات وقم بـ:\n• النقر على "تسجيل الدخول بحساب تويتر" للمصادقة، أو\n• إدخال auth_token و ct0 يدوياً من أدوات مطور Chrome',
 };
 
 function AppContent() {

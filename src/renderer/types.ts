@@ -35,6 +35,7 @@ export interface ChromeProfileDetection {
   selectedProfile: string;
   authToken?: string;
   ct0?: string;
+  warning?: string;
 }
 
 declare global {

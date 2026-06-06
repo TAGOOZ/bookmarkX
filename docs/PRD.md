@@ -48,18 +48,19 @@
 - As a user, bookmarks are fetched automatically every 6 hours (configurable via user.json)
 - As a user, I can manually trigger a fetch at any time (resets the 6-hour timer)
 - As a user, each bookmark is auto-classified with: Priority (high/medium/low), Topic tags, Reading time estimate
-- As a user, I can browse bookmarks in a 3-column layout (sidebar + list + detail)
-- As a user, I can filter by priority, topic, and content type
-- As a user, I can search bookmarks by keyword (full-text)
+- As a user, I can browse bookmarks in a 2-panel layout (grouped nav panel + detail)
+- As a user, I can browse bookmarks grouped by topic with collapsible sections
+- As a user, I can search bookmarks via an overlay search modal
+- As a user, I can trigger fetch, classify, and open settings from icon buttons in the nav panel
 - As a user, I get desktop notifications + in-app badge for high-priority new bookmarks
 - As a user, the app works offline with previously fetched data
 
 **Acceptance Criteria:**
 - bird.fast CLI is bundled or accessible from the Electron app
 - Classification uses <1s per bookmark (cheap AI call on metadata only)
-- 3-column layout renders in <100ms
+- 2-panel layout renders in <100ms
 - Offline mode shows cached bookmarks
-- Full RTL layout: sidebar, navigation, and content areas mirror for Arabic text
+- Full RTL layout: nav panel (right) + detail (center) mirror for Arabic text
 - Mixed Arabic/English text renders correctly (bidirectional text support)
 - Thmanyah font family loaded and applied to Arabic text
 - Auth tokens come from user.json (Phase 0) — no .env dependency
@@ -347,12 +348,13 @@ Agent as orchestrator using LangGraph TypeScript (ReAct loop). Pipeline keeps fe
 │  Renderer   │          Main Process             │
 │  (React)    │                                   │
 │             │  ┌─────────────────────────────┐  │
-│  3-Column   │  │  Job Scheduler (node-cron)  │  │
+│  2-Panel   │  │  Job Scheduler (node-cron)  │  │
 │  UI         │  │  - Fetch (every 6h)         │  │
 │             │  │  - Classify (auto)           │  │
-│  Filters    │  │  - Summarize (manual)        │  │
-│  Search     │  └─────────────┬───────────────┘  │
-│  Glossary   │                │                   │
+│  Nav Panel  │  │  - Summarize (manual)        │  │
+│  (grouped   │  └─────────────┬───────────────┘  │
+│   bookmarks │                │                   │
+│   + icons)  │  ┌─────────────▼───────────────┐  │
 │  Agent UI   │  ┌─────────────▼───────────────┐  │
 │  (cards)    │  │  BullMQ + SQLite Queue       │  │
 │             │  └─────────────┬───────────────┘  │
@@ -537,6 +539,7 @@ CREATE TABLE agent_actions (
 - [0014: LangGraph Agent Architecture](docs/adr/0014-langgraph-agent-architecture.md)
 - [0015: Article Parser — Structured Content Extraction](docs/adr/0015-article-parser.md)
 - [0016: User Config & Authentication](docs/adr/0016-user-config-auth.md)
+- [0017: Two-Panel Layout Redesign](docs/adr/0017-two-panel-layout-redesign.md)
 
 ## 9. Success Metrics
 
@@ -556,6 +559,7 @@ CREATE TABLE agent_actions (
 - **BookmarkDetail**: Obsidian-style page with Outline visual language — built from scratch, no Outline code fork
 - **Notes Editor**: BlockNote (`@blocknote/react`) — Notion-style block editor, same as Docmost uses. No custom textarea. Store as JSON string in DB, parse on load. Props change from `(content: string, onChange: (s: string) => void)` to `(initialContent: string, onChange: (blocks: Block[]) => void)`.
 - **Page layout**: Horizontal tabs for multiple bookmarks, ContentsBar aligned with app title, single scrollable page, three layout modes (linear/two-column/collapsible)
+- **App layout**: Two-panel RTL — nav panel (350px, right) with grouped bookmarks + action icons, detail panel (flex: 1, center). Sidebar removed. See [ADR-0017](docs/adr/0017-two-panel-layout-redesign.md).
 - **Section ownership**: Agent owns Summary/Glossary/Chat; User owns Highlights/Notes; Glossary is shared
 - **Enhance**: Selection-based — user selects text in notes, floating toolbar offers "Enhance" button
 - **Reference links**: Hover-to-copy sentence-level references from agent sections into user notes
