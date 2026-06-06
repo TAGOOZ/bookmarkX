@@ -2,13 +2,17 @@ import { app, BrowserWindow, ipcMain } from 'electron';
 import path from 'node:path';
 import fs from 'node:fs';
 import started from 'electron-squirrel-startup';
-import Database from 'better-sqlite3';
+import { createClient, type Client } from '@libsql/client';
 
 // Disable GPU acceleration on Linux/Wayland to avoid crashes
 if (process.platform === 'linux') {
   app.commandLine.appendSwitch('disable-gpu');
   app.commandLine.appendSwitch('disable-gpu-compositing');
+  app.commandLine.appendSwitch('disable-dev-shm-usage');
   app.commandLine.appendSwitch('no-sandbox');
+  app.commandLine.appendSwitch('disable-software-rasterizer');
+  app.commandLine.appendSwitch('use-gl', 'swiftshader');
+  app.commandLine.appendSwitch('in-process-gpu');
 }
 import { initializeSchema } from './db/schema';
 import { getStoredBookmarks } from './db/bookmarks';
@@ -20,7 +24,7 @@ if (started) {
   app.quit();
 }
 
-let db: Database.Database;
+let db: Client;
 
 const createWindow = () => {
   // Create the browser window.
@@ -68,18 +72,18 @@ app.on('activate', () => {
 });
 
 // Initialize database and IPC handlers
-app.whenReady().then(() => {
+app.whenReady().then(async () => {
   // Initialize SQLite database
   const dbPath = path.join(app.getPath('userData'), 'bookmarks.db');
-  db = new Database(dbPath);
-  initializeSchema(db);
+  db = createClient({ url: `file:${dbPath}` });
+  await initializeSchema(db);
 
   // IPC handlers for bookmark data
-  ipcMain.handle('get-bookmarks', () => {
+  ipcMain.handle('get-bookmarks', async () => {
     return getStoredBookmarks(db);
   });
 
-  ipcMain.handle('get-classifications', () => {
+  ipcMain.handle('get-classifications', async () => {
     return getClassifiedBookmarks(db);
   });
 
