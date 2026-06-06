@@ -58,7 +58,7 @@ body {
   padding-top: 36px;
 }
 
-[dir="ltr"] .app-container {
+[dir="rtl"] .app-container {
   flex-direction: row-reverse;
 }
 
