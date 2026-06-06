@@ -180,22 +180,78 @@ The BookmarkDetail is an Obsidian-style single scrollable page with a horizontal
 
 **Agent-ready note:** Search service must expose `semanticSearch(query, filters)` with typed I/O. Agent can use this to proactively surface relevant bookmarks.
 
-### Phase 4: Agent (Future)
+### Phase 4: Agent
+
+Agent as orchestrator using LangGraph TypeScript (ReAct loop). Pipeline keeps fetching — agent handles everything else. Ask-first autonomy: agent proposes actions, user approves. Memory stored in SQLite with sqlite-vec for vector embeddings. See [ADR-0014](docs/adr/0014-langgraph-agent-architecture.md).
+
+#### Phase 4A: LangGraph Skeleton + Tool Execution
 
 **User Stories:**
-- As a user, the agent proactively surfaces high-priority bookmarks I haven't read
-- As a user, the agent auto-summarizes new bookmarks without manual trigger
-- As a user, the agent suggests actions (e.g., "this bookmark relates to 3 others you've read")
-- As a user, the agent can update BookmarkDetail sections (push summaries, suggest notes)
-- As a user, the agent has conversation memory across sessions
-- As a user, the agent logs its decisions and reasoning for transparency
+- As a user, the agent can classify and summarize bookmarks using existing AI services
+- As a user, the agent runs a ReAct loop (Observe → Think → Act) when triggered
+- As a user, the agent is triggered by events (e.g., classification:complete)
 
 **Acceptance Criteria:**
-- Agent calls existing service functions (same as Phase 1-2 AI services)
-- Agent writes to `agent_memory` and `agent_actions` tables
+- `@langchain/langgraph` installed and configured
+- Flat state schema defined (bookmark, pending actions, user prefs, history, tool results)
+- ReAct graph created with Observe → Think → Act nodes
+- Existing AI services wired as LangGraph tools (classifyBookmark, summarizeBookmark, enhanceNote, sendMessage)
+- Agent can execute tools and return results
+- Agent runs inside Electron main process (no separate process)
+- Agent triggered by `classification:complete` event
+
+#### Phase 4B: Memory + Embeddings + Preferences
+
+**User Stories:**
+- As a user, the agent remembers its decisions and reasoning across sessions
+- As a user, the agent recalls similar past situations using semantic search
+- As a user, the agent stores learned preferences (e.g., "user approves AI topic summaries")
+
+**Acceptance Criteria:**
+- `sqlite-vec` installed and configured
+- `agent_memory` table created (id, bookmark_id, context, decision, reasoning, created_at)
+- `agent_memory_embeddings` table created (memory_id, embedding BLOB, model_used)
+- Three embedding backends implemented: Xenova Transformers (local, 384 dims), Gemini API (cloud, 768 dims), Ollama (cloud models, 768 dims)
+- User selects which embedding backend to use in Settings
+- Three memory types stored: learned preferences (semantic), episode log (episodic), user profile (facts)
+- Agent performs semantic search over memory via sqlite-vec KNN
+- `agent_actions` table tracks approved/rejected actions
+
+#### Phase 4C: Approval UI + Desktop Notifications
+
+**User Stories:**
+- As a user, I see notification cards when the agent proposes an action
+- As a user, I can approve, reject, or modify each proposal
+- As a user, I can review all pending proposals in a batch queue
+- As a user, I get desktop notifications for new proposals
+
+**Acceptance Criteria:**
+- In-app notification card component renders agent proposals
+- Batch approval queue shows all pending actions (action type, target bookmark, details)
+- Each proposal has Approve / Reject / Modify controls
+- Modify flow allows user to adjust proposal (e.g., "summarize but English only")
+- Desktop notification fires when new proposal arrives
+- Notification badge shows count of pending proposals
+- Agent does not execute until user approves
+- Agent actions are reversible (user can undo)
+
+#### Phase 4D: Preference Learning + Proactive Suggestions
+
+**User Stories:**
+- As a user, the agent learns from my approval patterns
+- As a user, the agent auto-proposes similar actions based on what I've approved before
+- As a user, the agent surfaces related bookmarks ("this connects to 3 others you've read")
+- As a user, the agent proactively suggests actions I actually want
+
+**Acceptance Criteria:**
+- Agent stores approval patterns in semantic memory (e.g., "approved summarize for AI topic 5x")
+- Agent queries memory before proposing to find similar past decisions
+- Agent suggests related bookmarks based on topic/vector similarity
+- Agent proactively surfaces high-priority unread bookmarks
+- Agent proposes connecting related bookmarks
+- ReAct loop uses memory-driven decisions (not just current state)
 - Agent emits events that UI subscribes to for real-time updates
-- User can review/override any agent action
-- Agent decisions are reversible
+- User can configure auto-execute rules for low-risk actions (optional)
 
 ## 5. Tech Stack
 
@@ -214,9 +270,12 @@ The BookmarkDetail is an Obsidian-style single scrollable page with a horizontal
 | Job Queue | BullMQ + SQLite | No Redis dependency, sufficient for personal use |
 | X Fetcher | bird.fast CLI | Free, cookie-based, near-real-time |
 | AI (Primary) | Google Gemini API | Free tier, good Egyptian Arabic quality |
-| AI (Fallback) | Ollama (cloud + local) | Offline/budget, cloud models available |
+| AI (Fallback) | Ollama (cloud models) | Cloud models via local Ollama runtime |
 | Article Reader | readability.js | Clean article extraction for reader mode |
 | Rich Text Editor | @blocknote/react | Notion-style block editor, same as Docmost |
+| Agent Framework | @langchain/langgraph | ReAct loop, tool orchestration, state management |
+| Vector Search | sqlite-vec | Vector similarity search in SQLite, no external DB |
+| Embeddings | @xenova/transformers | Local embedding model (all-MiniLM-L6-v2, 384 dims) |
 | Auto-update | electron-updater | Standard Electron update mechanism |
 
 ## 6. Architecture Overview
@@ -234,8 +293,8 @@ The BookmarkDetail is an Obsidian-style single scrollable page with a horizontal
 │  Filters    │  │  - Summarize (manual)        │  │
 │  Search     │  └─────────────┬───────────────┘  │
 │  Glossary   │                │                   │
-│             │  ┌─────────────▼───────────────┐  │
-│             │  │  BullMQ + SQLite Queue       │  │
+│  Agent UI   │  ┌─────────────▼───────────────┐  │
+│  (cards)    │  │  BullMQ + SQLite Queue       │  │
 │             │  └─────────────┬───────────────┘  │
 │             │                │                   │
 │             │  ┌─────────────▼───────────────┐  │
@@ -244,14 +303,21 @@ The BookmarkDetail is an Obsidian-style single scrollable page with a horizontal
 │             │  └─────────────┬───────────────┘  │
 │             │                │                   │
 │             │  ┌─────────────▼───────────────┐  │
+│             │  │  LangGraph Agent (ReAct)     │  │
+│             │  │  - Observe → Think → Act     │  │
+│             │  │  - Tools: classify, summarize│  │
+│             │  │  - Memory: sqlite-vec         │  │
+│             │  └─────────────┬───────────────┘  │
+│             │                │                   │
+│             │  ┌─────────────▼───────────────┐  │
 │             │  │  LLM Service                 │  │
-│             │  │  - GPT-4o / Claude (primary) │  │
+│             │  │  - Gemini (primary)          │  │
 │             │  │  - Ollama (fallback)         │  │
 │             │  └─────────────┬───────────────┘  │
 │             │                │                   │
 │             │  ┌─────────────▼───────────────┐  │
 │             │  │  libSQL (local)              │  │
-│             │  │  + built-in vectors          │  │
+│             │  │  + sqlite-vec (vectors)      │  │
 │             │  └─────────────┬───────────────┘  │
 │             │                │                   │
 │             │  ┌─────────────▼───────────────┐  │
@@ -261,7 +327,7 @@ The BookmarkDetail is an Obsidian-style single scrollable page with a horizontal
 └─────────────────────────────────────────────────┘
 ```
 
-## 7. Data Model (Phase 1)
+## 7. Data Model
 
 ```sql
 -- Core bookmark table
@@ -367,13 +433,21 @@ CREATE TABLE bookmark_glossary (
   PRIMARY KEY (summary_id, term_id)
 );
 
--- Phase 4: Agent (future)
+-- Phase 4: Agent
 CREATE TABLE agent_memory (
   id TEXT PRIMARY KEY,
   bookmark_id TEXT REFERENCES bookmarks(id),
+  memory_type TEXT CHECK(memory_type IN ('preference', 'episode', 'profile')),
   context TEXT NOT NULL,
   decision TEXT,
   reasoning TEXT,
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE agent_memory_embeddings (
+  memory_id TEXT REFERENCES agent_memory(id) PRIMARY KEY,
+  embedding BLOB NOT NULL,
+  model_used TEXT NOT NULL,
   created_at DATETIME DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -383,6 +457,7 @@ CREATE TABLE agent_actions (
   target TEXT NOT NULL,
   payload TEXT,
   result TEXT,
+  status TEXT CHECK(status IN ('pending', 'approved', 'rejected', 'modified', 'executed', 'rolled_back')),
   created_at DATETIME DEFAULT CURRENT_TIMESTAMP
 );
 ```
@@ -397,6 +472,7 @@ CREATE TABLE agent_actions (
 - [0011: @libsql/client as Local SQLite Driver](docs/adr/0011-libsql-client-local-sqlite.md)
 - [0012: BookmarkDetail Page Architecture](docs/adr/0012-bookmarkdetail-page-architecture.md)
 - [0013: Agent-Ready AI Boundaries](docs/adr/0013-agent-ready-ai-boundaries.md)
+- [0014: LangGraph Agent Architecture](docs/adr/0014-langgraph-agent-architecture.md)
 
 ## 9. Success Metrics
 

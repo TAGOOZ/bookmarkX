@@ -15,6 +15,30 @@ _Autonomous_: yes. The agent initiates actions.
 **Agent boundary**:
 The interface between current AI and future agent. All AI-related code must be built with agent-ready boundaries: clear input/output types, no UI coupling in AI logic, service-layer abstraction. When the agent arrives, it calls the same services the AI does — just with autonomy and memory on top.
 
+**Agent Orchestrator**:
+The agent's role as the central coordinator that manages the knowledge lifecycle. The agent orchestrates classify, summarize, connect, and suggest actions. The triage pipeline keeps fetching — the agent does everything else.
+_Avoid_: brain, controller
+
+**ReAct Loop**:
+The agent's decision-making pattern: Observe (check state, new bookmarks) → Think (decide what to do) → Act (call a tool) → Observe (check result) → Think... until done. Chosen over linear pipeline or branching graph for maximum flexibility.
+_Avoid_: agent loop, action loop
+
+**Agent Tools**:
+Functions the agent can call during its ReAct loop. Three categories: (1) Existing AI services (classifyBookmark, summarizeBookmark, enhanceNote, sendMessage), (2) Notifications/UI (propose actions to user), (3) Search/discovery (find related bookmarks, query glossary). Agent never accesses DB directly — goes through service functions per ADR-0013.
+_Avoid_: agent capabilities, agent functions
+
+**Agent Proposal**:
+An action the agent suggests to the user for approval. Rendered as an in-app notification card. User can approve, reject, or modify each proposal. Batch queue shows all pending proposals. Agent does not execute until user approves.
+_Avoid_: agent action, agent suggestion
+
+**Agent Memory**:
+Persistent state the agent retains across sessions. Three types: (1) Learned preferences (semantic) — e.g., "user always approves AI topic summaries", (2) Episode log (episodic) — e.g., "last Tuesday summarized 3 ML bookmarks", (3) User profile (facts) — e.g., "prefers Egyptian Arabic summaries". Stored in SQLite with sqlite-vec for vector-enhanced semantic recall.
+_Avoid_: agent state, agent context
+
+**Embedding Backend**:
+The service used to generate vector embeddings for agent memory search. Three supported backends: (1) Xenova Transformers (local, all-MiniLM-L6-v2, 384 dims), (2) Gemini API (cloud, 768 dims), (3) Ollama (cloud models via local Ollama runtime, 768 dims). User selects which backend to use.
+_Avoid_: embedding model, vector provider
+
 ## Language
 
 **Bookmark**:
