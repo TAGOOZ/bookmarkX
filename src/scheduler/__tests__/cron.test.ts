@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import Database from 'better-sqlite3';
-import { initializeSchema } from '../../db/schema';
+import type { Client } from '@libsql/client';
+import { createTestDb } from '../../db/__tests__/test-client';
 import { startCronScheduler } from '../cron';
 
 vi.mock('../../pipeline/fetch-and-store', () => ({
@@ -18,11 +18,10 @@ const mockFetchAndStore = vi.mocked(fetchAndStore);
 const mockClassifyAndNotify = vi.mocked(classifyAndNotify);
 
 describe('cron scheduler', () => {
-  let db: Database.Database;
+  let db: Client;
 
-  beforeEach(() => {
-    db = new Database(':memory:');
-    initializeSchema(db);
+  beforeEach(async () => {
+    db = await createTestDb();
     vi.clearAllMocks();
     vi.useFakeTimers();
   });

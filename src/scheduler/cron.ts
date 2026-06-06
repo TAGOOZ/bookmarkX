@@ -1,5 +1,5 @@
 import cron from 'node-cron';
-import Database from 'better-sqlite3';
+import type { Client } from '@libsql/client';
 import { fetchAndStore } from '../pipeline/fetch-and-store';
 import { classifyAndNotify } from '../pipeline/classify-and-notify';
 
@@ -9,7 +9,7 @@ export interface CronJob {
 }
 
 export function startCronScheduler(
-  db: Database.Database,
+  db: Client,
   schedule = '0 */6 * * *',
 ): CronJob {
   const run = async () => {
