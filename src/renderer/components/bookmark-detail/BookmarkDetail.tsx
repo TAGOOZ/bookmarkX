@@ -9,6 +9,7 @@ import { BookmarkDetailData } from './types';
 import { bookmarkToBlocks } from './bookmarkToBlocks';
 import { blocksToBookmark } from './blocksToBookmark';
 import ContentsSidebar from './ContentsSidebar';
+import { isArabic, detectDir } from './rtl-detect';
 import {
   createDualLangBlock,
   createCollapsibleArticleBlock,
@@ -48,19 +49,6 @@ function parseStoredBlocks(blocksJson: string | undefined): PartialBlock[] | und
   } catch {
     return undefined;
   }
-}
-
-const ARABIC_RE = /[\u0600-\u06FF\u0750-\u077F\u08A0-\u08FF\uFB50-\uFDFF\uFE70-\uFEFF]/;
-
-function isArabic(text: string): boolean {
-  return ARABIC_RE.test(text);
-}
-
-function detectDir(bookmark: BookmarkDetailData): string {
-  if (bookmark.title && isArabic(bookmark.title)) return 'rtl';
-  if (bookmark.content && isArabic(bookmark.content)) return 'rtl';
-  if (bookmark.summary && isArabic(bookmark.summary)) return 'rtl';
-  return 'ltr';
 }
 
 function stripEditorPadding(container: HTMLElement | null) {

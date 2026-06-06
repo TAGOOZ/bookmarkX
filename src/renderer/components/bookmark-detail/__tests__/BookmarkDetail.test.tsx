@@ -78,4 +78,32 @@ describe('BookmarkDetail', () => {
     );
     expect(container.querySelector('.bn-editor')).toBeDefined();
   });
+
+  it('sets dir="rtl" on editor for Arabic bookmark', () => {
+    const { container } = renderWithIntl(
+      <BookmarkDetail
+        bookmark={{ ...baseBookmark, title: 'مقال عن الذكاء الاصطناعي' }}
+      />,
+    );
+    const editor = container.querySelector('[dir="rtl"]');
+    expect(editor).not.toBeNull();
+  });
+
+  it('sets dir="ltr" on editor for English bookmark', () => {
+    const { container } = renderWithIntl(
+      <BookmarkDetail bookmark={baseBookmark} />
+    );
+    const editor = container.querySelector('[dir="ltr"]');
+    expect(editor).not.toBeNull();
+  });
+
+  it('sets dir="rtl" when summary is Arabic', () => {
+    const { container } = renderWithIntl(
+      <BookmarkDetail
+        bookmark={{ ...baseBookmark, summary: 'ملخص بالعربي' }}
+      />,
+    );
+    const editor = container.querySelector('[dir="rtl"]');
+    expect(editor).not.toBeNull();
+  });
 });

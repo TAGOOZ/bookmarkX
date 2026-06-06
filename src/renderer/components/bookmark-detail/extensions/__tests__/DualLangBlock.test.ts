@@ -1,7 +1,10 @@
+/**
+ * @vitest-environment jsdom
+ */
 import { describe, it, expect } from 'vitest';
 import { createDualLangBlock } from '../DualLangBlock';
 
-describe('DualLangBlock', () => {
+describe('DualLangBlock config', () => {
   const block = createDualLangBlock();
 
   it('has correct type', () => {
