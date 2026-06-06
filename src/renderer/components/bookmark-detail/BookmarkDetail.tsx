@@ -5,7 +5,6 @@ import { BlockNoteView } from '@blocknote/mantine';
 import { Block, PartialBlock } from '@blocknote/core';
 import '@blocknote/mantine/style.css';
 import styles from './BookmarkDetail.module.css';
-import PageHeader from './PageHeader';
 import { BookmarkDetailData } from './types';
 import { bookmarkToBlocks } from './bookmarkToBlocks';
 import { blocksToBookmark } from './blocksToBookmark';
@@ -27,18 +26,44 @@ function parseStoredBlocks(blocksJson: string | undefined): PartialBlock[] | und
   }
 }
 
+const BookmarkDetail: React.FC<BookmarkDetailProps> = ({
+  bookmark,
+  onBlocksChange,
+  onBookmarkChange,
+}) => {
+  if (!bookmark) {
+    return (
+      <div className={styles.empty}>
+        <FormattedMessage id="selectBookmark" />
+      </div>
+    );
+  }
+
+  const initialContent = parseStoredBlocks(bookmark.blocks) || bookmarkToBlocks(bookmark);
+
+  return (
+    <BookmarkEditor
+      bookmark={bookmark}
+      initialContent={initialContent}
+      onBlocksChange={onBlocksChange}
+      onBookmarkChange={onBookmarkChange}
+    />
+  );
+};
+
 interface BookmarkEditorProps {
   bookmark: BookmarkDetailData;
+  initialContent: PartialBlock[];
   onBlocksChange?: (blocks: string) => void;
   onBookmarkChange?: (updated: Partial<BookmarkDetailData>) => void;
 }
 
 const BookmarkEditor: React.FC<BookmarkEditorProps> = ({
   bookmark,
+  initialContent,
   onBlocksChange,
   onBookmarkChange,
 }) => {
-  const initialContent = parseStoredBlocks(bookmark.blocks) || bookmarkToBlocks(bookmark);
   const editor = useCreateBlockNote({ initialContent });
   const isExternalUpdate = useRef(true);
   const lastBookmarkId = useRef<string | null>(null);
@@ -62,51 +87,12 @@ const BookmarkEditor: React.FC<BookmarkEditorProps> = ({
   }, [editor, onBlocksChange, onBookmarkChange, bookmark]);
 
   return (
-    <div className={styles.editorWrapper}>
-      <BlockNoteView
-        editor={editor}
-        onChange={handleChange}
-        className={styles.editor}
-        theme="light"
-      />
-    </div>
-  );
-};
-
-const BookmarkDetail: React.FC<BookmarkDetailProps> = ({
-  bookmark,
-  onBlocksChange,
-  onBookmarkChange,
-}) => {
-  if (!bookmark) {
-    return (
-      <div className={styles.container}>
-        <div className={styles.empty}>
-          <FormattedMessage id="selectBookmark" />
-        </div>
-      </div>
-    );
-  }
-
-  return (
-    <div className={styles.container}>
-      <div className={styles.content}>
-        <PageHeader
-          title={bookmark.title}
-          url={bookmark.url}
-          topic={bookmark.topic}
-          priority={bookmark.priority}
-          contentType={bookmark.contentType}
-          readingTime={bookmark.readingTime}
-          createdAt={bookmark.createdAt}
-        />
-        <BookmarkEditor
-          bookmark={bookmark}
-          onBlocksChange={onBlocksChange}
-          onBookmarkChange={onBookmarkChange}
-        />
-      </div>
-    </div>
+    <BlockNoteView
+      editor={editor}
+      onChange={handleChange}
+      className={styles.editor}
+      theme="dark"
+    />
   );
 };
 

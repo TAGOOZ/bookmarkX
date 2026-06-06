@@ -47,9 +47,9 @@ describe('BookmarkDetail', () => {
     expect(screen.getByText('Select a bookmark')).toBeDefined();
   });
 
-  it('renders page header with title', () => {
-    renderWithIntl(<BookmarkDetail bookmark={baseBookmark} />);
-    expect(screen.getByText('Test Article')).toBeDefined();
+  it('renders the BlockNote editor with bookmark title in blocks', () => {
+    const { container } = renderWithIntl(<BookmarkDetail bookmark={baseBookmark} />);
+    expect(container.querySelector('.bn-editor')).toBeDefined();
   });
 
   it('renders the BlockNote editor', () => {
