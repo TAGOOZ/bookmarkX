@@ -80,3 +80,7 @@ _Avoid_: improve, rewrite, AI edit
 **Reference Link**:
 An inline link from a user note to a specific part of an agent section (e.g., "see summary about X"). Rendered as a clickable chip that jumps to that section.
 _Avoid_: cross-reference, backlink
+
+## Editor Decision
+
+**BlockNote** (`@blocknote/react`, `@blocknote/core`, `@blocknote/mantine`) — Notion-style block editor, same as Docmost. Replaces the plain textarea in NotesEditor. Store content as JSON string in DB (`JSON.stringify(blocks)`). Props change from `(content: string, onChange: (s: string) => void)` to `(initialContent: string, onChange: (blocks: Block[]) => void)`.

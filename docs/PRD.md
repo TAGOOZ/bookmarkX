@@ -121,7 +121,7 @@ The BookmarkDetail is an Obsidian-style single scrollable page with a Contents s
 2. `PageHeader` — title + metadata line (~80 lines)
 3. `SectionRenderer` — renders each section type (custom)
 4. `ArticleView` — readability.js content, collapsible (custom)
-5. `NotesEditor` — simple rich text for user notes (Tiptap or contentEditable)
+5. `NotesEditor` — **BlockNote editor** (`@blocknote/react`, `@blocknote/core`, `@blocknote/mantine`) — Notion-style rich text, same as Docmost. Handles formatting, blocks, slash commands out of the box. Props change from `(content: string, onChange: (s: string) => void)` to `(initialContent: string, onChange: (blocks: Block[]) => void)`. Store as JSON string in DB.
 6. `ChatPanel` — inline chat UI (custom)
 7. `ReferenceChip` — inline reference link chip (custom)
 8. `EnhanceToolbar` — floating toolbar on text selection (custom)
@@ -159,7 +159,7 @@ The BookmarkDetail is an Obsidian-style single scrollable page with a Contents s
 
 **Agent-ready notes:**
 - `summarizeBookmark()` must use service-layer abstraction with typed I/O. Writes to `summaries` table. Emits `summary:generated` event.
-- `enhanceNote(noteId, selection)` must be a standalone service function. Receives note ID + selected text, returns enhanced text. No UI coupling.
+- `enhanceNote(noteId, selection)` must be a standalone service function. Receives note ID + selected text, returns enhanced text. No UI coupling. Note content is BlockNote blocks stored as JSON string.
 - Chat service must expose `sendMessage(sessionId, message, context)` with typed return. Ready for agent to call the same function autonomously.
 - Glossary services (`addTerm()`, `searchTerms()`) must be DB-layer only. Agent can call the same functions to auto-populate glossary.
 
@@ -215,6 +215,7 @@ The BookmarkDetail is an Obsidian-style single scrollable page with a Contents s
 | AI (Primary) | Google Gemini API | Free tier, good Egyptian Arabic quality |
 | AI (Fallback) | Ollama (cloud + local) | Offline/budget, cloud models available |
 | Article Reader | readability.js | Clean article extraction for reader mode |
+| Rich Text Editor | @blocknote/react | Notion-style block editor, same as Docmost |
 | Auto-update | electron-updater | Standard Electron update mechanism |
 
 ## 6. Architecture Overview
@@ -329,7 +330,7 @@ CREATE TABLE notes (
   id TEXT PRIMARY KEY,
   bookmark_id TEXT REFERENCES bookmarks(id),
   title TEXT,
-  content TEXT NOT NULL,
+  content TEXT NOT NULL,  -- JSON string of BlockNote blocks: JSON.stringify(blocks)
   created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
   updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
 );
@@ -412,6 +413,7 @@ CREATE TABLE agent_actions (
 - **Data export**: JSON + Markdown export + full SQLite backup
 - **Mobile**: PWA first (quick access), React Native later (full features)
 - **BookmarkDetail**: Obsidian-style page with Outline visual language — built from scratch, no Outline code fork
+- **Notes Editor**: BlockNote (`@blocknote/react`) — Notion-style block editor, same as Docmost uses. No custom textarea. Store as JSON string in DB, parse on load. Props change from `(content: string, onChange: (s: string) => void)` to `(initialContent: string, onChange: (blocks: Block[]) => void)`.
 - **Page layout**: Single scrollable page with Contents sidebar (compact minimap), three layout modes (linear/two-column/collapsible)
 - **Section ownership**: Agent owns Summary/Glossary/Chat; User owns Highlights/Notes; Glossary is shared
 - **Enhance**: Selection-based — user selects text in notes, floating toolbar offers "Enhance" button
@@ -425,6 +427,7 @@ CREATE TABLE agent_actions (
 - [ ] Electron auto-update code signing (for production releases)
 - [ ] Supabase project setup and schema migration strategy
 - [ ] bird.fast cookie refresh strategy (cookies expire)
+- [x] Notes editor: BlockNote (`@blocknote/react`) — decided, same as Docmost
 
 ## 12. Agent-Ready Architecture
 
