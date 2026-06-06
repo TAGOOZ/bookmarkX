@@ -20,3 +20,11 @@ Hybrid article parser that extracts web page content into structured BlockNote b
 - New IPC handler `get-article-content` added for renderer to read parsed content
 - `ArticleReaderBlock` custom BlockNote block renders structured content as styled React
 - Agent can access structured article blocks for RAG, chat context, and proactive suggestions
+- `highlight.js` added as dependency for code block syntax highlighting (~20KB gzipped)
+- Article reader uses compact typography (14px body, 1.5 line-height) matching app density
+- Tables and images render as minimal text placeholders — not full renderers
+- Collapse UI uses fixed header bar with chevron, word count, and reading time
+- Links styled with underline + accent color for clear affordance
+- Blockquotes minimal: italic + indent only, no border or background
+- Full-width layout (no max-width constraint) for app-consistent density
+- Article section blends into editor flow when expanded, not a distinct visual section
