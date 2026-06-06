@@ -74,7 +74,7 @@
 **User Stories:**
 - As a user, I can perform semantic search ("find bookmarks about database optimization")
 - As a user, my data syncs across devices via Supabase
-- As a user, vector embeddings are stored locally (sqlite-vec) and in cloud (pgvector)
+- As a user, vector embeddings are stored locally (libSQL built-in vectors) and in cloud (pgvector)
 - As a user, conflict resolution handles concurrent edits gracefully
 
 **Acceptance Criteria:**
@@ -93,9 +93,9 @@
 | Typography | Thmanyah font family | Arabic + Latin in one family, visual consistency |
 | RTL | Full RTL layout | UI mirrors for Arabic, mixed text handled correctly |
 | i18n | react-intl | RTL/LTR switching, locale management |
-| Local DB | SQLite | Fast, zero-config, single-file backup |
+| Local DB | @libsql/client (libSQL) | Fast, zero-config, single-file backup, no native build |
 | Cloud DB | Supabase (Postgres) | User familiarity, sync enablement |
-| Vector (Local) | sqlite-vec | SQLite-native, no extra dependency |
+| Vector (Local) | libSQL built-in vectors | Native to SQLite engine, no extension needed |
 | Vector (Cloud) | pgvector (Supabase) | Cloud vector search |
 | Job Queue | BullMQ + SQLite | No Redis dependency, sufficient for personal use |
 | X Fetcher | bird.fast CLI | Free, cookie-based, near-real-time |
@@ -135,8 +135,8 @@
 │             │  └─────────────┬───────────────┘  │
 │             │                │                   │
 │             │  ┌─────────────▼───────────────┐  │
-│             │  │  SQLite (local)              │  │
-│             │  │  + sqlite-vec (vectors)      │  │
+│             │  │  libSQL (local)              │  │
+│             │  │  + built-in vectors          │  │
 │             │  └─────────────┬───────────────┘  │
 │             │                │                   │
 │             │  ┌─────────────▼───────────────┐  │
@@ -260,6 +260,7 @@ CREATE TABLE bookmark_glossary (
 - [0003: Electron + React Desktop](docs/adr/0003-electron-react-desktop.md)
 - [0004: BullMQ + SQLite Job Queue](docs/adr/0004-bullmq-sqlite-job-queue.md)
 - [0005: Cloud AI + Local Fallback](docs/adr/0005-cloud-ai-local-fallback-llm.md)
+- [0011: @libsql/client as Local SQLite Driver](docs/adr/0011-libsql-client-local-sqlite.md)
 
 ## 9. Success Metrics
 
