@@ -47,6 +47,7 @@ const SCHEMA_SQL = `
     bookmark_id TEXT REFERENCES bookmarks(id),
     extracted_text TEXT,
     word_count INTEGER,
+    blocks_json TEXT,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP
   );
 
@@ -98,4 +99,14 @@ const SCHEMA_SQL = `
 
 export async function initializeSchema(db: Client): Promise<void> {
   await db.executeMultiple(SCHEMA_SQL);
+
+  // Migration: add blocks_json if missing (existing databases)
+  try {
+    await db.execute({
+      sql: 'ALTER TABLE article_content ADD COLUMN blocks_json TEXT',
+      args: [],
+    });
+  } catch {
+    // Column already exists — ignore
+  }
 }

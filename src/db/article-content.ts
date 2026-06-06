@@ -3,6 +3,7 @@ import type { Client } from '@libsql/client';
 export interface ArticleContentData {
   extracted_text: string;
   word_count: number;
+  blocks_json?: string;
 }
 
 export interface ArticleContent extends ArticleContentData {
@@ -18,9 +19,9 @@ export async function storeArticleContent(
 ): Promise<void> {
   const id = crypto.randomUUID();
   await db.execute({
-    sql: `INSERT INTO article_content (id, bookmark_id, extracted_text, word_count)
-          VALUES (?, ?, ?, ?)`,
-    args: [id, bookmarkId, data.extracted_text, data.word_count],
+    sql: `INSERT INTO article_content (id, bookmark_id, extracted_text, word_count, blocks_json)
+          VALUES (?, ?, ?, ?, ?)`,
+    args: [id, bookmarkId, data.extracted_text, data.word_count, data.blocks_json || null],
   });
 }
 
@@ -41,6 +42,7 @@ export async function getArticleContent(
     bookmark_id: row.bookmark_id,
     extracted_text: row.extracted_text,
     word_count: row.word_count,
+    blocks_json: row.blocks_json || undefined,
     created_at: row.created_at,
   };
 }
