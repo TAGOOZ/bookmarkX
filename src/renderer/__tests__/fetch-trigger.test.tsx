@@ -10,16 +10,28 @@ import Sidebar from '../components/Sidebar';
 import { FilterState } from '../App';
 
 const messages = {
-  appName: 'BookmarkX',
-  bookmarks: 'Bookmarks',
-  settings: 'Settings',
-  fetchNow: 'Fetch Now',
-  priority: 'Priority',
-  topics: 'Topics',
-  contentTypes: 'Content Types',
-  all: 'All',
-  allTopics: 'All Topics',
-  allTypes: 'All Types',
+  appName: 'بوكماركس',
+  bookmarks: 'الإشارات المرجعية',
+  settings: 'الإعدادات',
+  fetchNow: 'جلب الآن',
+  classifyNow: 'تصنيف الآن',
+  priority: 'الأولوية',
+  topics: 'المواضيع',
+  contentTypes: 'أنواع المحتوى',
+  all: 'الكل',
+  high: 'عالي',
+  medium: 'متوسط',
+  low: 'منخفض',
+  allTopics: 'جميع المواضيع',
+  allTypes: 'جميع الأنواع',
+  تكنولوجيا: 'تكنولوجيا',
+  تصميم: 'تصميم',
+  أعمال: 'أعمال',
+  علوم: 'علوم',
+  مقال: 'مقال',
+  فيديو: 'فيديو',
+  صورة: 'صورة',
+  رابط: 'رابط',
 };
 
 const defaultFilters: FilterState = { priority: '', topic: '', contentType: '' };
@@ -33,6 +45,7 @@ beforeEach(() => {
     getSettings: vi.fn(),
     saveSettings: vi.fn(),
     fetchBookmarks: vi.fn(),
+    classifyAndNotify: vi.fn(),
   };
 });
 
@@ -41,7 +54,7 @@ afterEach(() => {
 });
 
 const renderWithIntl = (ui: React.ReactElement) =>
-  render(<IntlProvider locale="en" messages={messages}>{ui}</IntlProvider>);
+  render(<IntlProvider locale="ar" messages={messages}>{ui}</IntlProvider>);
 
 describe('Fetch trigger', () => {
   it('shows Fetch Now button in sidebar', () => {
@@ -54,7 +67,7 @@ describe('Fetch trigger', () => {
       />
     );
 
-    expect(screen.getByText('Fetch Now')).toBeDefined();
+    expect(screen.getByText('جلب الآن')).toBeDefined();
   });
 
   it('calls onFetchClick when button is clicked', async () => {
@@ -68,7 +81,7 @@ describe('Fetch trigger', () => {
       />
     );
 
-    await userEvent.click(screen.getByText('Fetch Now'));
+    await userEvent.click(screen.getByText('جلب الآن'));
     expect(onFetchClick).toHaveBeenCalledTimes(1);
   });
 });
