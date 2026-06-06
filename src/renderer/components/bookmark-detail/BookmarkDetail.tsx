@@ -39,6 +39,13 @@ function detectDir(bookmark: BookmarkDetailData): string {
   return 'ltr';
 }
 
+function stripEditorPadding(container: HTMLElement | null) {
+  const bnEditor = container?.querySelector('.bn-editor') as HTMLElement | null;
+  if (bnEditor) {
+    bnEditor.style.paddingInline = '0';
+  }
+}
+
 const BookmarkDetail: React.FC<BookmarkDetailProps> = ({
   bookmark,
   onBlocksChange,
@@ -90,6 +97,15 @@ const BookmarkEditor: React.FC<BookmarkEditorProps> = ({
   }, [bookmark]);
 
   useEffect(() => {
+    stripEditorPadding(editorRef.current);
+    const observer = new MutationObserver(() => stripEditorPadding(editorRef.current));
+    if (editorRef.current) {
+      observer.observe(editorRef.current, { childList: true, subtree: true });
+    }
+    return () => observer.disconnect();
+  }, []);
+
+  useEffect(() => {
     if (bookmark.id === lastBookmarkId.current) return;
     lastBookmarkId.current = bookmark.id;
     isExternalUpdate.current = true;
@@ -97,6 +113,7 @@ const BookmarkEditor: React.FC<BookmarkEditorProps> = ({
     editor.replaceBlocks(editor.document, newBlocks);
     isExternalUpdate.current = false;
     detectDirection();
+    stripEditorPadding(editorRef.current);
   }, [bookmark, editor, detectDirection]);
 
   const handleChange = useCallback(() => {
@@ -110,7 +127,7 @@ const BookmarkEditor: React.FC<BookmarkEditorProps> = ({
   }, [editor, onBlocksChange, onBookmarkChange, bookmark, detectDirection]);
 
   return (
-    <div ref={editorRef} dir="ltr">
+    <div ref={editorRef} dir="ltr" className={styles.editorWrapper}>
       <BlockNoteView
         editor={editor}
         onChange={handleChange}
