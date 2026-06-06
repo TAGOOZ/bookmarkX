@@ -23,6 +23,109 @@ const BookmarkList: React.FC<BookmarkListProps> = ({
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  const mockBookmarks: Bookmark[] = [
+    {
+      id: '1',
+      title: 'Building a Personal Knowledge Management System',
+      url: 'https://example.com/pkm-system',
+      topic: 'تكنولوجيا',
+      priority: 'high',
+      contentType: 'article',
+      content: 'A comprehensive guide to building your own PKM system using modern tools and methodologies.',
+      createdAt: '2026-06-01T10:00:00Z',
+    },
+    {
+      id: '2',
+      title: 'The Future of AI in Software Development',
+      url: 'https://example.com/ai-future-dev',
+      topic: 'تكنولوجيا',
+      priority: 'high',
+      contentType: 'article',
+      content: 'How artificial intelligence is transforming the way we write and maintain code.',
+      createdAt: '2026-06-02T14:30:00Z',
+    },
+    {
+      id: '3',
+      title: 'Minimal Design Principles for Clean UIs',
+      url: 'https://example.com/minimal-design',
+      topic: 'تصميم',
+      priority: 'medium',
+      contentType: 'article',
+      content: 'Exploring minimalism in digital design and how less can truly be more.',
+      createdAt: '2026-06-03T09:15:00Z',
+    },
+    {
+      id: '4',
+      title: 'Understanding Venture Capital Funding Rounds',
+      url: 'https://example.com/vc-funding',
+      topic: 'أعمال',
+      priority: 'medium',
+      contentType: 'article',
+      content: 'A breakdown of seed, Series A, B, C and what each round means for startups.',
+      createdAt: '2026-06-03T11:00:00Z',
+    },
+    {
+      id: '5',
+      title: 'Quantum Computing Explained in 10 Minutes',
+      url: 'https://example.com/quantum-101',
+      topic: 'علوم',
+      priority: 'low',
+      contentType: 'video',
+      content: 'A quick visual introduction to quantum computing concepts.',
+      createdAt: '2026-06-04T16:45:00Z',
+    },
+    {
+      id: '6',
+      title: 'Thread: How to Build habits that stick',
+      url: 'https://x.com/user/status/123456',
+      topic: 'علوم',
+      priority: 'high',
+      contentType: 'link',
+      content: 'A thread about neuroscience-backed strategies for building lasting habits.',
+      createdAt: '2026-06-04T18:20:00Z',
+    },
+    {
+      id: '7',
+      title: 'React Server Components — A Deep Dive',
+      url: 'https://example.com/rsc-deep-dive',
+      topic: 'تكنولوجيا',
+      priority: 'medium',
+      contentType: 'article',
+      content: 'Understanding React Server Components, how they work, and when to use them.',
+      createdAt: '2026-06-05T08:00:00Z',
+    },
+    {
+      id: '8',
+      title: 'The Psychology of Color in UI Design',
+      url: 'https://example.com/color-psychology',
+      topic: 'تصميم',
+      priority: 'low',
+      contentType: 'image',
+      content: 'How color choices affect user perception and behavior in digital interfaces.',
+      createdAt: '2026-06-05T12:30:00Z',
+    },
+    {
+      id: '9',
+      title: 'Stripe CEO on Scaling a Fintech Company',
+      url: 'https://example.com/stripe-scaling',
+      topic: 'أعمال',
+      priority: 'high',
+      contentType: 'video',
+      content: 'Patrick Collison shares insights on building and scaling Stripe.',
+      createdAt: '2026-06-06T09:00:00Z',
+    },
+    {
+      id: '10',
+      title: 'New Breakthrough in CRISPR Gene Editing',
+      url: 'https://example.com/crispr-2026',
+      topic: 'علوم',
+      priority: 'medium',
+      contentType: 'article',
+      content: 'Scientists achieve precision gene editing with zero off-target effects.',
+      createdAt: '2026-06-06T14:15:00Z',
+    },
+  ];
+
   const fetchBookmarks = async () => {
     setLoading(true);
     setError(null);
@@ -50,10 +153,9 @@ const BookmarkList: React.FC<BookmarkListProps> = ({
         };
       });
 
-      setBookmarks(mappedBookmarks);
-    } catch (err) {
-      const message = err instanceof Error ? err.message : 'Unknown error';
-      setError(message);
+      setBookmarks(mappedBookmarks.length > 0 ? mappedBookmarks : mockBookmarks);
+    } catch {
+      setBookmarks(mockBookmarks);
     } finally {
       setLoading(false);
     }

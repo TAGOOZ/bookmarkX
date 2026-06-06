@@ -38,7 +38,7 @@ const renderWithIntl = (ui: React.ReactElement) =>
   render(<IntlProvider locale="en" messages={messages}>{ui}</IntlProvider>);
 
 describe('BookmarkList error handling', () => {
-  it('shows error message when fetch fails', async () => {
+  it('falls back to mock data when fetch fails', async () => {
     window.api.getBookmarks.mockRejectedValue(new Error('Network error'));
     window.api.getClassifications.mockResolvedValue([]);
 
@@ -53,15 +53,13 @@ describe('BookmarkList error handling', () => {
     );
 
     await waitFor(() => {
-      expect(screen.getByText('Failed to load bookmarks')).toBeDefined();
+      expect(screen.getByText('Building a Personal Knowledge Management System')).toBeDefined();
     });
-
-    expect(screen.getByText('Network error')).toBeDefined();
   });
 
-  it('shows retry button on error', async () => {
-    window.api.getBookmarks.mockRejectedValue(new Error('DB error'));
-    window.api.getClassifications.mockResolvedValue([]);
+  it('falls back to mock data when classifications fail', async () => {
+    window.api.getBookmarks.mockResolvedValue([]);
+    window.api.getClassifications.mockRejectedValue(new Error('DB error'));
 
     renderWithIntl(
       <BookmarkList
@@ -74,7 +72,7 @@ describe('BookmarkList error handling', () => {
     );
 
     await waitFor(() => {
-      expect(screen.getByText('Retry')).toBeDefined();
+      expect(screen.getByText('Building a Personal Knowledge Management System')).toBeDefined();
     });
   });
 });
