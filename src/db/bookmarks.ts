@@ -1,34 +1,31 @@
-import Database from 'better-sqlite3';
+import type { Client } from '@libsql/client';
 import type { Bookmark } from '../fetch/types';
 
-export function storeBookmarks(db: Database.Database, bookmarks: Bookmark[]): void {
-  const insert = db.prepare(`
-    INSERT OR IGNORE INTO bookmarks (id, tweet_id, url, content_type, title, author_name, author_handle, tweet_text, fetched_at)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-  `);
+export async function storeBookmarks(db: Client, bookmarks: Bookmark[]): Promise<void> {
+  if (bookmarks.length === 0) return;
 
-  const insertMany = db.transaction((items: Bookmark[]) => {
-    for (const bookmark of items) {
-      insert.run(
-        bookmark.id,
-        bookmark.tweet_id,
-        bookmark.url,
-        bookmark.content_type,
-        bookmark.title,
-        bookmark.author_name,
-        bookmark.author_handle,
-        bookmark.tweet_text,
-        bookmark.fetched_at
-      );
-    }
-  });
+  const stmts = bookmarks.map((bookmark) => ({
+    sql: `INSERT OR IGNORE INTO bookmarks (id, tweet_id, url, content_type, title, author_name, author_handle, tweet_text, fetched_at)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    args: [
+      bookmark.id,
+      bookmark.tweet_id,
+      bookmark.url,
+      bookmark.content_type,
+      bookmark.title,
+      bookmark.author_name,
+      bookmark.author_handle,
+      bookmark.tweet_text,
+      bookmark.fetched_at,
+    ],
+  }));
 
-  insertMany(bookmarks);
+  await db.batch(stmts);
 }
 
-export function getStoredBookmarks(db: Database.Database): Bookmark[] {
-  const rows = db.prepare('SELECT * FROM bookmarks ORDER BY created_at DESC').all() as any[];
-  return rows.map(row => ({
+export async function getStoredBookmarks(db: Client): Promise<Bookmark[]> {
+  const { rows } = await db.execute('SELECT * FROM bookmarks ORDER BY created_at DESC');
+  return (rows as any[]).map((row) => ({
     id: row.id,
     tweet_id: row.tweet_id,
     url: row.url,
@@ -41,15 +38,15 @@ export function getStoredBookmarks(db: Database.Database): Bookmark[] {
   }));
 }
 
-export function getUnfetchedBookmarks(db: Database.Database): Bookmark[] {
-  const rows = db.prepare(`
+export async function getUnfetchedBookmarks(db: Client): Promise<Bookmark[]> {
+  const { rows } = await db.execute(`
     SELECT b.* FROM bookmarks b
     LEFT JOIN classifications c ON b.id = c.bookmark_id
     WHERE c.id IS NULL
     ORDER BY b.created_at DESC
-  `).all() as any[];
-  
-  return rows.map(row => ({
+  `);
+
+  return (rows as any[]).map((row) => ({
     id: row.id,
     tweet_id: row.tweet_id,
     url: row.url,
