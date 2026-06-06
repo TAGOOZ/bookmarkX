@@ -100,6 +100,7 @@ function App() {
           onFetchClick={handleFetch}
           onClassifyClick={handleClassify}
         />
+        <BookmarkDetail bookmark={selectedBookmark} />
         <BookmarkList
           selectedBookmark={selectedBookmark}
           onBookmarkSelect={handleBookmarkSelect}
@@ -108,7 +109,6 @@ function App() {
           onSearchChange={setSearchQuery}
           refreshKey={refreshKey}
         />
-        <BookmarkDetail bookmark={selectedBookmark} />
         {showSettings && (
           <Settings onClose={() => setShowSettings(false)} />
         )}
