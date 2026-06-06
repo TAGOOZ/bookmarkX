@@ -14,6 +14,7 @@ import { isArabic, detectDir } from './rtl-detect';
 import {
   createDualLangBlock,
   createCollapsibleArticleBlock,
+  createArticleReaderBlock,
   createChatBlock,
   createHighlightBlock,
   createGlossaryTermInline,
@@ -25,6 +26,7 @@ const schema = BlockNoteSchema.create({
     ...defaultBlockSpecs,
     dualLang: createDualLangBlock(),
     collapsibleArticle: createCollapsibleArticleBlock(),
+    articleReader: createArticleReaderBlock(),
     chat: createChatBlock(),
     highlight: createHighlightBlock(),
   },

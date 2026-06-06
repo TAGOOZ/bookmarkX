@@ -119,7 +119,19 @@ export function bookmarkToBlocks(bookmark: BookmarkDetailData): PartialBlock[] {
     }
   }
 
-  if (bookmark.content) {
+  if (bookmark.articleBlocks) {
+    blocks.push(heading('Article', 2));
+    try {
+      const parsed = JSON.parse(bookmark.articleBlocks);
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        blocks.push(...parsed);
+      }
+    } catch {
+      // Fall back to collapsibleArticle
+      const wordCount = (bookmark.content || '').split(/\s+/).filter(Boolean).length;
+      blocks.push(customBlock('collapsibleArticle', { content: bookmark.content || '', wordCount, isExpanded: false }));
+    }
+  } else if (bookmark.content) {
     blocks.push(heading('Article', 2));
     const wordCount = bookmark.content.split(/\s+/).filter(Boolean).length;
     blocks.push(customBlock('collapsibleArticle', { content: bookmark.content, wordCount, isExpanded: false }));

@@ -28,6 +28,9 @@ export interface BookmarkDetailData extends Bookmark {
   chatSessionId?: string;
   readingTime?: number;
   blocks?: string;
+  articleBlocks?: string;
+  articleWordCount?: number;
+  articleReadingTime?: number;
 }
 
 export type LayoutMode = 'linear' | 'two-column' | 'collapsible';
