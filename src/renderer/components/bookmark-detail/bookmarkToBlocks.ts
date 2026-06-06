@@ -9,18 +9,8 @@ function paragraph(text: string): PartialBlock {
   return { type: 'paragraph', content: text };
 }
 
-function boldParagraph(text: string): PartialBlock {
-  return { type: 'paragraph', content: [{ type: 'text', text, styles: { bold: true } }] };
-}
-
-function styledParagraph(label: string, value: string): PartialBlock {
-  return {
-    type: 'paragraph',
-    content: [
-      { type: 'text', text: label, styles: { bold: true } },
-      { type: 'text', text: value, styles: {} },
-    ],
-  };
+function styledText(text: string, styles: Record<string, boolean> = {}): { type: 'text'; text: string; styles: Record<string, boolean> } {
+  return { type: 'text', text, styles };
 }
 
 function bulletListItem(text: string): PartialBlock {
@@ -39,27 +29,62 @@ function splitParagraphs(text: string): PartialBlock[] {
     .map((p) => paragraph(p));
 }
 
+const ICONS: Record<string, string> = {
+  topic: '📁',
+  type: '📄',
+  priority: '⚡',
+  time: '⏱️',
+  calendar: '📅',
+  link: '🔗',
+};
+
 export function bookmarkToBlocks(bookmark: BookmarkDetailData): PartialBlock[] {
   const blocks: PartialBlock[] = [];
 
   blocks.push(heading(bookmark.title, 1));
 
   if (bookmark.url) {
-    blocks.push(paragraph(bookmark.url));
+    blocks.push({
+      type: 'paragraph',
+      content: [
+        styledText(`${ICONS.link} `),
+        styledText(bookmark.url, { bold: true }),
+      ],
+    });
   }
 
-  const meta: string[] = [];
-  if (bookmark.topic) meta.push(bookmark.topic);
-  if (bookmark.contentType) meta.push(bookmark.contentType);
-  if (bookmark.priority) meta.push(bookmark.priority);
-  if (bookmark.readingTime) meta.push(`${bookmark.readingTime} min`);
-  if (meta.length > 0) {
-    blocks.push(paragraph(meta.join(' · ')));
+  const metaParts: { type: 'text'; text: string; styles: Record<string, boolean> }[] = [];
+  if (bookmark.topic) {
+    metaParts.push(styledText(`${ICONS.topic} ${bookmark.topic}`, { bold: true }));
+    metaParts.push(styledText('   '));
+  }
+  if (bookmark.contentType) {
+    metaParts.push(styledText(`${ICONS.type} ${bookmark.contentType}`, { bold: true }));
+    metaParts.push(styledText('   '));
+  }
+  if (bookmark.priority) {
+    metaParts.push(styledText(`${ICONS.priority} ${bookmark.priority.toUpperCase()}`, { bold: true }));
+    metaParts.push(styledText('   '));
+  }
+  if (bookmark.readingTime) {
+    metaParts.push(styledText(`${ICONS.time} ${bookmark.readingTime} min read`));
+    metaParts.push(styledText('   '));
+  }
+  if (metaParts.length > 0) {
+    metaParts.pop();
+    blocks.push({ type: 'paragraph', content: metaParts });
   }
 
   if (bookmark.createdAt) {
     const date = new Date(bookmark.createdAt);
-    blocks.push(styledParagraph('Created: ', date.toLocaleDateString()));
+    blocks.push({
+      type: 'paragraph',
+      content: [
+        styledText(`${ICONS.calendar} `, {}),
+        styledText('Created: ', { bold: true }),
+        styledText(date.toLocaleDateString()),
+      ],
+    });
   }
 
   if (bookmark.summaryAr) {

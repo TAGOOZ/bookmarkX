@@ -200,15 +200,13 @@ const BookmarkEditor: React.FC<BookmarkEditorProps> = ({
         activeSection={activeSection}
         onNavigate={handleNavigate}
       />
-      <div className={styles.editorColumn}>
-        <div ref={scrollRef} className={styles.editorScroll}>
-          <BlockNoteView
-            editor={editor}
-            onChange={handleChange}
-            className={styles.editor}
-            theme="dark"
-          />
-        </div>
+      <div ref={scrollRef} className={styles.editorScroll}>
+        <BlockNoteView
+          editor={editor}
+          onChange={handleChange}
+          className={styles.editor}
+          theme="dark"
+        />
       </div>
     </div>
   );
