@@ -164,6 +164,44 @@ The BookmarkDetail is an Obsidian-style single scrollable page with a horizontal
 - Chat service must expose `sendMessage(sessionId, message, context)` with typed return. Ready for agent to call the same function autonomously.
 - Glossary services (`addTerm()`, `searchTerms()`) must be DB-layer only. Agent can call the same functions to auto-populate glossary.
 
+#### 2C: Article Parser — Structured Content Extraction
+
+**User Stories:**
+- As a user, articles are automatically parsed when I select a bookmark (one-time)
+- As a user, I see a spinner while the article is being parsed
+- As a user, parsed articles show structured content: headings, paragraphs, lists, code blocks, blockquotes
+- As a user, images in articles are shown as styled placeholders with alt text
+- As a user, I can collapse/expand the article section
+- As a user, threads with outer URLs have the linked article parsed as the article section
+
+**Acceptance Criteria:**
+- Local parser (Readability + Cheerio) extracts article content in <500ms for most pages
+- Gemini fallback activates when local parser fails (paywall, JS-rendered)
+- Parsed content stored as `PartialBlock[]` in `article_content.blocks_json`
+- Article section shows spinner during auto-parse, renders structured content after
+- Images render as `[Image: alt text]` placeholders (no download)
+- Inline formatting preserved: bold, italic, code, links
+- Code blocks rendered with monospace styling
+- Blockquotes rendered with indentation and italic styling
+- Tables rendered as formatted text
+- Collapse/expand toggle persists across sessions
+- Thread bookmarks with outer URLs parse the linked article
+- Thread bookmarks without outer URLs show no article section
+- RTL articles render correctly with proper text direction
+
+**Components to build:**
+1. `src/parser/local-parser.ts` — fetch → Readability → Cheerio → `PartialBlock[]`
+2. `src/parser/gemini-fallback.ts` — Gemini prompt returning structured blocks
+3. `src/parser/index.ts` — orchestrator: try local, fallback to Gemini
+4. `ArticleReaderBlock` — custom BlockNote block rendering `PartialBlock[]` as styled React
+5. `ArticleReaderBlock.module.css` — reader typography and layout
+
+**Agent-ready notes:**
+- Parser service (`parseArticle(url)`) must use service-layer abstraction with typed I/O
+- Parsed blocks stored in DB — agent can access structured article content for RAG, chat context
+- `getArticleContent()` returns `blocks_json` — agent uses this for article-aware features
+- Parser follows ADR-0013 boundaries: typed I/O, no UI coupling, DB as source of truth
+
 ### Phase 3: Search & Sync
 
 **User Stories:**
@@ -272,6 +310,7 @@ Agent as orchestrator using LangGraph TypeScript (ReAct loop). Pipeline keeps fe
 | AI (Primary) | Google Gemini API | Free tier, good Egyptian Arabic quality |
 | AI (Fallback) | Ollama (cloud models) | Cloud models via local Ollama runtime |
 | Article Reader | readability.js | Clean article extraction for reader mode |
+| Article Parser | @mozilla/readability + cheerio | Structured HTML → BlockNote blocks, hybrid with Gemini fallback |
 | Rich Text Editor | @blocknote/react | Notion-style block editor, same as Docmost |
 | Agent Framework | @langchain/langgraph | ReAct loop, tool orchestration, state management |
 | Vector Search | sqlite-vec | Vector similarity search in SQLite, no external DB |
@@ -380,7 +419,9 @@ CREATE TABLE article_content (
   id TEXT PRIMARY KEY,
   bookmark_id TEXT REFERENCES bookmarks(id) UNIQUE,
   extracted_text TEXT NOT NULL,
-  extracted_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  word_count INTEGER,
+  blocks_json TEXT,  -- PartialBlock[] JSON for structured rendering (ADR-0015)
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP
 );
 
 -- Phase 2: Highlights & Notes
@@ -473,6 +514,7 @@ CREATE TABLE agent_actions (
 - [0012: BookmarkDetail Page Architecture](docs/adr/0012-bookmarkdetail-page-architecture.md)
 - [0013: Agent-Ready AI Boundaries](docs/adr/0013-agent-ready-ai-boundaries.md)
 - [0014: LangGraph Agent Architecture](docs/adr/0014-langgraph-agent-architecture.md)
+- [0015: Article Parser — Structured Content Extraction](docs/adr/0015-article-parser.md)
 
 ## 9. Success Metrics
 
@@ -498,6 +540,7 @@ CREATE TABLE agent_actions (
 - **Theme**: Dual theme (dark + light) with Obsidian CSS custom properties
 - **Empty sections**: Hidden when no content exists
 - **Agent boundary**: AI services use service-layer abstraction with typed I/O, event emission, no UI coupling. Ready for future agent to call same functions autonomously.
+- **Article parser**: Hybrid (local Readability + Cheerio, Gemini fallback). Zero-conversion pipeline — parser outputs `PartialBlock[]` (BlockNote format) directly. Auto-parse on bookmark selection, one-time only. Images as `[Image: alt text]` placeholders. See [ADR-0015](docs/adr/0015-article-parser.md).
 
 ## 11. Open Questions
 
