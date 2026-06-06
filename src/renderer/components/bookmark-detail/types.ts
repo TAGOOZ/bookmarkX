@@ -32,5 +32,3 @@ export interface BookmarkDetailData extends Bookmark {
   articleWordCount?: number;
   articleReadingTime?: number;
 }
-
-export type LayoutMode = 'linear' | 'two-column' | 'collapsible';

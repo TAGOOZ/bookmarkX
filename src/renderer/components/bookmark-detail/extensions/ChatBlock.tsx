@@ -1,12 +1,7 @@
 import { createReactBlockSpec } from '@blocknote/react';
 import { defaultProps } from '@blocknote/core';
 import React, { useState, useRef, useEffect } from 'react';
-
-export interface ChatMessage {
-  id: string;
-  role: 'user' | 'assistant';
-  content: string;
-}
+import type { ChatMessage } from '../types';
 
 export const createChatBlock = createReactBlockSpec(
   {

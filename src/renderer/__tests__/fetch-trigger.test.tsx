@@ -54,6 +54,20 @@ beforeEach(() => {
     classifyAndNotify: vi.fn(),
     detectChromeProfile: vi.fn(),
     twitterLogin: vi.fn(),
+    summarizeBookmark: vi.fn(),
+    extractArticle: vi.fn(),
+    getArticleContent: vi.fn(),
+    sendChatMessage: vi.fn(),
+    createChatSession: vi.fn(),
+    getChatMessages: vi.fn(),
+    saveHighlight: vi.fn(),
+    getHighlights: vi.fn(),
+    saveNote: vi.fn(),
+    getNotes: vi.fn(),
+    addGlossaryTerm: vi.fn(),
+    searchGlossary: vi.fn(),
+    generateGlossary: vi.fn(),
+    enhanceNote: vi.fn(),
   };
 });
 

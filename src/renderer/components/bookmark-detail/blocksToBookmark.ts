@@ -65,6 +65,29 @@ function getCollapsibleArticleContent(blocks: Block[], startIdx: number): { cont
   return { content, endIdx: i };
 }
 
+function getArticleReaderContent(blocks: Block[], startIdx: number): { blocksJson: string; wordCount: number; readingTime: number; endIdx: number } {
+  let blocksJson = '';
+  let wordCount = 0;
+  let readingTime = 0;
+  let i = startIdx + 1;
+  while (i < blocks.length) {
+    const block = blocks[i];
+    if (block.type === 'heading') break;
+    if ((block as Record<string, unknown>).type === 'articleReader') {
+      const props = (block as Record<string, unknown>).props as Record<string, unknown> | undefined;
+      if (props) {
+        blocksJson = (props.blocksJson as string) || '';
+        wordCount = (props.wordCount as number) || 0;
+        readingTime = (props.readingTime as number) || 0;
+      }
+      i++;
+      break;
+    }
+    i++;
+  }
+  return { blocksJson, wordCount, readingTime, endIdx: i };
+}
+
 function getGlossaryItems(blocks: Block[], startIdx: number): { terms: GlossaryTerm[]; endIdx: number } {
   const terms: GlossaryTerm[] = [];
   let i = startIdx + 1;
@@ -79,6 +102,19 @@ function getGlossaryItems(blocks: Block[], startIdx: number): { terms: GlossaryT
           term: text.slice(0, colonIdx).trim(),
           definition: text.slice(colonIdx + 1).trim(),
         });
+      }
+    } else if (block.type === 'paragraph' && Array.isArray(block.content)) {
+      const glossaryItem = block.content.find(
+        (item: { type: string }) => item.type === 'glossaryTerm',
+      );
+      if (glossaryItem) {
+        const props = (glossaryItem as Record<string, unknown>).props as Record<string, unknown> | undefined;
+        if (props) {
+          terms.push({
+            term: (props.term as string) || '',
+            definition: (props.definition as string) || '',
+          });
+        }
       }
     }
     i++;
@@ -118,13 +154,19 @@ function getHighlights(blocks: Block[], startIdx: number): { highlights: Highlig
   return { highlights, endIdx: i };
 }
 
-function getChatMessages(blocks: Block[], startIdx: number): { messages: ChatMessage[]; endIdx: number } {
+function getChatMessages(blocks: Block[], startIdx: number): { messages: ChatMessage[]; sessionId: string | null; endIdx: number } {
   const messages: ChatMessage[] = [];
+  let sessionId: string | null = null;
   let i = startIdx + 1;
   while (i < blocks.length) {
     const block = blocks[i];
     if (block.type === 'heading') break;
-    if (block.type === 'paragraph') {
+    if ((block as Record<string, unknown>).type === 'chat') {
+      const props = (block as Record<string, unknown>).props as Record<string, unknown> | undefined;
+      if (props?.sessionId) {
+        sessionId = props.sessionId as string;
+      }
+    } else if (block.type === 'paragraph') {
       const text = getBlockText(block);
       const userMatch = text.match(/^\*\*You:\*\*\s*(.*)/);
       const assistantMatch = text.match(/^\*\*Assistant:\*\*\s*(.*)/);
@@ -136,7 +178,7 @@ function getChatMessages(blocks: Block[], startIdx: number): { messages: ChatMes
     }
     i++;
   }
-  return { messages, endIdx: i };
+  return { messages, sessionId, endIdx: i };
 }
 
 export function blocksToBookmark(
@@ -193,12 +235,19 @@ function processSection(
     const { terms } = getGlossaryItems(blocks, start);
     if (terms.length > 0) result.glossaryTerms = terms;
   } else if (sectionName === 'article') {
-    const { content } = getCollapsibleArticleContent(blocks, start);
-    if (content) {
-      (result as Record<string, unknown>).content = content;
+    const articleReader = getArticleReaderContent(blocks, start);
+    if (articleReader.blocksJson) {
+      result.articleBlocks = articleReader.blocksJson;
+      result.articleWordCount = articleReader.wordCount;
+      result.articleReadingTime = articleReader.readingTime;
     } else {
-      const { text } = getSection(blocks, start);
-      if (text) (result as Record<string, unknown>).content = text;
+      const { content } = getCollapsibleArticleContent(blocks, start);
+      if (content) {
+        (result as Record<string, unknown>).content = content;
+      } else {
+        const { text } = getSection(blocks, start);
+        if (text) (result as Record<string, unknown>).content = text;
+      }
     }
   } else if (sectionName === 'highlights') {
     const { highlights } = getHighlights(blocks, start);
@@ -209,7 +258,8 @@ function processSection(
       result.notes = JSON.stringify(notesBlocks);
     }
   } else if (sectionName === 'chat') {
-    const { messages } = getChatMessages(blocks, start);
+    const { messages, sessionId } = getChatMessages(blocks, start);
     if (messages.length > 0) result.chatMessages = messages;
+    if (sessionId) result.chatSessionId = sessionId;
   }
 }

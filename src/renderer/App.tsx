@@ -7,6 +7,7 @@ import Settings from './components/Settings';
 import { mockBookmarks } from './mockData';
 import arMessages from '../../locales/ar.json';
 import enMessages from '../../locales/en.json';
+import type { BookmarkDetailData } from './components/bookmark-detail/types';
 
 export interface Bookmark {
   id: string;
@@ -19,6 +20,7 @@ export interface Bookmark {
   contentType: string;
   content: string;
   createdAt: string;
+  readingTime?: number;
 }
 
 const MOCK_MODE_KEY = 'bookmarkx-mock-mode';
@@ -77,6 +79,20 @@ function AppContent() {
     () => openBookmarks.find((b) => b.id === activeBookmarkId) ?? null,
     [openBookmarks, activeBookmarkId],
   );
+
+  const handleBookmarkChange = useCallback((bookmarkId: string, updated: Partial<BookmarkDetailData>) => {
+    setOpenBookmarks((prev) =>
+      prev.map((b) => (b.id === bookmarkId ? { ...b, ...updated } : b)),
+    );
+    setBookmarks((prev) =>
+      prev.map((b) => (b.id === bookmarkId ? { ...b, ...updated } : b)),
+    );
+  }, []);
+
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const handleBlocksChange = useCallback((_bookmarkId: string, _blocks: string) => {
+    // Blocks are stored via onBookmarkChange; this is kept for future granular persistence
+  }, []);
 
   const handleBookmarkSelect = useCallback((bookmark: Bookmark) => {
     setOpenBookmarks((prev) => {
@@ -150,6 +166,7 @@ function AppContent() {
           contentType: dbBookmark.content_type,
           content: dbBookmark.tweet_text || '',
           createdAt: dbBookmark.fetched_at,
+          readingTime: classification?.reading_time_min || undefined,
         };
       });
 
@@ -182,7 +199,19 @@ function AppContent() {
             onTabClose={handleTabClose}
             dir={dir}
           />
-          <BookmarkDetail bookmark={activeBookmark} />
+          <BookmarkDetail
+            bookmark={activeBookmark}
+            onBookmarkChange={
+              activeBookmark
+                ? (updated: Partial<BookmarkDetailData>) => handleBookmarkChange(activeBookmark.id, updated)
+                : undefined
+            }
+            onBlocksChange={
+              activeBookmark
+                ? (blocks: string) => handleBlocksChange(activeBookmark.id, blocks)
+                : undefined
+            }
+          />
         </div>
         <NavPanel
           bookmarks={bookmarks}

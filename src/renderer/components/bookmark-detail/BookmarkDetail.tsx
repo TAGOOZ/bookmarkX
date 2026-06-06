@@ -10,7 +10,7 @@ import { bookmarkToBlocks } from './bookmarkToBlocks';
 import { blocksToBookmark } from './blocksToBookmark';
 import ContentsBar from './ContentsBar';
 import EnhanceToolbar from './EnhanceToolbar';
-import { isArabic, detectDir } from './rtl-detect';
+import { detectDir } from './rtl-detect';
 import {
   createDualLangBlock,
   createCollapsibleArticleBlock,
