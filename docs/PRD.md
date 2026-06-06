@@ -109,21 +109,23 @@ The BookmarkDetail is an Obsidian-style single scrollable page with a horizontal
 3. **Collapsible** — sections can be collapsed/expanded
 
 **Key interactions:**
-- **Contents bar**: Horizontal bar above editor with vertical dashes; hover reveals section titles; click to jump; IntersectionObserver tracks active section
+- **Horizontal tabs**: BookmarkDetail supports multiple open bookmarks as horizontal tabs above the ContentsBar; click tab to switch bookmark; close tab to remove
+- **Contents bar**: Horizontal bar aligned with app title, above editor with vertical dashes; hover reveals section titles; click to jump; IntersectionObserver tracks active section; dynamically detects all h2 headings (including user-added ones)
 - **Enhance**: User selects text in their notes → floating toolbar → "Enhance" button → agent improves selection without rewriting
 - **Reference links**: User hovers over any sentence in an agent section → link icon appears → click to copy reference → paste in notes → renders as clickable chip → jumps to that sentence
 - **Empty sections**: Hidden entirely when no content exists
 - **Article**: Inline but collapsible — user can expand to read full article, collapse to focus on summary/notes
 
 **Components to build:**
-1. `ContentsBar` — horizontal minimap above editor (~60 lines)
-2. `PageHeader` — title + metadata line (~80 lines)
-3. `SectionRenderer` — renders each section type (custom)
-4. `ArticleView` — readability.js content, collapsible (custom)
-5. `NotesEditor` — **BlockNote editor** (`@blocknote/react`, `@blocknote/core`, `@blocknote/mantine`) — Notion-style rich text, same as Docmost. Handles formatting, blocks, slash commands out of the box. Props change from `(content: string, onChange: (s: string) => void)` to `(initialContent: string, onChange: (blocks: Block[]) => void)`. Store as JSON string in DB.
-6. `ChatPanel` — inline chat UI (custom)
-7. `ReferenceChip` — inline reference link chip (custom)
-8. `EnhanceToolbar` — floating toolbar on text selection (custom)
+1. `BookmarkTabs` — horizontal tab bar for open bookmarks (~80 lines)
+2. `ContentsBar` — horizontal minimap aligned with app title (~60 lines)
+3. `PageHeader` — title + metadata line (~80 lines)
+4. `SectionRenderer` — renders each section type (custom)
+5. `ArticleView` — readability.js content, collapsible (custom)
+6. `NotesEditor` — **BlockNote editor** (`@blocknote/react`, `@blocknote/core`, `@blocknote/mantine`) — Notion-style rich text, same as Docmost. Handles formatting, blocks, slash commands out of the box. Props change from `(content: string, onChange: (s: string) => void)` to `(initialContent: string, onChange: (blocks: Block[]) => void)`. Store as JSON string in DB.
+7. `ChatPanel` — inline chat UI (custom)
+8. `ReferenceChip` — inline reference link chip (custom)
+9. `EnhanceToolbar` — floating toolbar on text selection (custom)
 
 **Visual direction:**
 - Dual theme: dark (#1e1e1e) + light (white), switchable
@@ -413,7 +415,7 @@ CREATE TABLE agent_actions (
 - **Mobile**: PWA first (quick access), React Native later (full features)
 - **BookmarkDetail**: Obsidian-style page with Outline visual language — built from scratch, no Outline code fork
 - **Notes Editor**: BlockNote (`@blocknote/react`) — Notion-style block editor, same as Docmost uses. No custom textarea. Store as JSON string in DB, parse on load. Props change from `(content: string, onChange: (s: string) => void)` to `(initialContent: string, onChange: (blocks: Block[]) => void)`.
-- **Page layout**: Single scrollable page with horizontal Contents bar (vertical dashes above editor), three layout modes (linear/two-column/collapsible)
+- **Page layout**: Horizontal tabs for multiple bookmarks, ContentsBar aligned with app title, single scrollable page, three layout modes (linear/two-column/collapsible)
 - **Section ownership**: Agent owns Summary/Glossary/Chat; User owns Highlights/Notes; Glossary is shared
 - **Enhance**: Selection-based — user selects text in notes, floating toolbar offers "Enhance" button
 - **Reference links**: Hover-to-copy sentence-level references from agent sections into user notes
