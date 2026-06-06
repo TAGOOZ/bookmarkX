@@ -171,23 +171,6 @@ describe('NavPanel', () => {
     expect(screen.getByTitle('إيقاف وضع التجريب')).toBeDefined();
   });
 
-  it('shows mock mode banner when mock mode is enabled', () => {
-    renderWithIntl(
-      <NavPanel
-        bookmarks={mockBookmarks}
-        onSettingsClick={vi.fn()}
-        onFetchClick={vi.fn()}
-        onClassifyClick={vi.fn()}
-        onSelectBookmark={vi.fn()}
-        selectedBookmarkId={null}
-        mockMode={true}
-        onToggleMockMode={vi.fn()}
-      />
-    );
-
-    expect(screen.getByText('وضع التجريب')).toBeDefined();
-  });
-
   it('calls onToggleMockMode when mock mode button is clicked', async () => {
     const onToggleMockMode = vi.fn();
     renderWithIntl(

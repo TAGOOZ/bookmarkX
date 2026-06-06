@@ -345,16 +345,6 @@ body {
   border: 1px solid orange;
 }
 
-.mock-mode-banner {
-  padding: var(--space-xs) var(--space-s);
-  background-color: rgba(255, 165, 0, 0.15);
-  color: orange;
-  font-size: var(--font-ui-small);
-  font-weight: 600;
-  text-align: center;
-  border-bottom: 1px solid rgba(255, 165, 0, 0.3);
-}
-
 .mock-mode-notice {
   padding: var(--space-m);
   margin-bottom: var(--space-m);

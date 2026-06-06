@@ -119,12 +119,6 @@ const NavPanel: React.FC<NavPanelProps> = ({
         </button>
       </div>
 
-      {mockMode && (
-        <div className="mock-mode-banner">
-          وضع التجريب
-        </div>
-      )}
-
       <div className="nav-panel-content">
         {topicNames.length === 0 ? (
           <div className="nav-panel-empty">
