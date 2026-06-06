@@ -1,8 +1,9 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useMemo } from 'react';
 import { IntlProvider } from 'react-intl';
 import Sidebar from './components/Sidebar';
 import BookmarkList from './components/BookmarkList';
 import BookmarkDetail from './components/bookmark-detail/BookmarkDetail';
+import BookmarkTabs from './components/bookmark-detail/BookmarkTabs';
 import Settings from './components/Settings';
 
 export interface Bookmark {
@@ -62,7 +63,8 @@ const messages = {
 };
 
 function App() {
-  const [selectedBookmark, setSelectedBookmark] = useState<Bookmark | null>(null);
+  const [openBookmarks, setOpenBookmarks] = useState<Bookmark[]>([]);
+  const [activeBookmarkId, setActiveBookmarkId] = useState<string | null>(null);
   const [showSettings, setShowSettings] = useState(false);
   const [filters, setFilters] = useState<FilterState>({
     priority: '',
@@ -72,9 +74,31 @@ function App() {
   const [searchQuery, setSearchQuery] = useState('');
   const [refreshKey, setRefreshKey] = useState(0);
 
-  const handleBookmarkSelect = (bookmark: Bookmark) => {
-    setSelectedBookmark(bookmark);
-  };
+  const activeBookmark = useMemo(
+    () => openBookmarks.find((b) => b.id === activeBookmarkId) ?? null,
+    [openBookmarks, activeBookmarkId],
+  );
+
+  const handleBookmarkSelect = useCallback((bookmark: Bookmark) => {
+    setOpenBookmarks((prev) => {
+      const exists = prev.find((b) => b.id === bookmark.id);
+      if (exists) return prev;
+      return [...prev, bookmark];
+    });
+    setActiveBookmarkId(bookmark.id);
+  }, []);
+
+  const handleTabSelect = useCallback((bookmarkId: string) => {
+    setActiveBookmarkId(bookmarkId);
+  }, []);
+
+  const handleTabClose = useCallback((bookmarkId: string) => {
+    setOpenBookmarks((prev) => prev.filter((b) => b.id !== bookmarkId));
+    setActiveBookmarkId((prev) => {
+      if (prev !== bookmarkId) return prev;
+      return null;
+    });
+  }, []);
 
   const handleFilterChange = (newFilters: FilterState) => {
     setFilters(newFilters);
@@ -101,9 +125,17 @@ function App() {
           onFetchClick={handleFetch}
           onClassifyClick={handleClassify}
         />
-        <BookmarkDetail bookmark={selectedBookmark} />
+        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+          <BookmarkTabs
+            openBookmarks={openBookmarks}
+            activeBookmarkId={activeBookmarkId}
+            onTabSelect={handleTabSelect}
+            onTabClose={handleTabClose}
+          />
+          <BookmarkDetail bookmark={activeBookmark} />
+        </div>
         <BookmarkList
-          selectedBookmark={selectedBookmark}
+          selectedBookmark={activeBookmark}
           onBookmarkSelect={handleBookmarkSelect}
           filters={filters}
           searchQuery={searchQuery}
