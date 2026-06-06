@@ -1,4 +1,4 @@
-import { app, BrowserWindow, ipcMain } from 'electron';
+import { app, BrowserWindow, ipcMain, Menu } from 'electron';
 import path from 'node:path';
 import fs from 'node:fs';
 import started from 'electron-squirrel-startup';
@@ -26,7 +26,8 @@ if (started) {
 let db: Client;
 
 const createWindow = () => {
-  // Create the browser window.
+  Menu.setApplicationMenu(null);
+
   const mainWindow = new BrowserWindow({
     width: 800,
     height: 600,
