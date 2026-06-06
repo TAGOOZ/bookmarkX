@@ -419,6 +419,164 @@ body {
   margin-top: 20px;
 }
 
+.settings-section {
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  padding: 16px;
+  background-color: var(--bg-primary);
+}
+
+.settings-section-title {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 12px;
+}
+
+.auth-options {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.auth-option {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.twitter-login-button {
+  padding: 10px 20px;
+  border-radius: 8px;
+  border: none;
+  background-color: #1d9bf0;
+  color: white;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+
+.twitter-login-button:hover {
+  opacity: 0.9;
+}
+
+.twitter-login-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.option-divider {
+  text-align: center;
+  color: var(--text-secondary);
+  font-size: 0.85rem;
+  position: relative;
+}
+
+.option-divider::before,
+.option-divider::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  width: 40%;
+  height: 1px;
+  background-color: var(--border-color);
+}
+
+.option-divider::before {
+  left: 0;
+}
+
+.option-divider::after {
+  right: 0;
+}
+
+.detect-input-row {
+  display: flex;
+  gap: 8px;
+}
+
+.detect-input-row .form-input {
+  flex: 1;
+}
+
+.detect-button {
+  padding: 8px 16px;
+  border-radius: 8px;
+  border: 1px solid var(--border-color);
+  background-color: var(--bg-secondary);
+  color: var(--text-primary);
+  font-weight: 500;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.detect-button:hover {
+  background-color: var(--bg-tertiary);
+}
+
+.detect-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.auth-status {
+  font-size: 0.8rem;
+  font-style: italic;
+}
+
+.auth-status-detected {
+  color: #4caf50;
+}
+
+.auth-status-manual {
+  color: var(--text-secondary);
+}
+
+.toggle-label {
+  position: relative;
+  display: inline-block;
+  width: 44px;
+  height: 24px;
+}
+
+.toggle-input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.toggle-switch {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: var(--bg-tertiary);
+  border-radius: 24px;
+  transition: 0.3s;
+}
+
+.toggle-switch::before {
+  content: '';
+  position: absolute;
+  height: 18px;
+  width: 18px;
+  left: 3px;
+  bottom: 3px;
+  background-color: var(--text-primary);
+  border-radius: 50%;
+  transition: 0.3s;
+}
+
+.toggle-input:checked + .toggle-switch {
+  background-color: var(--accent-color);
+}
+
+.toggle-input:checked + .toggle-switch::before {
+  transform: translateX(20px);
+}
+
 .empty-state {
   display: flex;
   flex-direction: column;

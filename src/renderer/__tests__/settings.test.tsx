@@ -10,13 +10,23 @@ import Settings from '../components/Settings';
 
 const messages = {
   settings: 'Settings',
+  userProfile: 'User Profile',
+  name: 'Name',
+  twitterHandle: 'Twitter Handle',
+  xAuth: 'X/Twitter Authentication',
   apiKey: 'Gemini API Key',
   authToken: 'Auth Token',
   ct0: 'CT0 Cookie',
   chromeProfile: 'Chrome Profile',
+  geminiApi: 'Gemini API',
+  preferences: 'Preferences',
+  theme: 'Theme',
+  language: 'Language',
+  notifications: 'Notifications',
+  fetchFrequency: 'Fetch Frequency',
+  aiModel: 'AI Model',
   save: 'Save',
   cancel: 'Cancel',
-  loading: 'Loading...',
 };
 
 const mockGetSettings = vi.fn();
@@ -30,6 +40,10 @@ beforeEach(() => {
     getBookmarkWithClassification: vi.fn(),
     getSettings: mockGetSettings,
     saveSettings: mockSaveSettings,
+    detectChromeProfile: vi.fn(),
+    twitterLogin: vi.fn(),
+    fetchBookmarks: vi.fn(),
+    classifyAndNotify: vi.fn(),
   };
 });
 
@@ -40,12 +54,25 @@ afterEach(() => {
 const renderWithIntl = (ui: React.ReactElement) =>
   render(<IntlProvider locale="en" messages={messages}>{ui}</IntlProvider>);
 
+const defaultConfig = {
+  name: '',
+  twitterHandle: '',
+  geminiApiKey: '',
+  birdAuthToken: '',
+  birdCt0: '',
+  birdChromeProfile: '',
+  theme: 'dark',
+  language: 'ar',
+  notifications: true,
+  fetchFrequency: '0 */6 * * *',
+  aiModel: 'gemini-2.0-flash',
+};
+
 describe('Settings IPC Integration', () => {
   it('loads existing settings on mount', async () => {
     mockGetSettings.mockResolvedValue({
+      ...defaultConfig,
       geminiApiKey: 'test-key-123',
-      birdAuthToken: '',
-      birdCt0: '',
       birdChromeProfile: '/path/to/profile',
     });
 
@@ -59,13 +86,8 @@ describe('Settings IPC Integration', () => {
     expect(screen.getByDisplayValue('/path/to/profile')).toBeDefined();
   });
 
-  it('saves settings to .env on submit', async () => {
-    mockGetSettings.mockResolvedValue({
-      geminiApiKey: '',
-      birdAuthToken: '',
-      birdCt0: '',
-      birdChromeProfile: '',
-    });
+  it('saves settings to user.json on submit', async () => {
+    mockGetSettings.mockResolvedValue({ ...defaultConfig });
     mockSaveSettings.mockResolvedValue(undefined);
 
     const onClose = vi.fn();
@@ -75,7 +97,7 @@ describe('Settings IPC Integration', () => {
       expect(mockGetSettings).toHaveBeenCalled();
     });
 
-    const apiKeyInput = screen.getByPlaceholderText('أدخل مفتاح Gemini API');
+    const apiKeyInput = screen.getByPlaceholderText('Enter Gemini API key');
     await userEvent.clear(apiKeyInput);
     await userEvent.type(apiKeyInput, 'new-api-key');
 
@@ -84,10 +106,8 @@ describe('Settings IPC Integration', () => {
 
     await waitFor(() => {
       expect(mockSaveSettings).toHaveBeenCalledWith({
+        ...defaultConfig,
         geminiApiKey: 'new-api-key',
-        birdAuthToken: '',
-        birdCt0: '',
-        birdChromeProfile: '',
       });
     });
 
@@ -104,12 +124,7 @@ describe('Settings IPC Integration', () => {
 
     expect(screen.getByText('Loading...')).toBeDefined();
 
-    resolveGetSettings!({
-      geminiApiKey: '',
-      birdAuthToken: '',
-      birdCt0: '',
-      birdChromeProfile: '',
-    });
+    resolveGetSettings!({ ...defaultConfig });
 
     await waitFor(() => {
       expect(screen.queryByText('Loading...')).toBeNull();

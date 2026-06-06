@@ -16,11 +16,25 @@ export interface ClassificationData {
   topics: string[];
 }
 
-export interface SettingsData {
+export interface UserConfig {
+  name: string;
+  twitterHandle: string;
   geminiApiKey: string;
   birdAuthToken: string;
   birdCt0: string;
   birdChromeProfile: string;
+  theme: 'dark' | 'light';
+  language: 'ar' | 'en';
+  notifications: boolean;
+  fetchFrequency: string;
+  aiModel: string;
+}
+
+export interface ChromeProfileDetection {
+  profiles: string[];
+  selectedProfile: string;
+  authToken?: string;
+  ct0?: string;
 }
 
 declare global {
@@ -33,10 +47,12 @@ declare global {
         reading_time_min: number;
       }>>;
       getBookmarkWithClassification: (bookmarkId: string) => Promise<ClassificationData | null>;
-      getSettings: () => Promise<SettingsData>;
-      saveSettings: (settings: SettingsData) => Promise<void>;
+      getSettings: () => Promise<UserConfig>;
+      saveSettings: (settings: UserConfig) => Promise<void>;
       fetchBookmarks: () => Promise<{ stored: number; skipped: number }>;
       classifyAndNotify: () => Promise<{ classified: number; notified: number; errors: number }>;
+      detectChromeProfile: () => Promise<ChromeProfileDetection>;
+      twitterLogin: () => Promise<{ authToken: string; ct0: string } | { error: string }>;
     };
   }
 }

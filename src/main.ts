@@ -1,8 +1,11 @@
-import { app, BrowserWindow, ipcMain, Menu } from 'electron';
+import { app, BrowserWindow, ipcMain, Menu, session } from 'electron';
 import path from 'node:path';
 import fs from 'node:fs';
+import os from 'node:os';
 import started from 'electron-squirrel-startup';
 import { createClient, type Client } from '@libsql/client';
+import { readConfig, writeConfig, type UserConfig } from './main/user-config';
+import { detectAndExtract } from './main/chrome-profile-detect';
 
 // Disable GPU acceleration on Linux to avoid crashes
 // NOTE: --no-sandbox MUST be passed as CLI arg, not appendSwitch (see electron/electron#47650)
@@ -76,10 +79,33 @@ app.on('activate', () => {
 
 // Initialize database and IPC handlers
 app.whenReady().then(async () => {
+  const userDataDir = app.getPath('userData');
+
+  // Delete .env on first launch after update
+  const envPath = path.join(app.getAppPath(), '.env');
+  if (fs.existsSync(envPath)) {
+    fs.unlinkSync(envPath);
+  }
+
   // Initialize SQLite database
-  const dbPath = path.join(app.getPath('userData'), 'bookmarks.db');
+  const dbPath = path.join(userDataDir, 'bookmarks.db');
   db = createClient({ url: `file:${dbPath}` });
   await initializeSchema(db);
+
+  // Helper: read config and set env vars for child processes
+  function getConfig(): UserConfig {
+    return readConfig(userDataDir);
+  }
+
+  function getConfigEnv(): { authToken?: string; ct0?: string; chromeProfile?: string; apiKey?: string } {
+    const config = getConfig();
+    return {
+      authToken: config.birdAuthToken || undefined,
+      ct0: config.birdCt0 || undefined,
+      chromeProfile: config.birdChromeProfile || undefined,
+      apiKey: config.geminiApiKey || undefined,
+    };
+  }
 
   // IPC handlers for bookmark data
   ipcMain.handle('get-bookmarks', async () => {
@@ -95,64 +121,83 @@ app.whenReady().then(async () => {
     return getClassification(db, bookmarkId);
   });
 
-  // Settings IPC handlers
-  const envPath = path.join(app.getAppPath(), '.env');
-
+  // Settings IPC handlers (user.json)
   ipcMain.handle('get-settings', () => {
-    const envContent = fs.existsSync(envPath) ? fs.readFileSync(envPath, 'utf-8') : '';
-    const parse = (key: string): string => {
-      const match = envContent.match(new RegExp(`^${key}=(.*)$`, 'm'));
-      return match ? match[1] : '';
-    };
-    return {
-      geminiApiKey: parse('GEMINI_API_KEY'),
-      birdAuthToken: parse('BIRD_AUTH_TOKEN'),
-      birdCt0: parse('BIRD_CT0'),
-      birdChromeProfile: parse('BIRD_CHROME_PROFILE'),
-    };
+    return getConfig();
   });
 
-  ipcMain.handle('save-settings', (_event, settings: {
-    geminiApiKey: string;
-    birdAuthToken: string;
-    birdCt0: string;
-    birdChromeProfile: string;
-  }) => {
-    const lines = [
-      '# Gemini API Key (required for classification)',
-      `GEMINI_API_KEY=${settings.geminiApiKey}`,
-      '',
-      '# Bird CLI authentication (for X/Twitter bookmarks)',
-      `BIRD_CHROME_PROFILE=${settings.birdChromeProfile}`,
-      `BIRD_AUTH_TOKEN=${settings.birdAuthToken}`,
-      `BIRD_CT0=${settings.birdCt0}`,
-    ];
-    fs.writeFileSync(envPath, lines.join('\n'), 'utf-8');
+  ipcMain.handle('save-settings', (_event, settings: UserConfig) => {
+    writeConfig(userDataDir, settings);
+  });
+
+  // Chrome profile detection
+  ipcMain.handle('detect-chrome-profile', async () => {
+    const config = getConfig();
+    const chromeDir = config.birdChromeProfile
+      ? path.dirname(config.birdChromeProfile)
+      : path.join(os.homedir(), '.config', 'google-chrome');
+    return detectAndExtract(chromeDir);
+  });
+
+  // Twitter login via BrowserWindow
+  ipcMain.handle('twitter-login', async () => {
+    return new Promise<{ authToken: string; ct0: string } | { error: string }>((resolve) => {
+      const loginWindow = new BrowserWindow({
+        width: 600,
+        height: 700,
+        webPreferences: {
+          partition: 'twitter-auth',
+          nodeIntegration: false,
+        },
+      });
+
+      loginWindow.loadURL('https://x.com/login');
+
+      let resolved = false;
+      const checkInterval = setInterval(async () => {
+        if (resolved) return;
+        try {
+          const cookies = await session
+            .fromPartition('twitter-auth')
+            .cookies.get({ domain: 'x.com' });
+          const authToken = cookies.find((c) => c.name === 'auth_token')?.value;
+          const ct0 = cookies.find((c) => c.name === 'ct0')?.value;
+          if (authToken && ct0) {
+            resolved = true;
+            clearInterval(checkInterval);
+            loginWindow.close();
+            resolve({ authToken, ct0 });
+          }
+        } catch {
+          // Window may have been closed
+        }
+      }, 1000);
+
+      loginWindow.on('closed', () => {
+        if (!resolved) {
+          resolved = true;
+          clearInterval(checkInterval);
+          resolve({ error: 'cancelled' });
+        }
+      });
+    });
   });
 
   ipcMain.handle('fetch-bookmarks', async () => {
     const { fetchAndStore } = await import('./pipeline/fetch-and-store');
-    const envContent = fs.existsSync(envPath) ? fs.readFileSync(envPath, 'utf-8') : '';
-    const parse = (key: string): string => {
-      const match = envContent.match(new RegExp(`^${key}=(.*)$`, 'm'));
-      return match ? match[1] : '';
-    };
+    const env = getConfigEnv();
     return fetchAndStore(db, {
-      authToken: parse('BIRD_AUTH_TOKEN') || undefined,
-      ct0: parse('BIRD_CT0') || undefined,
-      chromeProfile: parse('BIRD_CHROME_PROFILE') || undefined,
+      authToken: env.authToken,
+      ct0: env.ct0,
+      chromeProfile: env.chromeProfile,
     });
   });
 
   ipcMain.handle('classify-and-notify', async () => {
     const { classifyAndNotify } = await import('./pipeline/classify-and-notify');
-    const envContent = fs.existsSync(envPath) ? fs.readFileSync(envPath, 'utf-8') : '';
-    const parse = (key: string): string => {
-      const match = envContent.match(new RegExp(`^${key}=(.*)$`, 'm'));
-      return match ? match[1] : '';
-    };
+    const env = getConfigEnv();
     return classifyAndNotify(db, {
-      apiKey: parse('GEMINI_API_KEY') || undefined,
+      apiKey: env.apiKey,
     });
   });
 
@@ -163,26 +208,18 @@ app.whenReady().then(async () => {
     const bookmarks = await getStoredBookmarks(db);
     const bookmark = bookmarks.find((b) => b.id === bookmarkId);
     if (!bookmark) throw new Error('Bookmark not found');
-    const envContent = fs.existsSync(envPath) ? fs.readFileSync(envPath, 'utf-8') : '';
-    const parse = (key: string): string => {
-      const match = envContent.match(new RegExp(`^${key}=(.*)$`, 'm'));
-      return match ? match[1] : '';
-    };
+    const env = getConfigEnv();
     return summarizeBookmark(db, bookmarkId, bookmark, {
-      apiKey: parse('GEMINI_API_KEY') || undefined,
+      apiKey: env.apiKey,
     });
   });
 
   // Phase 2 IPC handlers: Extract article
   ipcMain.handle('extract-article', async (_event, bookmarkId: string, url: string) => {
     const { extractArticle } = await import('./services/extract');
-    const envContent = fs.existsSync(envPath) ? fs.readFileSync(envPath, 'utf-8') : '';
-    const parse = (key: string): string => {
-      const match = envContent.match(new RegExp(`^${key}=(.*)$`, 'm'));
-      return match ? match[1] : '';
-    };
+    const env = getConfigEnv();
     return extractArticle(db, bookmarkId, url, {
-      apiKey: parse('GEMINI_API_KEY') || undefined,
+      apiKey: env.apiKey,
     });
   });
 
@@ -195,13 +232,9 @@ app.whenReady().then(async () => {
   // Phase 2 IPC handlers: Chat
   ipcMain.handle('send-chat-message', async (_event, sessionId: string, message: string, articleContext?: string) => {
     const { sendMessage } = await import('./services/chat');
-    const envContent = fs.existsSync(envPath) ? fs.readFileSync(envPath, 'utf-8') : '';
-    const parse = (key: string): string => {
-      const match = envContent.match(new RegExp(`^${key}=(.*)$`, 'm'));
-      return match ? match[1] : '';
-    };
+    const env = getConfigEnv();
     return sendMessage(db, sessionId, message, articleContext, {
-      apiKey: parse('GEMINI_API_KEY') || undefined,
+      apiKey: env.apiKey,
     });
   });
 
@@ -243,13 +276,9 @@ app.whenReady().then(async () => {
   // Phase 2 IPC handlers: Enhance note
   ipcMain.handle('enhance-note', async (_event, selectedText: string, context?: string) => {
     const { enhanceNote } = await import('./services/enhance');
-    const envContent = fs.existsSync(envPath) ? fs.readFileSync(envPath, 'utf-8') : '';
-    const parse = (key: string): string => {
-      const match = envContent.match(new RegExp(`^${key}=(.*)$`, 'm'));
-      return match ? match[1] : '';
-    };
+    const env = getConfigEnv();
     return enhanceNote(selectedText, context, {
-      apiKey: parse('GEMINI_API_KEY') || undefined,
+      apiKey: env.apiKey,
     });
   });
 
@@ -273,13 +302,9 @@ app.whenReady().then(async () => {
   ipcMain.handle('generate-glossary', async (_event, bookmarkId: string, content: string, title?: string) => {
     const { generateGlossary } = await import('./services/glossary');
     const { addTerm, linkTermToBookmark } = await import('./db/glossary');
-    const envContent = fs.existsSync(envPath) ? fs.readFileSync(envPath, 'utf-8') : '';
-    const parse = (key: string): string => {
-      const match = envContent.match(new RegExp(`^${key}=(.*)$`, 'm'));
-      return match ? match[1] : '';
-    };
+    const env = getConfigEnv();
     const terms = await generateGlossary(content, {
-      apiKey: parse('GEMINI_API_KEY') || undefined,
+      apiKey: env.apiKey,
       title,
     });
     for (const t of terms) {
