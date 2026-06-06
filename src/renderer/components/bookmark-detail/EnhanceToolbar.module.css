@@ -1,0 +1,26 @@
+.toolbar {
+  position: absolute;
+  z-index: 100;
+  display: flex;
+  gap: var(--space-xs);
+  padding: var(--space-xs);
+  background-color: var(--background-secondary);
+  border: 1px solid var(--background-modifier-border);
+  border-radius: var(--radius-m);
+  box-shadow: var(--shadow-m);
+}
+
+.btn {
+  padding: var(--space-xs) var(--space-s);
+  border: none;
+  border-radius: var(--radius-s);
+  background-color: var(--accent-color);
+  color: var(--text-on-accent);
+  font-size: var(--font-ui-small);
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.btn:hover {
+  opacity: 0.9;
+}

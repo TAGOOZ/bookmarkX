@@ -1,0 +1,33 @@
+.container {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xl);
+}
+
+.section {
+  padding: var(--space-l);
+  border-radius: var(--radius-m);
+}
+
+.agent {
+  background-color: var(--section-agent-bg);
+  border-left: 3px solid var(--section-agent-border);
+}
+
+.user {
+  background-color: var(--section-user-bg);
+  border-left: 3px solid var(--section-user-border);
+}
+
+.shared {
+  border-left: 3px solid var(--background-modifier-border);
+}
+
+.label {
+  font-size: var(--font-ui-small);
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: var(--space-m);
+}

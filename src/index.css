@@ -1,15 +1,14 @@
 @import './fonts.css';
+@import './renderer/styles/tokens.css';
 
 :root {
-  --sidebar-width: 250px;
-  --list-width: 350px;
-  --bg-primary: #1e1e1e;
-  --bg-secondary: #262626;
-  --bg-tertiary: #363636;
-  --text-primary: #dadada;
-  --text-secondary: #999999;
-  --accent-color: #a882ff;
-  --border-color: #3f3f3f;
+  /* Legacy aliases for existing components */
+  --bg-primary: var(--background-primary);
+  --bg-secondary: var(--background-secondary);
+  --bg-tertiary: var(--background-tertiary);
+  --text-primary: var(--text-normal);
+  --text-secondary: var(--text-muted);
+  --border-color: var(--background-modifier-border);
 }
 
 * {

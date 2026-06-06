@@ -1,0 +1,64 @@
+.container {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-m);
+}
+
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-s);
+}
+
+.term {
+  display: flex;
+  gap: var(--space-m);
+  font-size: var(--font-ui);
+}
+
+.termName {
+  font-weight: 600;
+  color: var(--accent-color);
+  min-width: 120px;
+}
+
+.termDef {
+  color: var(--text-normal);
+  margin: 0;
+}
+
+.addForm {
+  display: flex;
+  gap: var(--space-s);
+  margin-top: var(--space-s);
+}
+
+.input {
+  flex: 1;
+  padding: var(--space-s) var(--space-m);
+  border: 1px solid var(--background-modifier-border);
+  border-radius: var(--radius-m);
+  background-color: var(--background-modifier-form-field);
+  color: var(--text-normal);
+  font-size: var(--font-ui-small);
+}
+
+.input:focus {
+  outline: none;
+  border-color: var(--accent-color);
+}
+
+.addBtn {
+  padding: var(--space-s) var(--space-m);
+  border: none;
+  border-radius: var(--radius-m);
+  background-color: var(--accent-color);
+  color: var(--text-on-accent);
+  font-size: var(--font-ui-small);
+  cursor: pointer;
+}
+
+.addBtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}

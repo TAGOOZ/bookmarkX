@@ -1,0 +1,54 @@
+.sidebar {
+  position: sticky;
+  top: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-m);
+  padding: var(--space-l) var(--space-xs);
+  width: var(--contents-sidebar-width);
+  min-height: 100%;
+}
+
+.dash {
+  display: flex;
+  align-items: center;
+  gap: var(--space-s);
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: var(--space-xs);
+  width: 100%;
+}
+
+.dashLine {
+  display: block;
+  width: 24px;
+  height: 2px;
+  background-color: var(--text-faint);
+  border-radius: var(--radius-xs);
+  transition: background-color var(--transition-fast), width var(--transition-fast);
+  flex-shrink: 0;
+}
+
+.dash:hover .dashLine {
+  background-color: var(--accent-color);
+  width: 32px;
+}
+
+.active .dashLine {
+  background-color: var(--accent-color);
+  height: 3px;
+}
+
+.label {
+  font-size: var(--font-ui-xs);
+  color: var(--text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.dash:hover .label {
+  color: var(--text-normal);
+}
