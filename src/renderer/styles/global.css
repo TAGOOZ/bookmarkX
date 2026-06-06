@@ -54,6 +54,13 @@ body {
   overflow: hidden !important;
 }
 
+/* Override BlockNote's blue selection outline with app accent color */
+.ProseMirror-selectednode > .bn-block-content > *,
+.bn-block-content.ProseMirror-selectednode > * {
+  outline: 2px solid var(--accent-color) !important;
+  outline-offset: 2px;
+}
+
 /* Focus indicators */
 button:focus-visible,
 input:focus-visible,
