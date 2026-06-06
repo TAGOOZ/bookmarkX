@@ -1,54 +1,83 @@
-import React, { useState, useRef, useCallback } from 'react';
+import React, { useCallback, useEffect, useRef } from 'react';
 import { FormattedMessage } from 'react-intl';
+import { useCreateBlockNote } from '@blocknote/react';
+import { BlockNoteView } from '@blocknote/mantine';
+import { Block, PartialBlock } from '@blocknote/core';
+import '@blocknote/mantine/style.css';
 import styles from './BookmarkDetail.module.css';
 import PageHeader from './PageHeader';
-import ContentsSidebar from './ContentsSidebar';
-import SectionRenderer, { SectionDef } from './SectionRenderer';
-import SummarySection from './SummarySection';
-import GlossarySection from './GlossarySection';
-import ArticleView from './ArticleView';
-import HighlightsSection from './HighlightsSection';
-import NotesEditor from './NotesEditor';
-import ChatPanel from './ChatPanel';
-import { BookmarkDetailData, LayoutMode } from './types';
+import { BookmarkDetailData } from './types';
+import { bookmarkToBlocks } from './bookmarkToBlocks';
+import { blocksToBookmark } from './blocksToBookmark';
 
 interface BookmarkDetailProps {
   bookmark: BookmarkDetailData | null;
-  onNotesChange?: (notes: string) => void;
-  onChatSend?: (message: string) => void;
-  onGlossaryAdd?: (term: string, definition: string) => void;
-  onEnhance?: (selection: string) => void;
-  chatLoading?: boolean;
+  onBlocksChange?: (blocks: string) => void;
+  onBookmarkChange?: (updated: Partial<BookmarkDetailData>) => void;
 }
 
-const LAYOUT_LABELS: Record<LayoutMode, string> = {
-  linear: 'Linear',
-  'two-column': 'Two Column',
-  collapsible: 'Collapsible',
-};
+function parseStoredBlocks(blocksJson: string | undefined): PartialBlock[] | undefined {
+  if (!blocksJson) return undefined;
+  try {
+    const parsed = JSON.parse(blocksJson);
+    if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+    return undefined;
+  } catch {
+    return undefined;
+  }
+}
 
-// eslint-disable-next-line @typescript-eslint/no-empty-function
-const noop = () => {};
+interface BookmarkEditorProps {
+  bookmark: BookmarkDetailData;
+  onBlocksChange?: (blocks: string) => void;
+  onBookmarkChange?: (updated: Partial<BookmarkDetailData>) => void;
+}
+
+const BookmarkEditor: React.FC<BookmarkEditorProps> = ({
+  bookmark,
+  onBlocksChange,
+  onBookmarkChange,
+}) => {
+  const initialContent = parseStoredBlocks(bookmark.blocks) || bookmarkToBlocks(bookmark);
+  const editor = useCreateBlockNote({ initialContent });
+  const isExternalUpdate = useRef(true);
+  const lastBookmarkId = useRef<string | null>(null);
+
+  useEffect(() => {
+    if (bookmark.id === lastBookmarkId.current) return;
+    lastBookmarkId.current = bookmark.id;
+    isExternalUpdate.current = true;
+    const newBlocks = parseStoredBlocks(bookmark.blocks) || bookmarkToBlocks(bookmark);
+    editor.replaceBlocks(editor.document, newBlocks);
+    isExternalUpdate.current = false;
+  }, [bookmark, editor]);
+
+  const handleChange = useCallback(() => {
+    if (isExternalUpdate.current) return;
+    const blocks = editor.document;
+    const serialized = JSON.stringify(blocks);
+    onBlocksChange?.(serialized);
+    const updated = blocksToBookmark(blocks as Block[], bookmark);
+    onBookmarkChange?.(updated);
+  }, [editor, onBlocksChange, onBookmarkChange, bookmark]);
+
+  return (
+    <div className={styles.editorWrapper}>
+      <BlockNoteView
+        editor={editor}
+        onChange={handleChange}
+        className={styles.editor}
+        theme="light"
+      />
+    </div>
+  );
+};
 
 const BookmarkDetail: React.FC<BookmarkDetailProps> = ({
   bookmark,
-  onNotesChange,
-  onChatSend,
-  onGlossaryAdd,
-  chatLoading,
+  onBlocksChange,
+  onBookmarkChange,
 }) => {
-  const [layoutMode, setLayoutMode] = useState<LayoutMode>('linear');
-  const [activeSection, setActiveSection] = useState('summary');
-  const contentRef = useRef<HTMLDivElement>(null);
-
-  const handleNavigate = useCallback((sectionId: string) => {
-    const el = document.getElementById(sectionId);
-    if (el) {
-      el.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      setActiveSection(sectionId);
-    }
-  }, []);
-
   if (!bookmark) {
     return (
       <div className={styles.container}>
@@ -59,89 +88,9 @@ const BookmarkDetail: React.FC<BookmarkDetailProps> = ({
     );
   }
 
-  const sections: SectionDef[] = [
-    {
-      id: 'summary',
-      label: 'Summary',
-      visible: !!(bookmark.summary || bookmark.summaryAr),
-      owner: 'agent',
-      render: () => (
-        <SummarySection content={bookmark.summary} contentAr={bookmark.summaryAr} />
-      ),
-    },
-    {
-      id: 'glossary',
-      label: 'Glossary',
-      visible: !!(bookmark.glossaryTerms && bookmark.glossaryTerms.length > 0) || !!onGlossaryAdd,
-      owner: 'shared',
-      render: () => (
-        <GlossarySection terms={bookmark.glossaryTerms} onAddTerm={onGlossaryAdd} />
-      ),
-    },
-    {
-      id: 'article',
-      label: 'Article',
-      visible: !!bookmark.content,
-      owner: 'shared',
-      render: () => <ArticleView content={bookmark.content} />,
-    },
-    {
-      id: 'highlights',
-      label: 'Highlights',
-      visible: !!(bookmark.highlights && bookmark.highlights.length > 0),
-      owner: 'user',
-      render: () => <HighlightsSection highlights={bookmark.highlights || []} />,
-    },
-    {
-      id: 'notes',
-      label: 'Notes',
-      visible: true,
-      owner: 'user',
-      render: () => (
-        <NotesEditor content={bookmark.notes || ''} onChange={onNotesChange || noop} />
-      ),
-    },
-    {
-      id: 'chat',
-      label: 'Chat',
-      visible: true,
-      owner: 'agent',
-      render: () => (
-        <ChatPanel
-          messages={bookmark.chatMessages || []}
-          onSend={onChatSend || noop}
-          loading={chatLoading}
-        />
-      ),
-    },
-  ];
-
-  const visibleSections = sections.filter((s) => s.visible);
-  const contentsSections = visibleSections.map((s) => ({
-    id: s.id,
-    label: s.label,
-    visible: true,
-  }));
-
   return (
-    <div className={`${styles.container} ${styles[layoutMode]}`}>
-      <ContentsSidebar
-        sections={contentsSections}
-        activeSection={activeSection}
-        onNavigate={handleNavigate}
-      />
-      <div className={styles.content} ref={contentRef}>
-        <div className={styles.layoutToggle}>
-          {(Object.keys(LAYOUT_LABELS) as LayoutMode[]).map((mode) => (
-            <button
-              key={mode}
-              className={`${styles.layoutBtn} ${layoutMode === mode ? styles.layoutActive : ''}`}
-              onClick={() => setLayoutMode(mode)}
-            >
-              {LAYOUT_LABELS[mode]}
-            </button>
-          ))}
-        </div>
+    <div className={styles.container}>
+      <div className={styles.content}>
         <PageHeader
           title={bookmark.title}
           url={bookmark.url}
@@ -151,7 +100,11 @@ const BookmarkDetail: React.FC<BookmarkDetailProps> = ({
           readingTime={bookmark.readingTime}
           createdAt={bookmark.createdAt}
         />
-        <SectionRenderer sections={sections} />
+        <BookmarkEditor
+          bookmark={bookmark}
+          onBlocksChange={onBlocksChange}
+          onBookmarkChange={onBookmarkChange}
+        />
       </div>
     </div>
   );

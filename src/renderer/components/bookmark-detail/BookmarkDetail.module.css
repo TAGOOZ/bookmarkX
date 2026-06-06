@@ -21,40 +21,18 @@
   font-size: var(--font-h4);
 }
 
-.layoutToggle {
-  display: flex;
-  gap: var(--space-xs);
-  margin-bottom: var(--space-l);
+.editorWrapper {
+  margin-top: var(--space-l);
 }
 
-.layoutBtn {
-  padding: var(--space-xs) var(--space-s);
-  border: 1px solid var(--background-modifier-border);
-  border-radius: var(--radius-m);
-  background: none;
-  color: var(--text-muted);
-  font-size: var(--font-ui-xs);
-  cursor: pointer;
-  transition: color var(--transition-fast), border-color var(--transition-fast);
+.editor {
+  min-height: calc(100vh - 200px);
+  border: var(--input-border-width, 1px) solid var(--background-modifier-border);
+  border-radius: var(--input-radius, var(--radius-s));
+  transition: box-shadow 0.15s ease-in-out, border 0.15s ease-in-out;
 }
 
-.layoutBtn:hover {
-  color: var(--text-normal);
+.editor:focus-within {
+  border-color: var(--interactive-accent);
+  box-shadow: 0 0 0 2px rgba(168, 130, 255, 0.15);
 }
-
-.layoutActive {
-  border-color: var(--accent-color);
-  color: var(--accent-color);
-}
-
-/* Two Column Mode */
-.two-column .content {
-  column-count: 2;
-  column-gap: var(--space-2xl);
-}
-
-.two-column .layoutToggle {
-  column-span: all;
-}
-
-/* Collapsible Mode - sections have collapse controls via ArticleView */

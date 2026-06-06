@@ -26,6 +26,7 @@ export interface BookmarkDetailData extends Bookmark {
   notes?: string;
   chatMessages?: ChatMessage[];
   readingTime?: number;
+  blocks?: string;
 }
 
 export type LayoutMode = 'linear' | 'two-column' | 'collapsible';

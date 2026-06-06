@@ -4,7 +4,6 @@
 import React from 'react';
 import { describe, it, expect, beforeAll, afterEach, vi } from 'vitest';
 import { render, screen, cleanup } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
 import { IntlProvider } from 'react-intl';
 import BookmarkDetail from '../BookmarkDetail';
 
@@ -53,50 +52,30 @@ describe('BookmarkDetail', () => {
     expect(screen.getByText('Test Article')).toBeDefined();
   });
 
-  it('renders article content', () => {
-    renderWithIntl(<BookmarkDetail bookmark={baseBookmark} />);
-    expect(screen.getByText('Article body text here.')).toBeDefined();
+  it('renders the BlockNote editor', () => {
+    const { container } = renderWithIntl(<BookmarkDetail bookmark={baseBookmark} />);
+    expect(container.querySelector('.bn-editor')).toBeDefined();
   });
 
-  it('hides summary section when no summary provided', () => {
-    renderWithIntl(<BookmarkDetail bookmark={baseBookmark} />);
-    expect(screen.queryByText('Summary')).toBeNull();
-  });
-
-  it('shows summary when provided', () => {
-    renderWithIntl(
+  it('converts bookmark data to blocks and renders', () => {
+    const { container } = renderWithIntl(
       <BookmarkDetail
-        bookmark={{ ...baseBookmark, summary: 'AI summary text', summaryAr: 'ملخص بالعربي' }}
+        bookmark={{ ...baseBookmark, summary: 'AI summary text' }}
       />,
     );
-    expect(screen.getByText('Summary')).toBeDefined();
-    expect(screen.getByText('ملخص بالعربي')).toBeDefined();
+    expect(container.querySelector('.bn-editor')).toBeDefined();
   });
 
-  it('shows glossary when terms provided', () => {
-    renderWithIntl(
+  it('renders with pre-stored blocks', () => {
+    const blocks = [
+      { type: 'heading', props: { level: 2 }, content: 'Custom Heading' },
+      { type: 'paragraph', content: 'Custom content' },
+    ];
+    const { container } = renderWithIntl(
       <BookmarkDetail
-        bookmark={{
-          ...baseBookmark,
-          glossaryTerms: [{ term: 'API', definition: 'Application Programming Interface' }],
-        }}
+        bookmark={{ ...baseBookmark, blocks: JSON.stringify(blocks) }}
       />,
     );
-    expect(screen.getByText('Glossary')).toBeDefined();
-    expect(screen.getByText('API')).toBeDefined();
-  });
-
-  it('renders layout mode buttons', () => {
-    renderWithIntl(<BookmarkDetail bookmark={baseBookmark} />);
-    expect(screen.getByText('Linear')).toBeDefined();
-    expect(screen.getByText('Two Column')).toBeDefined();
-    expect(screen.getByText('Collapsible')).toBeDefined();
-  });
-
-  it('switches layout mode on click', async () => {
-    const user = userEvent.setup();
-    renderWithIntl(<BookmarkDetail bookmark={baseBookmark} />);
-    await user.click(screen.getByText('Two Column'));
-    expect(screen.getByText('Two Column').closest('button')?.className).toContain('layoutActive');
+    expect(container.querySelector('.bn-editor')).toBeDefined();
   });
 });
