@@ -17,10 +17,6 @@ function checkListItem(text: string, checked = false): PartialBlock {
   return { type: 'checkListItem', props: { checked }, content: text };
 }
 
-function divider(): PartialBlock {
-  return { type: 'divider' };
-}
-
 function splitParagraphs(text: string): PartialBlock[] {
   return text
     .split(/\n\n+/)
@@ -43,7 +39,6 @@ export function bookmarkToBlocks(bookmark: BookmarkDetailData): PartialBlock[] {
   }
 
   if (bookmark.glossaryTerms && bookmark.glossaryTerms.length > 0) {
-    blocks.push(divider());
     blocks.push(heading('Glossary', 2));
     for (const term of bookmark.glossaryTerms) {
       blocks.push(bulletListItem(`${term.term}: ${term.definition}`));
@@ -51,13 +46,11 @@ export function bookmarkToBlocks(bookmark: BookmarkDetailData): PartialBlock[] {
   }
 
   if (bookmark.content) {
-    blocks.push(divider());
     blocks.push(heading('Article', 2));
     blocks.push(...splitParagraphs(bookmark.content));
   }
 
   if (bookmark.highlights && bookmark.highlights.length > 0) {
-    blocks.push(divider());
     blocks.push(heading('Highlights', 2));
     for (const highlight of bookmark.highlights) {
       blocks.push(checkListItem(highlight.text));
@@ -68,7 +61,6 @@ export function bookmarkToBlocks(bookmark: BookmarkDetailData): PartialBlock[] {
   }
 
   if (bookmark.notes) {
-    blocks.push(divider());
     blocks.push(heading('Notes', 2));
     try {
       const parsed = JSON.parse(bookmark.notes);
@@ -83,7 +75,6 @@ export function bookmarkToBlocks(bookmark: BookmarkDetailData): PartialBlock[] {
   }
 
   if (bookmark.chatMessages && bookmark.chatMessages.length > 0) {
-    blocks.push(divider());
     blocks.push(heading('Chat', 2));
     for (const msg of bookmark.chatMessages) {
       const label = msg.role === 'user' ? 'You' : 'Assistant';

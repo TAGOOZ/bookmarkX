@@ -17,7 +17,7 @@ function getSection(blocks: Block[], startIdx: number): { text: string; endIdx: 
   let i = startIdx + 1;
   while (i < blocks.length) {
     const block = blocks[i];
-    if (block.type === 'heading' || (block.type === 'divider')) break;
+    if (block.type === 'heading') break;
     const text = getBlockText(block);
     if (text) lines.push(text);
     i++;
@@ -30,7 +30,7 @@ function getGlossaryItems(blocks: Block[], startIdx: number): { terms: GlossaryT
   let i = startIdx + 1;
   while (i < blocks.length) {
     const block = blocks[i];
-    if (block.type === 'heading' || block.type === 'divider') break;
+    if (block.type === 'heading') break;
     if (block.type === 'bulletListItem') {
       const text = getBlockText(block);
       const colonIdx = text.indexOf(':');
@@ -51,7 +51,7 @@ function getHighlights(blocks: Block[], startIdx: number): { highlights: Highlig
   let i = startIdx + 1;
   while (i < blocks.length) {
     const block = blocks[i];
-    if (block.type === 'heading' || block.type === 'divider') break;
+    if (block.type === 'heading') break;
     if (block.type === 'checkListItem' || block.type === 'bulletListItem') {
       const text = getBlockText(block);
       if (text) {
@@ -73,7 +73,7 @@ function getChatMessages(blocks: Block[], startIdx: number): { messages: ChatMes
   let i = startIdx + 1;
   while (i < blocks.length) {
     const block = blocks[i];
-    if (block.type === 'heading' || block.type === 'divider') break;
+    if (block.type === 'heading') break;
     if (block.type === 'paragraph') {
       const text = getBlockText(block);
       const userMatch = text.match(/^\*\*You:\*\*\s*(.*)/);
@@ -143,9 +143,7 @@ function processSection(
     const { highlights } = getHighlights(blocks, start);
     if (highlights.length > 0) result.highlights = highlights;
   } else if (sectionName === 'notes') {
-    const notesBlocks = blocks.slice(start + 1, end).filter(
-      (b) => b.type !== 'divider',
-    );
+    const notesBlocks = blocks.slice(start + 1, end);
     if (notesBlocks.length > 0) {
       result.notes = JSON.stringify(notesBlocks);
     }
