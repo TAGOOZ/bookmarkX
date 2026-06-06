@@ -20,6 +20,9 @@ contextBridge.exposeInMainWorld('api', {
   // Phase 2: Extract article
   extractArticle: (bookmarkId: string, url: string) =>
     ipcRenderer.invoke('extract-article', bookmarkId, url),
+  // Get article content (including blocks_json)
+  getArticleContent: (bookmarkId: string) =>
+    ipcRenderer.invoke('get-article-content', bookmarkId),
   // Phase 2: Chat
   sendChatMessage: (sessionId: string, message: string, articleContext?: string) =>
     ipcRenderer.invoke('send-chat-message', sessionId, message, articleContext),

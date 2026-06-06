@@ -186,6 +186,12 @@ app.whenReady().then(async () => {
     });
   });
 
+  // Get article content (including blocks_json)
+  ipcMain.handle('get-article-content', async (_event, bookmarkId: string) => {
+    const { getArticleContent } = await import('./db/article-content');
+    return getArticleContent(db, bookmarkId);
+  });
+
   // Phase 2 IPC handlers: Chat
   ipcMain.handle('send-chat-message', async (_event, sessionId: string, message: string, articleContext?: string) => {
     const { sendMessage } = await import('./services/chat');

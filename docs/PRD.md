@@ -18,11 +18,34 @@
 
 ## 4. Phased Release Plan
 
+### Phase 0: User Account & Authentication
+
+**User Stories:**
+- As a user, the app auto-detects my Chrome profile on Linux and extracts X/Twitter cookies
+- As a user, I can log in to X/Twitter directly via an in-app browser window (no manual cookie extraction)
+- As a user, I can manually enter auth tokens as a fallback
+- As a user, my profile (name, Twitter handle, API keys, preferences) is stored in a JSON config file
+- As a user, on first launch the app works immediately but shows a subtle banner prompting to complete setup
+- As a user, I can configure theme (dark/light), language (RTL/LTR), notifications, fetch frequency, and AI model
+
+**Acceptance Criteria:**
+- Chrome profile auto-detection scans `~/.config/google-chrome/` for available profiles (Linux)
+- Cookie extraction reads `auth_token` and `ct0` from Chrome's unencrypted SQLite cookie DB
+- Twitter login opens an Electron BrowserWindow to `x.com/login`, captures session cookies after login
+- User config stored as `user.json` in userData dir (`~/.config/bookmarkX/user.json`)
+- Config format: flat JSON with fields: name, twitterHandle, geminiApiKey, birdAuthToken, birdCt0, birdChromeProfile, theme, language, notifications, fetchFrequency, aiModel
+- `.env` file is deleted; all settings migrate to `user.json`
+- Settings UI shows two equal options: "Login with Twitter" button + manual token entry
+- Auto-detect fills fields automatically when Chrome profile is found
+- First-run: app works with empty config, shows prompt banner to complete setup
+- Profile section lives in Settings modal (not sidebar)
+
+**Agent-ready note:** User config module (`user-config.ts`) must expose typed read/write functions. No UI coupling. Config is the single source of truth for auth tokens and preferences.
+
 ### Phase 1: MVP — Fetch & Classify
 
 **User Stories:**
-- As a user, I can connect my X account via bird.fast cookie auth
-- As a user, bookmarks are fetched automatically every 6 hours (configurable)
+- As a user, bookmarks are fetched automatically every 6 hours (configurable via user.json)
 - As a user, I can manually trigger a fetch at any time (resets the 6-hour timer)
 - As a user, each bookmark is auto-classified with: Priority (high/medium/low), Topic tags, Reading time estimate
 - As a user, I can browse bookmarks in a 3-column layout (sidebar + list + detail)
@@ -30,7 +53,6 @@
 - As a user, I can search bookmarks by keyword (full-text)
 - As a user, I get desktop notifications + in-app badge for high-priority new bookmarks
 - As a user, the app works offline with previously fetched data
-- As a user, I can configure API keys and auth tokens from the Settings screen
 
 **Acceptance Criteria:**
 - bird.fast CLI is bundled or accessible from the Electron app
@@ -40,8 +62,7 @@
 - Full RTL layout: sidebar, navigation, and content areas mirror for Arabic text
 - Mixed Arabic/English text renders correctly (bidirectional text support)
 - Thmanyah font family loaded and applied to Arabic text
-- Settings screen allows updating: GEMINI_API_KEY, BIRD_AUTH_TOKEN, BIRD_CT0, BIRD_CHROME_PROFILE
-- Settings persist to .env file and are loaded on app start
+- Auth tokens come from user.json (Phase 0) — no .env dependency
 - Sensitive values (API keys, tokens) are masked in the UI
 
 **Agent-ready note:** Classification service (`classifyBookmark()`) must use service-layer abstraction with typed I/O and event emission. No UI coupling. Ready for future agent invocation.
@@ -515,6 +536,7 @@ CREATE TABLE agent_actions (
 - [0013: Agent-Ready AI Boundaries](docs/adr/0013-agent-ready-ai-boundaries.md)
 - [0014: LangGraph Agent Architecture](docs/adr/0014-langgraph-agent-architecture.md)
 - [0015: Article Parser — Structured Content Extraction](docs/adr/0015-article-parser.md)
+- [0016: User Config & Authentication](docs/adr/0016-user-config-auth.md)
 
 ## 9. Success Metrics
 
@@ -541,12 +563,21 @@ CREATE TABLE agent_actions (
 - **Empty sections**: Hidden when no content exists
 - **Agent boundary**: AI services use service-layer abstraction with typed I/O, event emission, no UI coupling. Ready for future agent to call same functions autonomously.
 - **Article parser**: Hybrid (local Readability + Cheerio, Gemini fallback). Zero-conversion pipeline — parser outputs `PartialBlock[]` (BlockNote format) directly. Auto-parse on bookmark selection, one-time only. Images as `[Image: alt text]` placeholders. See [ADR-0015](docs/adr/0015-article-parser.md).
+- **User config**: Single-user app. Flat JSON config file (`user.json`) in userData dir (`~/.config/bookmarkX/`). Stores identity (name, Twitter handle), auth tokens (Gemini API key, bird auth), and preferences (theme, language, notifications, fetch frequency, AI model). Replaces `.env` file entirely. See [ADR-0016](docs/adr/0016-user-config-auth.md).
+- **Chrome profile detection**: Linux-only auto-detection. Scans `~/.config/google-chrome/` for profiles, extracts `auth_token` and `ct0` from Chrome's unencrypted SQLite cookie DB. Fills settings automatically.
+- **Twitter login**: Electron BrowserWindow approach. Opens `x.com/login` in a session-partitioned window, captures cookies after login. Equal option alongside manual token entry.
+- **First-run experience**: App works immediately with empty config. Subtle prompt banner guides user to complete setup in Settings.
+- **Settings UI**: Profile section in Settings modal (not sidebar). Two equal auth options: "Login with Twitter" button + manual token entry. Auto-detect button for Chrome profile.
 
 ## 11. Open Questions
 
 - [ ] Electron auto-update code signing (for production releases)
 - [ ] Supabase project setup and schema migration strategy
-- [ ] bird.fast cookie refresh strategy (cookies expire)
+- [x] bird.fast cookie refresh strategy — solved via Chrome auto-detect + Twitter login (Phase 0)
+- [x] Settings storage format — solved: user.json replaces .env (ADR-0016)
+- [x] User account model — solved: single-user, config file approach (ADR-0016)
+- [ ] Chrome profile detection for macOS/Windows (encrypted cookies — needs keytar)
+- [ ] Language support: English UI alongside Arabic (LTR mode)
 - [x] Notes editor: BlockNote (`@blocknote/react`) — decided, same as Docmost
 
 ## 12. Agent-Ready Architecture
