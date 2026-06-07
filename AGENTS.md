@@ -6,6 +6,7 @@
 2. **Tests commit separately from impl** when possible — `test(scope): ...` then `feat(scope): ...`
 3. **Run lint and tests before committing** — `pnpm lint && pnpm test`
 4. **When user says "done" for the session** — Use the `handoff` skill to create a handoff document for the next agent
+5. **Before implementing any feature** — Read `PRODUCT.md`, `CONTEXT.md`, and relevant `docs/adr/` to understand domain language, design principles, and architectural decisions. Never implement blind.
 
 ## Commit Convention
 

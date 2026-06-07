@@ -36,6 +36,64 @@ Focused, legible, unhurried. Think Obsidian meets a well-organized Arabic librar
 3. **Arabic-first, English-second**: RTL layout is the default, not an afterthought. Mixed bidirectional text renders correctly. Thmanyah font family carries the voice.
 4. **Agent and user as clear owners**: Sections have explicit ownership (agent writes Summary/Glossary/Chat; user owns Highlights/Notes). Visual treatment reflects this boundary without heavy decoration.
 5. **Earned familiarity**: The tool should feel like something the user already knows how to use. Standard affordances, consistent vocabulary, no reinventing scrollbars or modals for flavor.
+6. **One continuous doc**: The BookmarkDetail is a single BlockNote document — article, summary, glossary, notes, highlights, all in one scrollable editor. No separate panels, no borders between sections.
+7. **Split where it helps**: Users can split the detail view into 2-3 columns to compare bookmarks side by side. Never force split — it's always opt-in.
+
+## Core Features (v1)
+
+### Bookmark Management
+- Fetch bookmarks from X/Twitter via bird.fast CLI (paginated, cursor-based)
+- Dual titles: `title_ar` and `title_en` — display follows app locale with fallback
+- One hierarchical topic (tree) per bookmark, many flat hashtags
+- Topics: collapsible groups in NavPanel, created by AI or user, reparent on move
+- Hashtags: flat tags, many-to-many with bookmarks, independent of topic
+
+### Triage Pipeline
+- Fetch (metadata) → Classify (cheap AI) → Summarize (expensive AI, manual trigger)
+- Classify assigns: priority (high/medium/low), one topic, hashtags, reading time
+- Summarize generates: dual-language summary (EN + EG-AR) + contextual glossary
+
+### Import Pipeline
+- Batch fetch with cursor-based pagination
+- Clean: dedup URLs, filter retweets/likes
+- Enrich: local parser for domain + word count (no AI tokens)
+- Classify in batches of 10-20 to amortize prompt overhead
+- Progress bar with pause/resume support
+
+### BlockNote Editor
+- One continuous BlockNote doc for all sections (Summary → Glossary → Article → Highlights → Notes → Chat)
+- Article section collapsible, no borders, seamless integration
+- Text selection across sections for chat mentions
+- Custom named sections per-bookmark (insert before/between/after fixed sections)
+- English: Shantell Sans, Arabic: Playpen Sans Arabic (Google Fonts CDN)
+- Agent sections (Summary/Glossary/Chat) read-only; user sections (Highlights/Notes) editable
+
+### Split View
+- 2-3 vertical columns in center panel
+- Each column has own BookmarkTab bar
+- Resizable dividers (300px min width)
+- Triggers: drag-to-edge, split button on tab hover, right-click menu
+- Only active column shows Contents sidebar
+
+### NavPanel
+- Right-side panel (RTL), mirrors position with locale
+- Structure: username + profile image → action icons → grouped bookmark list
+- Collapses to vertical icon strip, expands on hover/toggle
+- BookmarkTab right-click: Close, Close All, Close to Right/Left, Close All But This, Open in New Column, Reopen Closed Tab
+
+### Contents Sidebar
+- Mirrors NavPanel position (left in Arabic, right in English)
+- Visual inverse color scheme vs NavPanel
+- Vertical mini dashes for sections, hover to reveal titles
+
+### Notifications
+- Agent proposals (approve/reject/modify) + status updates (fetch/classify complete)
+- In-app notification cards
+
+### Settings
+- RTL-first layout, scrollbar clipped to rounded corners
+- X/Twitter auth with username + profile image fetch
+- Theme (dark/light), language, AI model, fetch frequency
 
 ## Accessibility & Inclusion
 

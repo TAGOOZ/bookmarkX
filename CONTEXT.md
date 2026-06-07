@@ -49,8 +49,16 @@ _Avoid_: save, link, post
 The act of retrieving bookmark metadata from X via bird.fast CLI.
 _Avoid_: scrape, pull, sync
 
+**Topic**:
+A hierarchical grouping label (tree structure). A bookmark belongs to exactly ONE topic — its parent in the tree. Both AI (during classify) and user can create topics. Moving a bookmark between topics reparents it. Topics appear as collapsible groups in the NavPanel.
+_Avoid_: category, group, folder
+
+**Hashtag**:
+A flat, non-hierarchical tag. A bookmark can have multiple hashtags. Hashtags are independent of topic assignment — a bookmark can be in one topic but tagged with many hashtags. Created by user or AI.
+_Avoid_: tag, label
+
 **Classify**:
-An AI-powered cheap pass that assigns priority (high/medium/low), topic tags, and reading time estimate to a bookmark using only metadata/tweet text.
+An AI-powered cheap pass that assigns priority (high/medium/low), topic (one), hashtags (many), and reading time estimate to a bookmark using only metadata/tweet text.
 _Avoid_: tag, categorize, rank
 
 **Summarize**:
@@ -69,6 +77,10 @@ _Avoid_: importance, ranking
 The three-stage processing flow: Fetch (metadata) → Classify (cheap AI) → Summarize (expensive AI, manual trigger).
 _Avoid_: workflow, pipeline
 
+**Import Pipeline**:
+A batch processing flow for importing hundreds of Twitter bookmarks: Fetch (paginated, batched) → Clean (dedup + filter retweets/likes) → Enrich (AI-powered domain/read-time extraction) → Classify (batched). Runs incrementally to avoid token burn. Bookmarks are importable before classification — user can browse metadata immediately.
+_Avoid_: bulk import, batch sync
+
 **Outer Link**:
 A URL shared in a tweet that links to external content (blog post, article, docs).
 _Avoid_: external link, reference
@@ -82,11 +94,23 @@ A sequence of connected tweets from one author, telling a story or explaining a 
 _Avoid_: tweet thread, chain
 
 **Bookmark Detail Page**:
-The main content view for a selected bookmark. An Obsidian-style single scrollable page with sections: Summary → Glossary → Article (collapsible) → Highlights → Notes → Chat. Has a compact Contents sidebar (dash minimap, hover to reveal titles). Agent owns summary/glossary/chat; user owns notes.
+The main content view for a selected bookmark. A single continuous BlockNote document containing all sections (Summary → Glossary → Article → Highlights → Notes → Chat) in one scrollable editor. Article section is collapsible with no visible borders — seamless integration, not a separate panel. Text can be selected across sections for mentioning in chat or asking about. Has a compact Contents sidebar (dash minimap, hover to reveal titles). Agent owns summary/glossary/chat; user owns notes. Supports split view — the center panel can split into 2-3 vertical columns, each showing a different bookmark with its own tab bar.
 _Avoid_: detail view, detail panel
 
+**Split View**:
+A layout mode where the BookmarkDetail center panel splits into 2-3 vertical columns. Each column has its own BookmarkTab bar and shows a different bookmark. Triggered by drag-to-edge, split button on tab hover, or right-click context menu. Columns are resizable with 300px minimum width. Only the active/focused column shows the Contents sidebar.
+_Avoid_: multi-panel, side-by-side
+
+**BookmarkTab Context Menu**:
+Right-click menu on BookmarkTabs with: Close, Close All, Close to Right, Close to Left, Close All But This, separator, Open in New Column, Reopen Closed Tab. Standard browser-style tab management plus split view trigger. Closed tabs are tracked in a stack for reopen.
+_Avoid_: tab menu, tab context menu
+
+**NavPanel**:
+The right-side navigation panel (RTL) containing grouped bookmarks, action icons, and user identity. Structure: username + profile image at top, then search/settings icons, then grouped bookmark list. Position mirrors with locale (right in Arabic, left in English). Can collapse to a vertical icon strip (icons only, no bookmark list) — expands on hover or toggle.
+_Avoid_: sidebar, bookmark list panel
+
 **Contents Sidebar**:
-A compact minimap on the left of the Bookmark Detail Page. Shows small dashes/lines for each section; hovering reveals section titles. Clicking jumps to that section.
+A compact minimap that mirrors the NavPanel position based on locale (Arabic → left, English → right). Shows small vertical dashes for each section; hovering reveals section titles. Clicking jumps to that section. Has a visual inverse color scheme compared to the NavPanel (light bar on dark panel or vice versa).
 _Avoid_: TOC sidebar, table of contents panel
 
 **Agent Section**:
@@ -94,7 +118,7 @@ A section of the Bookmark Detail Page written by the AI agent: Summary, Glossary
 _Avoid_: ai section, generated section
 
 **User Section**:
-A section of the Bookmark Detail Page written by the user: Highlights, Notes. The agent can enhance user notes on request but never overwrites them.
+A section of the Bookmark Detail Page written by the user: Highlights, Notes. The agent can enhance user notes on request but never overwrites them. Users can also create additional named sections (per-bookmark) and place them before, between, or after the fixed sections.
 _Avoid_: user content, manual section
 
 **Enhance**:
@@ -116,9 +140,13 @@ All non-content UI elements: labels, headings, buttons, navigation, tabs, titleb
 _Avoid_: UI, interface
 
 **Dual Titles**:
-Bookmarks store two title columns: `title_ar` and `title_en`. The displayed title follows the current locale, falling back to the other language if the preferred one is NULL.
+Bookmarks store two title columns: `title_ar` and `title_en`. The displayed title follows the current locale, falling back to the other language if the preferred one is NULL. The entire panel (group names, bookmark titles, tabs, all chrome) is forced to the app language direction — no mixed-direction text in NavPanel or BookmarkTabs.
 _Avoid_: translated title, alternate title
 
 ## Editor Decision
 
 **BlockNote** (`@blocknote/react`, `@blocknote/core`, `@blocknote/mantine`) — Notion-style block editor, same as Docmost. Replaces the plain textarea in NotesEditor. Store content as JSON string in DB (`JSON.stringify(blocks)`). Props change from `(content: string, onChange: (s: string) => void)` to `(initialContent: string, onChange: (blocks: Block[]) => void)`.
+
+**BlockNote Fonts**:
+English text inside BlockNote editor uses Shantell Sans (Google Fonts CDN) — the hand-drawn style font from tldraw. Arabic text inside BlockNote uses Playpen Sans Arabic (Google Fonts CDN). Fonts loaded via `@import` in CSS and applied to BlockNote editor via `.bn-editor` CSS override only — rest of the app keeps Thmanyah font family.
+_Avoid_: editor fonts, blocknote fonts
