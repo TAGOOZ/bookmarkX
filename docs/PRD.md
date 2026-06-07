@@ -92,13 +92,16 @@
 **User Stories:**
 - As a user, bookmarks are fetched automatically every 6 hours (configurable via user.json)
 - As a user, I can manually trigger a fetch at any time (resets the 6-hour timer)
-- As a user, each bookmark is auto-classified with: Priority (high/medium/low), Topic tags, Reading time estimate
+- As a user, each bookmark is auto-classified with: Priority (high/medium/low), Topic (one, hierarchical), Hashtags (many, flat), Reading time estimate
 - As a user, I can browse bookmarks in a 2-panel layout (grouped nav panel + detail)
 - As a user, I can browse bookmarks grouped by topic with collapsible sections
 - As a user, I can search bookmarks via an overlay search modal
 - As a user, I can trigger fetch, classify, and open settings from icon buttons in the nav panel
 - As a user, I get desktop notifications + in-app badge for high-priority new bookmarks
 - As a user, the app works offline with previously fetched data
+- As a user, I can import hundreds of Twitter bookmarks in batches with progress tracking
+- As a user, I can create custom topics and move bookmarks between topics
+- As a user, I can tag bookmarks with multiple hashtags independent of topic
 
 **Acceptance Criteria:**
 - bird.fast CLI is bundled or accessible from the Electron app
@@ -115,17 +118,17 @@
 
 ### Phase 2: BookmarkDetail Page + Summarize, Chat & Glossary
 
-Phase 2 delivers the core reading/annotation view AND the AI features that live inside it. The BookmarkDetail page is redesigned from a flat info panel into an Obsidian-style document page with Outline's visual language.
+Phase 2 delivers the core reading/annotation view AND the AI features that live inside it. The BookmarkDetail page is redesigned from a flat info panel into a single continuous BlockNote document.
 
 #### 2A: BookmarkDetail Page Architecture
 
-The BookmarkDetail is an Obsidian-style single scrollable page with a horizontal Contents bar above the editor. Built from scratch with lightweight React components + CSS Modules. No Outline code dependency.
+The BookmarkDetail is a single continuous BlockNote document containing all sections (Summary → Glossary → Article → Highlights → Notes → Chat) in one scrollable editor. Article section is collapsible with no borders — seamless integration. Text can be selected across sections for mentioning in chat. Built on BlockNote (`@blocknote/react`, `@blocknote/core`, `@blocknote/mantine`).
 
 **Page Anatomy (top to bottom):**
 
 ```
 ┌──────────────────────────────────────────────────────────┐
-│            Contents Bar (horizontal minimap)              │
+│            Contents Bar (vertical minimap)                │
 │     |     |     |     |     |     |                      │
 │   Summary Glossary Article Highlights Notes Chat          │
 │  (hover → titles, click → jump)                          │
@@ -142,8 +145,9 @@ The BookmarkDetail is an Obsidian-style single scrollable page with a horizontal
 │  │  Term definitions, user can add custom terms        │  │
 │  └────────────────────────────────────────────────────┘  │
 │                                                          │
-│  ┌─ Article (collapsible) ────────────────────────────┐  │
-│  │  Readability.js extracted content, expand/collapse  │  │
+│  ┌─ Article (collapsible, no borders) ────────────────┐  │
+│  │  Structured BlockNote blocks, expand/collapse       │  │
+│  │  Text selectable for chat/mentions                  │  │
 │  └────────────────────────────────────────────────────┘  │
 │                                                          │
 │  ┌─ Highlights (user) ────────────────────────────────┐  │
@@ -157,6 +161,10 @@ The BookmarkDetail is an Obsidian-style single scrollable page with a horizontal
 │  ┌─ Chat (agent) ─────────────────────────────────────┐  │
 │  │  Inline AI conversation with article context        │  │
 │  └────────────────────────────────────────────────────┘  │
+│                                                          │
+│  ┌─ Custom Section (user-created, per-bookmark) ──────┐  │
+│  │  Named section, insertable before/between/after     │  │
+│  └────────────────────────────────────────────────────┘  │
 └──────────────────────────────────────────────────────────┘
 ```
 
@@ -165,23 +173,21 @@ The BookmarkDetail is an Obsidian-style single scrollable page with a horizontal
 |---------|-------|-----------|
 | Summary | Agent | Agent writes, user cannot edit |
 | Glossary | Agent + User | Agent generates, user can add terms |
-| Article | System | Readability.js extraction, read-only |
+| Article | System | Structured BlockNote blocks, read-only |
 | Highlights | User | User selects text, adds notes |
 | Notes | User | User writes, agent can enhance |
 | Chat | Agent + User | User asks, agent responds |
-
-**Layout options (user-switchable):**
-1. **Linear** (default) — single column, sections flow top to bottom
-2. **Two-column** — agent content on left, user content on right
-3. **Collapsible** — sections can be collapsed/expanded
+| Custom | User | Named sections, per-bookmark |
 
 **Key interactions:**
-- **Horizontal tabs**: BookmarkDetail supports multiple open bookmarks as horizontal tabs above the ContentsBar; click tab to switch bookmark; close tab to remove
-- **Contents bar**: Horizontal bar aligned with app title, above editor with vertical dashes; hover reveals section titles; click to jump; IntersectionObserver tracks active section; dynamically detects all h2 headings (including user-added ones)
+- **One continuous BlockNote doc**: All sections live in a single BlockNote editor. No borders between sections. Article is collapsible but part of the same document.
+- **Text selection across sections**: User can select text from any section to mention in chat or ask about.
+- **Custom sections**: User can add named sections and place them before, between, or after fixed sections (per-bookmark).
+- **BlockNote fonts**: English text uses Shantell Sans (Google Fonts CDN), Arabic text uses Playpen Sans Arabic (Google Fonts CDN). Applied via `.bn-editor` CSS override only.
+- **Contents bar**: Vertical minimap that mirrors NavPanel position (left in Arabic, right in English). Visual inverse color scheme vs NavPanel. Hover reveals section titles; click to jump.
 - **Enhance**: User selects text in their notes → floating toolbar → "Enhance" button → agent improves selection without rewriting
 - **Reference links**: User hovers over any sentence in an agent section → link icon appears → click to copy reference → paste in notes → renders as clickable chip → jumps to that sentence
 - **Empty sections**: Hidden entirely when no content exists
-- **Article**: Inline but collapsible — user can expand to read full article, collapse to focus on summary/notes
 
 **Components to build:**
 1. `BookmarkTabs` — horizontal tab bar for open bookmarks (~80 lines)
@@ -462,16 +468,33 @@ CREATE TABLE classifications (
   created_at DATETIME DEFAULT CURRENT_TIMESTAMP
 );
 
--- Topic tags (many-to-many)
+-- Topic tags (hierarchical tree)
 CREATE TABLE topics (
   id TEXT PRIMARY KEY,
-  name TEXT UNIQUE NOT NULL
+  name TEXT NOT NULL,
+  parent_id TEXT REFERENCES topics(id),
+  created_by TEXT CHECK(created_by IN ('ai', 'user')),
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  UNIQUE(name, parent_id)
 );
 
-CREATE TABLE bookmark_topics (
+-- Hashtags (flat, many-to-many)
+CREATE TABLE hashtags (
+  id TEXT PRIMARY KEY,
+  name TEXT UNIQUE NOT NULL,
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE bookmark_hashtags (
   bookmark_id TEXT REFERENCES bookmarks(id),
-  topic_id TEXT REFERENCES topics(id),
-  PRIMARY KEY (bookmark_id, topic_id)
+  hashtag_id TEXT REFERENCES hashtags(id),
+  PRIMARY KEY (bookmark_id, hashtag_id)
+);
+
+-- Bookmark topic assignment (one topic per bookmark)
+CREATE TABLE bookmark_topics (
+  bookmark_id TEXT REFERENCES bookmarks(id) PRIMARY KEY,
+  topic_id TEXT REFERENCES topics(id)
 );
 
 -- Phase 2: Summaries (dual-language)
@@ -571,6 +594,17 @@ CREATE TABLE agent_actions (
   status TEXT CHECK(status IN ('pending', 'approved', 'rejected', 'modified', 'executed', 'rolled_back')),
   created_at DATETIME DEFAULT CURRENT_TIMESTAMP
 );
+
+-- Import pipeline batch tracking
+CREATE TABLE import_jobs (
+  id TEXT PRIMARY KEY,
+  status TEXT CHECK(status IN ('running', 'paused', 'completed', 'failed')),
+  cursor TEXT,
+  total_fetched INTEGER DEFAULT 0,
+  total_classified INTEGER DEFAULT 0,
+  started_at DATETIME,
+  completed_at DATETIME
+);
 ```
 
 ## 8. Key Decisions (ADRs)
@@ -588,6 +622,9 @@ CREATE TABLE agent_actions (
 - [0016: User Config & Authentication](docs/adr/0016-user-config-auth.md)
 - [0017: Two-Panel Layout Redesign](docs/adr/0017-two-panel-layout-redesign.md)
 - [0018: Internationalization & Bidirectional Layout](docs/adr/0018-i18n-bidirectional-layout.md)
+- [0019: Topic & Hashtag Data Model](docs/adr/0019-topic-hashtag-model.md)
+- [0020: Batch Import Pipeline](docs/adr/0020-batch-import-pipeline.md)
+- [0021: Split View Multi-Column](docs/adr/0021-split-view-multi-column.md)
 
 ## 9. Success Metrics
 
@@ -607,7 +644,7 @@ CREATE TABLE agent_actions (
 - **BookmarkDetail**: Obsidian-style page with Outline visual language — built from scratch, no Outline code fork
 - **Notes Editor**: BlockNote (`@blocknote/react`) — Notion-style block editor, same as Docmost uses. No custom textarea. Store as JSON string in DB, parse on load. Props change from `(content: string, onChange: (s: string) => void)` to `(initialContent: string, onChange: (blocks: Block[]) => void)`.
 - **Page layout**: Horizontal tabs for multiple bookmarks, ContentsBar aligned with app title, single scrollable page, three layout modes (linear/two-column/collapsible)
-- **App layout**: Two-panel RTL — nav panel (350px, right) with grouped bookmarks + action icons, detail panel (flex: 1, center). Sidebar removed. See [ADR-0017](docs/adr/0017-two-panel-layout-redesign.md).
+- **App layout**: Two-panel RTL — nav panel (350px, right) with grouped bookmarks + action icons, detail panel (flex: 1, center). NavPanel collapses to vertical icon strip. Center panel supports 2-3 column split view. Sidebar removed. See [ADR-0017](docs/adr/0017-two-panel-layout-redesign.md) and [ADR-0021](docs/adr/0021-split-view-multi-column.md).
 - **Section ownership**: Agent owns Summary/Glossary/Chat; User owns Highlights/Notes; Glossary is shared
 - **Enhance**: Selection-based — user selects text in notes, floating toolbar offers "Enhance" button
 - **Reference links**: Hover-to-copy sentence-level references from agent sections into user notes
@@ -621,6 +658,18 @@ CREATE TABLE agent_actions (
 - **First-run experience**: App works immediately with empty config. Subtle prompt banner guides user to complete setup in Settings.
 - **Settings UI**: Profile section in Settings modal (not sidebar). Two equal auth options: "Login with Twitter" button + manual token entry. Auto-detect button for Chrome profile.
 - **i18n architecture**: Separate JSON translation files (`locales/ar.json`, `locales/en.json`). All hardcoded strings converted to `intl.formatMessage()`. CSS uses logical properties. Locale state in React context + user.json. Language change triggers app restart with prompt. Bookmark titles stored as dual columns (`title_ar`, `title_en`) with fallback. NavPanel and layout mirror with language. See [ADR-0018](docs/adr/0018-i18n-bidirectional-layout.md).
+- **Topic/Hashtag model**: One hierarchical topic tree + many flat hashtags per bookmark. Topics are tree-structured (parent_id), both AI and user can create, moving = reparent. Hashtags are flat tags, many-to-many. See [ADR-0019](docs/adr/0019-topic-hashtag-model.md).
+- **Import pipeline**: Batch processing for hundreds of Twitter bookmarks. Fetch paginated (cursor-based) → Clean (dedup URLs, filter retweets/likes) → Enrich (local parser, no AI tokens) → Classify (batched 10-20). Pause/resume support. See [ADR-0020](docs/adr/0020-batch-import-pipeline.md).
+- **Split view**: Center panel splits into 2-3 vertical columns, each with own BookmarkTab bar. Resizable dividers (300px min). Triggers: drag-to-edge, split button on tab hover, right-click menu. Only active column shows Contents sidebar. See [ADR-0021](docs/adr/0021-split-view-multi-column.md).
+- **BookmarkDetail as continuous doc**: Single BlockNote document for all sections. Article collapsible with no borders. Text selectable across sections for chat. Custom named sections per-bookmark (insert before/between/after fixed sections).
+- **BlockNote fonts**: English uses Shantell Sans (Google Fonts CDN), Arabic uses Playpen Sans Arabic (Google Fonts CDN). Applied only inside BlockNote via `.bn-editor` CSS override. Rest of app keeps Thmanyah.
+- **Contents bar**: Vertical minimap that mirrors NavPanel position (left in Arabic, right in English). Visual inverse color scheme vs NavPanel.
+- **NavPanel collapse**: Collapses to vertical icon strip, expands on hover/toggle. Username + profile image from X/Twitter auth above icon strip.
+- **BookmarkTab context menu**: Right-click with Close, Close All, Close to Right, Close to Left, Close All But This, Open in New Column, Reopen Closed Tab. Closed tabs tracked in a stack.
+- **App lang forces everything**: Group names, bookmark titles, tabs, all chrome forced to app language direction. No mixed-direction text in NavPanel or BookmarkTabs.
+- **Settings RTL**: Fix scrollbar clipping at rounded corners, RTL alignment for form elements.
+- **Notifications**: Agent proposals + status updates combined in one notification system. Fix broken button UI, implement backend.
+- **parsingArticle RTL**: Container needs `dir="rtl"` in Arabic mode.
 
 ## 11. Open Questions
 
