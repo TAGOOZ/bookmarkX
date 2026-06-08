@@ -249,6 +249,14 @@ The BookmarkDetail is a single continuous BlockNote document containing all sect
 - As a user, threads with outer URLs have the linked article parsed as the article section
 - As a user, embedded content (YouTube, CodePen, tweets) are preserved as clickable links
 - As a user, I can search within article content via full-text search
+- As a user, collapsible `<details>` sections in technical docs preserve their toggle behavior
+- As a user, article reader has full-screen/reader mode toggle
+- As a user, I can print articles with a clean print stylesheet
+- As a user, I see a table of contents generated from headings
+- As a user, I see a reading progress indicator while scrolling
+- As a user, I can export articles as Markdown
+- As a user, saved URLs show rich link previews with title, description, and thumbnail
+- As a user, when Gemini API is down and local parser fails, I get a user-facing error with retry option
 
 **Acceptance Criteria:**
 - Defuddle extracts clean article content (no nav, footers, ads, sidebars) in <500ms for most pages
@@ -256,6 +264,8 @@ The BookmarkDetail is a single continuous BlockNote document containing all sect
 - `parseMDToBlocks` maps Markdown to BlockNote `PartialBlock[]` blocks
 - Gemini fallback activates only when Defuddle fails (paywall, JS-rendered pages)
 - Current cheerio parser kept as intermediate fallback between Defuddle and Gemini
+- Gemini API calls use `fetch`/`undici` (not curl), with retry + exponential backoff
+- URL→result cache (SQLite or Map) prevents re-extracting same URL
 - Parsed content stored as `PartialBlock[]` in `article_content.blocks_json`
 - Article section shows spinner during auto-parse, renders structured content after
 - Images render as `<img>` elements with `loading="lazy"` and alt text
@@ -267,6 +277,7 @@ The BookmarkDetail is a single continuous BlockNote document containing all sect
 - Nested lists rendered with proper indentation
 - `<iframe>`/`<video>`/`<audio>` preserved as clickable links (not silently dropped)
 - `<figure>`/`<figcaption>` rendered with image + caption
+- `<details>`/`<summary>` rendered as toggleable sections (custom Turndown rule)
 - Collapse/expand toggle persists across sessions
 - Thread bookmarks with outer URLs parse the linked article
 - Thread bookmarks without outer URLs show no article section
@@ -275,6 +286,13 @@ The BookmarkDetail is a single continuous BlockNote document containing all sect
 - `parser_version` column tracks which parser version produced the content
 - `content_hash` column detects when source HTML has changed
 - Full-text search via FTS5 index on `extracted_text` column
+- Full-screen/reader mode toggle in ArticleReaderBlock
+- Print stylesheet (`@media print`) for clean article printing
+- Table of contents generated from heading blocks
+- Reading progress bar while scrolling article
+- Export article as Markdown via blocks→markdown serializer
+- Link preview cards rendered from OpenGraph metadata (title, description, image)
+- User-facing error UI when all parsers fail (Defuddle + cheerio + Gemini), with retry button
 
 **Pipeline:**
 ```
@@ -293,10 +311,12 @@ Fallback chain:
 **Components to build:**
 1. `src/parser/extract-content.ts` — Defuddle wrapper (content extraction)
 2. `src/parser/local-parser.ts` — rewritten: Defuddle → Turndown → `parseMDToBlocks`
-3. `src/parser/gemini-fallback.ts` — Gemini prompt returning structured blocks (last resort)
+3. `src/parser/gemini-fallback.ts` — Gemini prompt returning structured blocks (last resort), with retry + backoff
 4. `src/parser/index.ts` — orchestrator: Defuddle → cheerio fallback → Gemini fallback
-5. `ArticleReaderBlock` — custom BlockNote block rendering `PartialBlock[]` as styled React (images, tables, TOC)
+5. `ArticleReaderBlock` — custom BlockNote block rendering `PartialBlock[]` as styled React (images, tables, TOC, progress bar, reader mode)
 6. `ArticleReaderBlock.module.css` — reader typography, image/table styles, print CSS
+7. `src/parser/blocks-to-markdown.ts` — BlockNote blocks → Markdown serializer (export)
+8. `src/parser/markdown-to-blocks.ts` — Markdown → BlockNote blocks (import)
 
 **New dependencies:**
 - `defuddle` — article content extraction (by kepano/Obsidian creator)
@@ -308,6 +328,7 @@ Fallback chain:
 - Parsed blocks stored in DB — agent can access structured article content for RAG, chat context
 - `getArticleContent()` returns `blocks_json` — agent uses this for article-aware features
 - Parser follows ADR-0013 boundaries: typed I/O, no UI coupling, DB as source of truth
+- Export function (`blocksToMarkdown(blocks)`) must be a pure service function — agent can call it to export articles
 - See [ADR-0015](docs/adr/0015-article-parser.md) for full pipeline design and phased implementation
 
 ### Phase 3: Search & Sync
@@ -688,7 +709,7 @@ CREATE TABLE import_jobs (
 - **Theme**: Dual theme (dark + light) with Obsidian CSS custom properties
 - **Empty sections**: Hidden when no content exists
 - **Agent boundary**: AI services use service-layer abstraction with typed I/O, event emission, no UI coupling. Ready for future agent to call same functions autonomously.
-- **Article parser**: Hybrid pipeline — Defuddle (content extraction) + Turndown (HTML→Markdown) + `parseMDToBlocks` (Markdown→BlockNote). Gemini as last-resort fallback. Images as `<img>` elements with lazy loading. Tables as `<table>` elements. Code blocks with language detection. Custom Turndown rules for `<iframe>`, `<video>`, `<audio>`. Current cheerio parser kept as intermediate fallback. See [ADR-0015](docs/adr/0015-article-parser.md).
+- **Article parser**: Hybrid pipeline — Defuddle (content extraction) + Turndown (HTML→Markdown) + `parseMDToBlocks` (Markdown→BlockNote). Gemini as last-resort fallback. Images as `<img>` elements with lazy loading. Tables as `<table>` elements. Code blocks with language detection. Custom Turndown rules for `<iframe>`, `<video>`, `<audio>`, `<details>`/`<summary>`. Current cheerio parser kept as intermediate fallback. Reader mode with full-screen toggle, print CSS, TOC, progress bar. Export as Markdown via blocks→markdown serializer. Link preview cards from OpenGraph metadata. Gemini uses fetch with retry+backoff. See [ADR-0015](docs/adr/0015-article-parser.md).
 - **User config**: Single-user app. Flat JSON config file (`user.json`) in userData dir (`~/.config/bookmarkX/`). Stores identity (name, Twitter handle), auth tokens (Gemini API key, bird auth), and preferences (theme, language, notifications, fetch frequency, AI model). Replaces `.env` file entirely. See [ADR-0016](docs/adr/0016-user-config-auth.md).
 - **Chrome profile detection**: Linux-only auto-detection. Scans `~/.config/google-chrome/` for profiles, extracts `auth_token` and `ct0` from Chrome's unencrypted SQLite cookie DB. Fills settings automatically.
 - **Twitter login**: Electron BrowserWindow approach. Opens `x.com/login` in a session-partitioned window, captures cookies after login. Equal option alongside manual token entry.

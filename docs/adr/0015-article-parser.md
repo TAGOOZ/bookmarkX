@@ -170,5 +170,11 @@ Turndown chosen for control over custom rules (`<iframe>`, `<video>`, `<details>
 | P5: `<figure>`/`<figcaption>` → empty output | MEDIUM | Defuddle extracts figure content, Turndown converts |
 | P7: Inline images in paragraphs invisible | MEDIUM | Turndown handles inline images in paragraphs |
 | P8: Heading level cap at h3 | LOW | Remove cap — BlockNote supports h1-h6 |
+| P6: No `<details>`/`<summary>` support | LOW | Custom Turndown rule converts to toggleable BlockNote block or keeps as HTML |
 | P9: No code block language detection | MEDIUM | Turndown preserves code block language hints |
+| P10: Gemini fallback is fragile and expensive | MEDIUM | Replace curl with fetch, add retry+backoff, URL→result cache, make last-resort only |
+| P12: ArticleReaderBlock UX is primitive | MEDIUM | Full-screen/reader mode, print CSS, TOC from headings, reading progress bar |
+| P13: No offline fallback | LOW | Defuddle runs locally (no API needed); Gemini fallback shows error with retry option |
+| P16: No export/portability | LOW | BlockNote blocks → markdown serializer, export button, markdown import |
 | P17: Embeds/iframes/videos silently dropped | MEDIUM | Custom Turndown rules convert to markdown links |
+| P18: No link preview/unfurling | LOW | Extract OpenGraph metadata via Defuddle, render as styled link preview cards |
