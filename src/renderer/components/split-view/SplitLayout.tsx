@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import BookmarkDetail from '../bookmark-detail/BookmarkDetail';
 import BookmarkTabs from '../bookmark-detail/BookmarkTabs';
 import SplitDivider from './SplitDivider';
@@ -7,6 +7,7 @@ import type { BookmarkDetailData } from '../bookmark-detail/types';
 import styles from './SplitLayout.module.css';
 
 const MIN_COLUMN_WIDTH = 300;
+const MAX_COLUMNS = 3;
 
 const SplitLayout: React.FC<SplitLayoutProps> = ({
   splitState,
@@ -18,6 +19,8 @@ const SplitLayout: React.FC<SplitLayoutProps> = ({
   onBookmarkChange,
   dir,
 }) => {
+  const [activeDropZone, setActiveDropZone] = useState<'left' | 'right' | null>(null);
+
   const handleBookmarkSelect = useCallback((_columnId: string, bookmarkId: string) => {
     onColumnActive(_columnId);
     void bookmarkId;
@@ -32,17 +35,51 @@ const SplitLayout: React.FC<SplitLayoutProps> = ({
     [splitState.columns],
   );
 
+  const isMaxColumns = splitState.columns.length >= MAX_COLUMNS;
+
+  const handleDragOver = useCallback((e: React.DragEvent, edge: 'left' | 'right') => {
+    e.preventDefault();
+    const hasBookmarkId = e.dataTransfer.types.includes('text/tab-bookmark-id');
+    if (hasBookmarkId && !isMaxColumns) {
+      e.dataTransfer.dropEffect = 'move';
+      setActiveDropZone(edge);
+    }
+  }, [isMaxColumns]);
+
+  const handleDragLeave = useCallback(() => {
+    setActiveDropZone(null);
+  }, []);
+
+  const handleDrop = useCallback((e: React.DragEvent, _edge: 'left' | 'right') => {
+    e.preventDefault();
+    setActiveDropZone(null);
+    const bookmarkId = e.dataTransfer.getData('text/tab-bookmark-id');
+    if (!bookmarkId || isMaxColumns) return;
+
+    const firstColumn = splitState.columns[0];
+    if (firstColumn) {
+      onSplitColumn(firstColumn.id, bookmarkId);
+    }
+  }, [isMaxColumns, splitState.columns, onSplitColumn]);
+
   return (
     <div
       className={styles.container}
       dir={dir}
       onMouseEnter={() => {
-        // Ensure the layout has a valid active column
         if (!splitState.columns.find(c => c.id === splitState.activeColumnId)) {
           onColumnActive(splitState.columns[0]?.id);
         }
       }}
     >
+      <div
+        className={`${styles.dropZone} ${activeDropZone === 'left' ? styles.dropZoneActive : ''}`}
+        data-drop-zone="left"
+        aria-disabled={isMaxColumns}
+        onDragOver={(e) => handleDragOver(e, 'left')}
+        onDragLeave={handleDragLeave}
+        onDrop={(e) => handleDrop(e, 'left')}
+      />
       {splitState.columns.map((column, index) => {
         const bookmark = column.bookmarkId
           ? openBookmarks.find(b => b.id === column.bookmarkId) ?? null
@@ -85,6 +122,7 @@ const SplitLayout: React.FC<SplitLayoutProps> = ({
                   onTabSelect={(id) => handleBookmarkSelect(column.id, id)}
                   onTabClose={(id) => handleTabClose(column.id, id)}
                   onSplitColumn={(id) => onSplitColumn(column.id, id)}
+                  columnId={column.id}
                   dir={dir}
                 />
               )}
@@ -101,6 +139,14 @@ const SplitLayout: React.FC<SplitLayoutProps> = ({
           </React.Fragment>
         );
       })}
+      <div
+        className={`${styles.dropZone} ${activeDropZone === 'right' ? styles.dropZoneActive : ''}`}
+        data-drop-zone="right"
+        aria-disabled={isMaxColumns}
+        onDragOver={(e) => handleDragOver(e, 'right')}
+        onDragLeave={handleDragLeave}
+        onDrop={(e) => handleDrop(e, 'right')}
+      />
     </div>
   );
 };

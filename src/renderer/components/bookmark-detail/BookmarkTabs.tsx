@@ -11,6 +11,7 @@ interface BookmarkTabsProps {
   onTabCloseBatch?: (bookmarkIds: string[]) => void;
   onReopenClosedTab?: (bookmark: Bookmark) => void;
   onSplitColumn?: (bookmarkId: string) => void;
+  columnId?: string;
   dir?: 'ltr' | 'rtl';
 }
 
@@ -52,12 +53,14 @@ const BookmarkTabs: React.FC<BookmarkTabsProps> = ({
   onTabCloseBatch,
   onReopenClosedTab,
   onSplitColumn,
+  columnId,
   dir = 'ltr',
 }) => {
   const { locale } = useLocale();
   const intl = useIntl();
   const [contextMenu, setContextMenu] = useState<ContextMenuState | null>(null);
   const [closedTabs, setClosedTabs] = useState<Bookmark[]>(loadClosedTabs);
+  const [draggingId, setDraggingId] = useState<string | null>(null);
   const menuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -188,6 +191,19 @@ const BookmarkTabs: React.FC<BookmarkTabsProps> = ({
     setContextMenu(null);
   }, [contextMenu, onSplitColumn]);
 
+  const handleDragStart = useCallback((e: React.DragEvent, bookmarkId: string) => {
+    if (!columnId) return;
+    e.dataTransfer.setData('text/tab-bookmark-id', bookmarkId);
+    e.dataTransfer.setData('text/tab-column-id', columnId);
+    e.dataTransfer.effectAllowed = 'move';
+    setDraggingId(bookmarkId);
+  }, [columnId]);
+
+  const handleDragEnd = useCallback((e: React.DragEvent) => {
+    e.dataTransfer.clearData();
+    setDraggingId(null);
+  }, []);
+
   if (openBookmarks.length === 0 && closedTabs.length === 0) return null;
 
   return (
@@ -206,11 +222,14 @@ const BookmarkTabs: React.FC<BookmarkTabsProps> = ({
           return (
             <div
               key={bookmark.id}
-              className={`${styles.tab} ${isActive ? styles.active : ''}`}
+              className={`${styles.tab} ${isActive ? styles.active : ''} ${draggingId === bookmark.id ? styles.dragging : ''}`}
               role="tab"
               aria-selected={isActive}
               onClick={() => onTabSelect(bookmark.id)}
               onContextMenu={(e) => handleContextMenu(e, bookmark.id)}
+              draggable={!!columnId}
+              onDragStart={(e) => handleDragStart(e, bookmark.id)}
+              onDragEnd={handleDragEnd}
             >
               <span className={styles.tabTitle}>{truncateTitle(displayTitle)}</span>
               <button

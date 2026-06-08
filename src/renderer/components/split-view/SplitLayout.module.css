@@ -4,6 +4,7 @@
   flex: 1;
   overflow: hidden;
   height: 100%;
+  position: relative;
 }
 
 .column {
@@ -16,4 +17,29 @@
 
 .columnActive {
   /* subtle indicator for focused column — reserved for future use */
+}
+
+.dropZone {
+  width: 50px;
+  flex-shrink: 0;
+  background: transparent;
+  transition: background-color 0.15s ease;
+  position: relative;
+  z-index: 10;
+}
+
+.dropZoneActive {
+  background: var(--accent-color);
+  opacity: 0.3;
+}
+
+.dropZoneActive::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 3px;
+  background: var(--accent-color);
+  left: 50%;
+  transform: translateX(-50%);
 }

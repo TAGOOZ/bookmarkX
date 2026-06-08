@@ -104,6 +104,10 @@
   color: var(--text-normal);
 }
 
+.tab.dragging {
+  opacity: 0.5;
+}
+
 .contextMenu {
   position: fixed;
   z-index: 1000;
