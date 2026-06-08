@@ -129,5 +129,12 @@
   "closeTabsToLeft": "Close to Left",
   "closeOtherTabs": "Close Others",
   "reopenClosedTab": "Reopen Closed Tab",
-  "openInNewColumn": "Open in New Column"
+  "openInNewColumn": "Open in New Column",
+  "noNotifications": "No notifications",
+  "markAllRead": "Mark all read",
+  "clearAll": "Clear all",
+  "notificationFetchComplete": "Fetch complete",
+  "notificationClassifyComplete": "Classification complete",
+  "notificationSummarizeComplete": "Summarize complete",
+  "notificationError": "Error occurred"
 }

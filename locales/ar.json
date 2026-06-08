@@ -128,5 +128,12 @@
   "closeTabsToLeft": "إغلاق لليسار",
   "closeOtherTabs": "إغلاق البقية",
   "reopenClosedTab": "إعادة فتح التgl المغلق",
-  "openInNewColumn": "فتح في عمود جديد"
+  "openInNewColumn": "فتح في عمود جديد",
+  "noNotifications": "لا توجد إشعارات",
+  "markAllRead": "تحديد الكل كمقروء",
+  "clearAll": "مسح الكل",
+  "notificationFetchComplete": "اكتمل الجلب",
+  "notificationClassifyComplete": "اكتمل التصنيف",
+  "notificationSummarizeComplete": "اكتمل التلخيص",
+  "notificationError": "حدث خطأ"
 }

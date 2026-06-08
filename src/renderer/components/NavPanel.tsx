@@ -7,6 +7,8 @@ import {
 import { Bookmark } from '../App';
 import TopicGroup from './TopicGroup';
 import SearchOverlay from './SearchOverlay';
+import { NotificationBell, NotificationPanel } from './notifications';
+import type { NotificationItem } from './notifications';
 
 interface TopicTreeNode {
   id: string;
@@ -44,6 +46,9 @@ const NavPanel: React.FC<NavPanelProps> = ({
 }) => {
   const intl = useIntl();
   const [showSearch, setShowSearch] = useState(false);
+  const [showNotifications, setShowNotifications] = useState(false);
+  const [notifications, setNotifications] = useState<NotificationItem[]>([]);
+  const [unreadCount, setUnreadCount] = useState(0);
   const [isExpanded, setIsExpanded] = useState(() => {
     try {
       const stored = localStorage.getItem(EXPANDED_KEY);
@@ -87,6 +92,20 @@ const NavPanel: React.FC<NavPanelProps> = ({
     window.api.getSettings().then((s) => setUserName(s.name || '')).catch(() => {});
   }, []);
 
+  useEffect(() => {
+    const loadNotifications = async () => {
+      try {
+        const notifs = await (window as any).api?.getNotifications?.() ?? [];
+        setNotifications(notifs);
+        const count = await (window as any).api?.getUnreadCount?.() ?? 0;
+        setUnreadCount(count);
+      } catch {
+        // notifications not available yet
+      }
+    };
+    loadNotifications();
+  }, []);
+
   const bookmarkTopicMap = useMemo(() => {
     const map = new Map<string, Bookmark[]>();
     bookmarks.forEach((b) => {
@@ -128,6 +147,43 @@ const NavPanel: React.FC<NavPanelProps> = ({
       // createTopic failed silently
     }
   }, [newTopicName]);
+
+  const handleNotificationBellClick = useCallback(() => {
+    setShowNotifications((prev) => !prev);
+  }, []);
+
+  const handleMarkNotificationRead = useCallback(async (id: string) => {
+    try {
+      await (window as any).api?.markNotificationRead?.(id);
+      setNotifications((prev) => prev.map((n) => n.id === id ? { ...n, read: 1 } : n));
+      setUnreadCount((prev) => Math.max(0, prev - 1));
+    } catch {
+      // silently fail
+    }
+  }, []);
+
+  const handleMarkAllNotificationsRead = useCallback(async () => {
+    try {
+      await (window as any).api?.markAllNotificationsRead?.();
+      setNotifications((prev) => prev.map((n) => ({ ...n, read: 1 })));
+      setUnreadCount(0);
+    } catch {
+      // silently fail
+    }
+  }, []);
+
+  const handleDeleteNotification = useCallback(async (id: string) => {
+    try {
+      await (window as any).api?.deleteNotification?.(id);
+      setNotifications((prev) => prev.filter((n) => n.id !== id));
+      setUnreadCount((prev) => {
+        const notif = notifications.find((n) => n.id === id);
+        return notif?.read === 0 ? Math.max(0, prev - 1) : prev;
+      });
+    } catch {
+      // silently fail
+    }
+  }, [notifications]);
 
   const handleRenameTopic = useCallback(async (topicId: string, newName: string) => {
     if (!newName.trim()) return;
@@ -227,6 +283,18 @@ const NavPanel: React.FC<NavPanelProps> = ({
       >
         <Settings size={18} />
       </button>
+      <div style={{ position: 'relative' }}>
+        <NotificationBell unreadCount={unreadCount} onClick={handleNotificationBellClick} />
+        {showNotifications && (
+          <NotificationPanel
+            notifications={notifications}
+            onMarkRead={handleMarkNotificationRead}
+            onMarkAllRead={handleMarkAllNotificationsRead}
+            onDelete={handleDeleteNotification}
+            onClose={() => setShowNotifications(false)}
+          />
+        )}
+      </div>
     </div>
   );
 

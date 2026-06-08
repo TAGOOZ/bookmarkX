@@ -89,4 +89,10 @@ contextBridge.exposeInMainWorld('api', {
     ipcRenderer.invoke('detach-hashtag-from-bookmark', bookmarkId, hashtagId),
   setBookmarkHashtags: (bookmarkId: string, hashtagNames: string[]) =>
     ipcRenderer.invoke('set-bookmark-hashtags', bookmarkId, hashtagNames),
+  // Notifications
+  getNotifications: () => ipcRenderer.invoke('get-notifications'),
+  getUnreadCount: () => ipcRenderer.invoke('get-unread-count'),
+  markNotificationRead: (id: string) => ipcRenderer.invoke('mark-notification-read', id),
+  markAllNotificationsRead: () => ipcRenderer.invoke('mark-all-notifications-read'),
+  deleteNotification: (id: string) => ipcRenderer.invoke('delete-notification', id),
 });

@@ -130,6 +130,16 @@ const SCHEMA_SQL = `
     term_id TEXT REFERENCES glossary_terms(id),
     PRIMARY KEY (bookmark_id, term_id)
   );
+
+  CREATE TABLE IF NOT EXISTS notifications (
+    id TEXT PRIMARY KEY,
+    type TEXT CHECK(type IN ('status', 'error', 'agent_proposal')) NOT NULL,
+    title TEXT NOT NULL,
+    message TEXT,
+    read INTEGER DEFAULT 0,
+    data TEXT,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  );
 `;
 
 export async function initializeSchema(db: Client): Promise<void> {

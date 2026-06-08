@@ -360,6 +360,35 @@ ipcMain.handle('set-bookmark-hashtags', async (_event, bookmarkId: string, hasht
   return { success: true };
 });
 
+// Notifications IPC handlers
+ipcMain.handle('get-notifications', async () => {
+  const { getNotifications } = await import('./db/notifications');
+  return getNotifications(db);
+});
+
+ipcMain.handle('get-unread-count', async () => {
+  const { getUnreadCount } = await import('./db/notifications');
+  return getUnreadCount(db);
+});
+
+ipcMain.handle('mark-notification-read', async (_event, id: string) => {
+  const { markAsRead } = await import('./db/notifications');
+  await markAsRead(db, id);
+  return { success: true };
+});
+
+ipcMain.handle('mark-all-notifications-read', async () => {
+  const { markAllRead } = await import('./db/notifications');
+  await markAllRead(db);
+  return { success: true };
+});
+
+ipcMain.handle('delete-notification', async (_event, id: string) => {
+  const { deleteNotification } = await import('./db/notifications');
+  await deleteNotification(db, id);
+  return { success: true };
+});
+
 const createWindow = () => {
   Menu.setApplicationMenu(null);
 
