@@ -11,6 +11,10 @@ interface TopicGroupProps {
   onToggle: (topic: string) => void;
   onSelectBookmark: (bookmark: Bookmark) => void;
   selectedBookmarkId: string | null;
+  depth?: number;
+  childCount?: number;
+  totalCount?: number;
+  children?: React.ReactNode;
 }
 
 const TopicGroup: React.FC<TopicGroupProps> = ({
@@ -21,11 +25,15 @@ const TopicGroup: React.FC<TopicGroupProps> = ({
   onToggle,
   onSelectBookmark,
   selectedBookmarkId,
+  depth = 0,
+  totalCount,
+  children,
 }) => {
   const intl = useIntl();
   const [showAll, setShowAll] = useState(false);
   const visibleBookmarks = showAll ? bookmarks : bookmarks.slice(0, maxVisible);
   const hasMore = bookmarks.length > maxVisible;
+  const displayCount = totalCount ?? bookmarks.length;
 
   const getPriorityColor = (priority: string) => {
     switch (priority) {
@@ -57,7 +65,7 @@ const TopicGroup: React.FC<TopicGroupProps> = ({
   }, []);
 
   return (
-    <div className="topic-group">
+    <div className="topic-group" style={{ paddingInlineStart: depth > 0 ? `${depth * 12}px` : undefined }}>
       <button
         className="topic-group-header"
         onClick={handleToggle}
@@ -67,7 +75,7 @@ const TopicGroup: React.FC<TopicGroupProps> = ({
           {isExpanded ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
         </span>
         <span className="topic-group-name">{topic}</span>
-        <span className="topic-group-count">{bookmarks.length}</span>
+        <span className="topic-group-count">{displayCount}</span>
       </button>
       {isExpanded && (
         <div className="topic-group-items">
@@ -103,6 +111,7 @@ const TopicGroup: React.FC<TopicGroupProps> = ({
                 : intl.formatMessage({ id: 'showMore' }, { count: bookmarks.length - maxVisible })}
             </button>
           )}
+          {children}
         </div>
       )}
     </div>

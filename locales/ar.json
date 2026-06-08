@@ -82,6 +82,8 @@
   "highlights": "أبرز النقاط",
   "notes": "ملاحظات",
   "chat": "محادثة",
+  "collapseNav": "طي الشريط الجانبي",
+  "expandNav": "توسيع الشريط الجانبي",
   "mockModeNotice": "وضع التجريب مفعّل — الإعدادات غير متاحة",
   "closeSettings": "إغلاق الإعدادات",
   "languageChanged": "تم تغيير اللغة",

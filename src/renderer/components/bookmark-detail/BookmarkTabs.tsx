@@ -1,5 +1,5 @@
 import React from 'react';
-import { Bookmark } from '../../App';
+import { Bookmark, useLocale } from '../../App';
 import styles from './BookmarkTabs.module.css';
 
 interface BookmarkTabsProps {
@@ -22,6 +22,8 @@ const BookmarkTabs: React.FC<BookmarkTabsProps> = ({
   onTabClose,
   dir = 'ltr',
 }) => {
+  const { locale } = useLocale();
+
   if (openBookmarks.length === 0) return null;
 
   return (
@@ -33,6 +35,9 @@ const BookmarkTabs: React.FC<BookmarkTabsProps> = ({
     >
       {openBookmarks.map((bookmark) => {
         const isActive = bookmark.id === activeBookmarkId;
+        const displayTitle = locale === 'ar'
+          ? (bookmark.titleAr || bookmark.titleEn || bookmark.title)
+          : (bookmark.titleEn || bookmark.titleAr || bookmark.title);
         return (
           <div
             key={bookmark.id}
@@ -41,14 +46,14 @@ const BookmarkTabs: React.FC<BookmarkTabsProps> = ({
             aria-selected={isActive}
             onClick={() => onTabSelect(bookmark.id)}
           >
-            <span className={styles.tabTitle}>{truncateTitle(bookmark.title)}</span>
+            <span className={styles.tabTitle}>{truncateTitle(displayTitle)}</span>
             <button
               className={styles.closeBtn}
               onClick={(e) => {
                 e.stopPropagation();
                 onTabClose(bookmark.id);
               }}
-              aria-label={`Close ${bookmark.title}`}
+              aria-label={`Close ${displayTitle}`}
             >
               ×
             </button>

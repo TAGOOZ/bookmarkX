@@ -82,6 +82,8 @@
   "highlights": "Highlights",
   "notes": "Notes",
   "chat": "Chat",
+  "collapseNav": "Collapse sidebar",
+  "expandNav": "Expand sidebar",
   "mockModeNotice": "Mock mode active — Settings unavailable",
   "closeSettings": "Close settings",
   "languageChanged": "Language changed",
