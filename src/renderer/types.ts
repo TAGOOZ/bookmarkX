@@ -1,3 +1,17 @@
+export interface Bookmark {
+  id: string;
+  title: string;
+  titleAr: string | null;
+  titleEn: string | null;
+  url: string;
+  topic: string;
+  priority: 'high' | 'medium' | 'low';
+  contentType: string;
+  content: string;
+  createdAt: string;
+  readingTime?: number;
+}
+
 export interface BookmarkData {
   id: string;
   tweet_id: string;

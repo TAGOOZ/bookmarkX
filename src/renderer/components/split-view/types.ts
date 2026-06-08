@@ -1,4 +1,4 @@
-import type { Bookmark } from '../../App';
+import type { Bookmark } from '../../types';
 import type { BookmarkDetailData } from '../bookmark-detail/types';
 
 export interface SplitColumn {

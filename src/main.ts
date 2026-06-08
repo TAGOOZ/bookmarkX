@@ -1,11 +1,11 @@
-import { app, BrowserWindow, ipcMain, Menu, session } from 'electron';
+import { app, BrowserWindow, Menu } from 'electron';
 import path from 'node:path';
 import fs from 'node:fs';
-import os from 'node:os';
 import started from 'electron-squirrel-startup';
 import { createClient, type Client } from '@libsql/client';
-import { readConfig, writeConfig, type UserConfig } from './main/user-config';
-import { detectAndExtract } from './main/chrome-profile-detect';
+import { registerAllIpc } from './main/ipc';
+import { initializeSchema } from './db/schema';
+import { startCronScheduler } from './scheduler/cron';
 
 // Disable GPU acceleration on Linux to avoid crashes
 // NOTE: --no-sandbox MUST be passed as CLI arg, not appendSwitch (see electron/electron#47650)
@@ -16,10 +16,6 @@ if (process.platform === 'linux') {
   app.commandLine.appendSwitch('disable-dev-shm-usage');
   app.commandLine.appendSwitch('in-process-gpu');
 }
-import { initializeSchema } from './db/schema';
-import { getStoredBookmarks } from './db/bookmarks';
-import { getClassifiedBookmarks } from './db/classifications';
-import { startCronScheduler } from './scheduler/cron';
 
 // Handle creating/removing shortcuts on Windows when installing/uninstalling.
 if (started) {
@@ -27,367 +23,6 @@ if (started) {
 }
 
 let db: Client;
-
-function getConfig(): UserConfig {
-  const userDataDir = app.getPath('userData');
-  return readConfig(userDataDir);
-}
-
-function getConfigEnv(): { authToken?: string; ct0?: string; chromeProfile?: string; apiKey?: string } {
-  const config = getConfig();
-  return {
-    authToken: config.birdAuthToken || undefined,
-    ct0: config.birdCt0 || undefined,
-    chromeProfile: config.birdChromeProfile || undefined,
-    apiKey: config.geminiApiKey || undefined,
-  };
-}
-
-// Register ALL IPC handlers BEFORE any async init so they are always available.
-// Handlers that need `db` will use the module-level `db` variable which gets
-// set during app.whenReady(). The renderer may call these before db is ready,
-// but the handler exists — it will just throw if db isn't initialized yet.
-
-ipcMain.handle('get-bookmarks', async () => {
-  return getStoredBookmarks(db);
-});
-
-ipcMain.handle('get-classifications', async () => {
-  return getClassifiedBookmarks(db);
-});
-
-ipcMain.handle('get-bookmark-with-classification', async (_event, bookmarkId: string) => {
-  const { getClassification } = await import('./db/classifications');
-  return getClassification(db, bookmarkId);
-});
-
-ipcMain.handle('get-settings', () => {
-  return getConfig();
-});
-
-ipcMain.handle('save-settings', (_event, settings: UserConfig) => {
-  const userDataDir = app.getPath('userData');
-  writeConfig(userDataDir, settings);
-});
-
-ipcMain.handle('detect-chrome-profile', async () => {
-  const config = getConfig();
-  const chromeDir = config.birdChromeProfile
-    ? path.dirname(config.birdChromeProfile)
-    : path.join(os.homedir(), '.config', 'google-chrome');
-  return detectAndExtract(chromeDir);
-});
-
-ipcMain.handle('twitter-login', async () => {
-  return new Promise<{ authToken: string; ct0: string } | { error: string }>((resolve) => {
-    const loginWindow = new BrowserWindow({
-      width: 600,
-      height: 700,
-      webPreferences: {
-        partition: 'twitter-auth',
-        nodeIntegration: false,
-      },
-    });
-
-    loginWindow.loadURL('https://x.com/login');
-
-    let resolved = false;
-    const checkInterval = setInterval(async () => {
-      if (resolved) return;
-      try {
-        const cookies = await session
-          .fromPartition('twitter-auth')
-          .cookies.get({ domain: 'x.com' });
-        const authToken = cookies.find((c) => c.name === 'auth_token')?.value;
-        const ct0 = cookies.find((c) => c.name === 'ct0')?.value;
-        if (authToken && ct0) {
-          resolved = true;
-          clearInterval(checkInterval);
-          loginWindow.close();
-          resolve({ authToken, ct0 });
-        }
-      } catch {
-        // Window may have been closed
-      }
-    }, 1000);
-
-    loginWindow.on('closed', () => {
-      if (!resolved) {
-        resolved = true;
-        clearInterval(checkInterval);
-        resolve({ error: 'cancelled' });
-      }
-    });
-  });
-});
-
-ipcMain.handle('fetch-bookmarks', async () => {
-  const { fetchAndStore } = await import('./pipeline/fetch-and-store');
-  const env = getConfigEnv();
-  return fetchAndStore(db, {
-    authToken: env.authToken,
-    ct0: env.ct0,
-    chromeProfile: env.chromeProfile,
-  });
-});
-
-ipcMain.handle('classify-and-notify', async () => {
-  const { classifyAndNotify } = await import('./pipeline/classify-and-notify');
-  const env = getConfigEnv();
-  return classifyAndNotify(db, {
-    apiKey: env.apiKey,
-  });
-});
-
-// Phase 2 IPC handlers: Summarize
-ipcMain.handle('summarize-bookmark', async (_event, bookmarkId: string) => {
-  const { summarizeBookmark } = await import('./services/summarize');
-  const { getStoredBookmarks } = await import('./db/bookmarks');
-  const bookmarks = await getStoredBookmarks(db);
-  const bookmark = bookmarks.find((b) => b.id === bookmarkId);
-  if (!bookmark) throw new Error('Bookmark not found');
-  const env = getConfigEnv();
-  return summarizeBookmark(db, bookmarkId, bookmark, {
-    apiKey: env.apiKey,
-  });
-});
-
-// Phase 2 IPC handlers: Extract article
-ipcMain.handle('extract-article', async (_event, bookmarkId: string, url: string) => {
-  try {
-    const { extractArticle } = await import('./services/extract');
-    const env = getConfigEnv();
-    return await extractArticle(db, bookmarkId, url, {
-      apiKey: env.apiKey,
-    });
-  } catch (err) {
-    console.error('extract-article failed:', err);
-    throw err;
-  }
-});
-
-// Get article content (including blocks_json)
-ipcMain.handle('get-article-content', async (_event, bookmarkId: string) => {
-  const { getArticleContent } = await import('./db/article-content');
-  return getArticleContent(db, bookmarkId);
-});
-
-// Phase 2 IPC handlers: Chat
-ipcMain.handle('send-chat-message', async (_event, sessionId: string, message: string, articleContext?: string) => {
-  const { sendMessage } = await import('./services/chat');
-  const env = getConfigEnv();
-  return sendMessage(db, sessionId, message, articleContext, {
-    apiKey: env.apiKey,
-  });
-});
-
-// Phase 2 IPC handlers: Highlights
-ipcMain.handle('save-highlight', async (_event, bookmarkId: string, data: { selected_text: string; note: string | null; color: string | null }) => {
-  const { storeHighlight } = await import('./db/highlights');
-  await storeHighlight(db, bookmarkId, data);
-  return { success: true };
-});
-
-ipcMain.handle('get-highlights', async (_event, bookmarkId: string) => {
-  const { getHighlights } = await import('./db/highlights');
-  return getHighlights(db, bookmarkId);
-});
-
-// Phase 2 IPC handlers: Notes
-ipcMain.handle('save-note', async (_event, bookmarkId: string, data: { title: string | null; content: string | null }) => {
-  const { storeNote } = await import('./db/notes');
-  await storeNote(db, bookmarkId, data);
-  return { success: true };
-});
-
-ipcMain.handle('get-notes', async (_event, bookmarkId: string) => {
-  const { getNotes } = await import('./db/notes');
-  return getNotes(db, bookmarkId);
-});
-
-// Phase 2 IPC handlers: Glossary
-ipcMain.handle('add-glossary-term', async (_event, term: string, definition: string) => {
-  const { addTerm } = await import('./db/glossary');
-  return addTerm(db, term, definition);
-});
-
-ipcMain.handle('search-glossary', async (_event, query: string) => {
-  const { searchTerms } = await import('./db/glossary');
-  return searchTerms(db, query);
-});
-
-// Phase 2 IPC handlers: Enhance note
-ipcMain.handle('enhance-note', async (_event, selectedText: string, context?: string) => {
-  const { enhanceNote } = await import('./services/enhance');
-  const env = getConfigEnv();
-  return enhanceNote(selectedText, context, {
-    apiKey: env.apiKey,
-  });
-});
-
-// Phase 2 IPC handlers: Chat sessions
-ipcMain.handle('create-chat-session', async (_event, bookmarkId: string) => {
-  try {
-    const { createChatSession } = await import('./db/chat');
-    return await createChatSession(db, bookmarkId);
-  } catch (err) {
-    console.warn('Failed to create chat session:', err);
-    return null;
-  }
-});
-
-ipcMain.handle('get-chat-messages', async (_event, sessionId: string) => {
-  const { getChatMessages } = await import('./db/chat');
-  return getChatMessages(db, sessionId);
-});
-
-// Phase 2 IPC handlers: Glossary generation
-ipcMain.handle('generate-glossary', async (_event, bookmarkId: string, content: string, title?: string) => {
-  const { generateGlossary } = await import('./services/glossary');
-  const { addTerm, linkTermToBookmark } = await import('./db/glossary');
-  const env = getConfigEnv();
-  const terms = await generateGlossary(content, {
-    apiKey: env.apiKey,
-    title,
-  });
-  for (const t of terms) {
-    const termId = await addTerm(db, t.term, t.definition);
-    await linkTermToBookmark(db, bookmarkId, termId);
-  }
-  return terms;
-});
-
-// Phase 6 IPC handlers: Export & Import
-ipcMain.handle('export-bookmark', async (_event, format: 'md' | 'json', content: string, defaultName: string) => {
-  const { dialog } = await import('electron');
-  const ext = format === 'md' ? '.md' : '.json';
-  const filterName = format === 'md' ? 'Markdown' : 'JSON';
-  const result = await dialog.showSaveDialog({
-    defaultPath: defaultName.endsWith(ext) ? defaultName : `${defaultName}${ext}`,
-    filters: [{ name: filterName, extensions: [format] }],
-  });
-  if (result.canceled || !result.filePath) return { cancelled: true };
-  await fs.promises.writeFile(result.filePath, content, 'utf-8');
-  return { success: true, path: result.filePath };
-});
-
-ipcMain.handle('import-markdown', async () => {
-  const { dialog } = await import('electron');
-  const result = await dialog.showOpenDialog({
-    properties: ['openFile'],
-    filters: [{ name: 'Markdown', extensions: ['md', 'markdown'] }],
-  });
-  if (result.canceled || result.filePaths.length === 0) return { cancelled: true };
-  const content = await fs.promises.readFile(result.filePaths[0], 'utf-8');
-  const fileName = path.basename(result.filePaths[0]);
-  return { content, fileName };
-});
-
-// Phase 4 IPC handlers: Full-text search
-ipcMain.handle('search-articles', async (_event, query: string, limit?: number) => {
-  if (!db) return [];
-  if (!query || query.trim().length < 2) return [];
-  try {
-    const { searchArticleContent } = await import('./db/article-content');
-    return await searchArticleContent(db, query, limit);
-  } catch (err) {
-    console.error('search-articles error:', err);
-    return [];
-  }
-});
-
-// Phase 1 IPC handlers: Topics
-ipcMain.handle('get-topic-tree', async () => {
-  const { getTopicTree } = await import('./db/topics');
-  return getTopicTree(db);
-});
-
-ipcMain.handle('create-topic', async (_event, name: string, parentId: string | null) => {
-  const { createTopic } = await import('./db/topics');
-  return createTopic(db, name, parentId, 'user');
-});
-
-ipcMain.handle('rename-topic', async (_event, topicId: string, newName: string) => {
-  const { renameTopic } = await import('./db/topics');
-  await renameTopic(db, topicId, newName);
-  return { success: true };
-});
-
-ipcMain.handle('reparent-topic', async (_event, topicId: string, newParentId: string | null) => {
-  const { reparentTopic } = await import('./db/topics');
-  await reparentTopic(db, topicId, newParentId);
-  return { success: true };
-});
-
-ipcMain.handle('delete-topic', async (_event, topicId: string) => {
-  const { deleteTopic } = await import('./db/topics');
-  await deleteTopic(db, topicId);
-  return { success: true };
-});
-
-ipcMain.handle('move-bookmark-to-topic', async (_event, bookmarkId: string, topicId: string | null) => {
-  const { moveBookmarkToTopic } = await import('./db/topics');
-  await moveBookmarkToTopic(db, bookmarkId, topicId);
-  return { success: true };
-});
-
-// Phase 1 IPC handlers: Hashtags
-ipcMain.handle('get-all-hashtags', async () => {
-  const { getAllHashtags } = await import('./db/hashtags');
-  return getAllHashtags(db);
-});
-
-ipcMain.handle('get-bookmark-hashtags', async (_event, bookmarkId: string) => {
-  const { getBookmarkHashtags } = await import('./db/hashtags');
-  return getBookmarkHashtags(db, bookmarkId);
-});
-
-ipcMain.handle('attach-hashtag-to-bookmark', async (_event, bookmarkId: string, hashtagId: string) => {
-  const { attachHashtagToBookmark } = await import('./db/hashtags');
-  await attachHashtagToBookmark(db, bookmarkId, hashtagId);
-  return { success: true };
-});
-
-ipcMain.handle('detach-hashtag-from-bookmark', async (_event, bookmarkId: string, hashtagId: string) => {
-  const { detachHashtagFromBookmark } = await import('./db/hashtags');
-  await detachHashtagFromBookmark(db, bookmarkId, hashtagId);
-  return { success: true };
-});
-
-ipcMain.handle('set-bookmark-hashtags', async (_event, bookmarkId: string, hashtagNames: string[]) => {
-  const { setBookmarkHashtags } = await import('./db/hashtags');
-  await setBookmarkHashtags(db, bookmarkId, hashtagNames);
-  return { success: true };
-});
-
-// Notifications IPC handlers
-ipcMain.handle('get-notifications', async () => {
-  const { getNotifications } = await import('./db/notifications');
-  return getNotifications(db);
-});
-
-ipcMain.handle('get-unread-count', async () => {
-  const { getUnreadCount } = await import('./db/notifications');
-  return getUnreadCount(db);
-});
-
-ipcMain.handle('mark-notification-read', async (_event, id: string) => {
-  const { markAsRead } = await import('./db/notifications');
-  await markAsRead(db, id);
-  return { success: true };
-});
-
-ipcMain.handle('mark-all-notifications-read', async () => {
-  const { markAllRead } = await import('./db/notifications');
-  await markAllRead(db);
-  return { success: true };
-});
-
-ipcMain.handle('delete-notification', async (_event, id: string) => {
-  const { deleteNotification } = await import('./db/notifications');
-  await deleteNotification(db, id);
-  return { success: true };
-});
 
 const createWindow = () => {
   Menu.setApplicationMenu(null);
@@ -438,7 +73,7 @@ app.on('activate', () => {
   }
 });
 
-// Initialize database after app is ready (IPC handlers already registered above)
+// Initialize database after app is ready, then register IPC handlers
 app.whenReady().then(async () => {
   const userDataDir = app.getPath('userData');
 
@@ -452,6 +87,9 @@ app.whenReady().then(async () => {
   const dbPath = path.join(userDataDir, 'bookmarks.db');
   db = createClient({ url: `file:${dbPath}` });
   await initializeSchema(db);
+
+  // Register all IPC handlers (was: 390 lines of inline handlers)
+  registerAllIpc(require('electron').ipcMain, db);
 
   // Start cron scheduler: fetch every 6 hours, then classify
   const cronJob = startCronScheduler(db, '0 */6 * * *');

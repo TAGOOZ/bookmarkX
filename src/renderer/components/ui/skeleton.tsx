@@ -1,0 +1,15 @@
+import { cn } from '../../lib/utils';
+
+function Skeleton({ className, ...props }: React.ComponentProps<'div'>) {
+  return (
+    <div
+      className={cn(
+        'animate-pulse rounded-[var(--radius-s)] bg-[var(--background-tertiary)]',
+        className,
+      )}
+      {...props}
+    />
+  );
+}
+
+export { Skeleton };

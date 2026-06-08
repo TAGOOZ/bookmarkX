@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { useIntl } from 'react-intl';
-import { Bookmark } from '../App';
+import type { Bookmark } from '../types';
 
 interface ArticleSearchResult {
   bookmark_id: string;

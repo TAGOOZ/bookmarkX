@@ -1,7 +1,7 @@
 import React, { useState, useCallback } from 'react';
 import { useIntl } from 'react-intl';
 import { ChevronDown, ChevronRight, MoreHorizontal, Pencil, Trash2 } from 'lucide-react';
-import { Bookmark } from '../App';
+import type { Bookmark } from '../types';
 
 interface TopicGroupProps {
   topic: string;

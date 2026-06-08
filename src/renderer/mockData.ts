@@ -1,4 +1,4 @@
-import { Bookmark } from './App';
+import type { Bookmark } from './types';
 
 export const mockBookmarks: Bookmark[] = [
   {

@@ -4,7 +4,7 @@ import {
   Search, Download, Tag, FlaskConical, FlaskConicalOff, Settings,
   PanelRightOpen, PanelRightClose, Plus,
 } from 'lucide-react';
-import { Bookmark } from '../App';
+import type { Bookmark } from '../types';
 import TopicGroup from './TopicGroup';
 import SearchOverlay from './SearchOverlay';
 import { NotificationBell, NotificationPanel } from './notifications';

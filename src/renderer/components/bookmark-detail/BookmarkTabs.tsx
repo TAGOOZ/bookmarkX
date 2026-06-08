@@ -1,6 +1,7 @@
 import React, { useState, useCallback, useRef, useEffect } from 'react';
 import { useIntl } from 'react-intl';
-import { Bookmark, useLocale } from '../../App';
+import type { Bookmark } from '../../types';
+import { useLocale } from '../../App';
 import styles from './BookmarkTabs.module.css';
 
 interface BookmarkTabsProps {
