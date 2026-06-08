@@ -6,6 +6,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, waitFor, cleanup } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { IntlProvider } from 'react-intl';
+import { LocaleContext } from '../App';
 import Settings from '../components/Settings';
 
 const messages = {
@@ -77,6 +78,20 @@ beforeEach(() => {
     searchGlossary: vi.fn(),
     generateGlossary: vi.fn(),
     enhanceNote: vi.fn(),
+    exportBookmark: vi.fn(),
+    importMarkdown: vi.fn(),
+    getTopicTree: vi.fn(),
+    createTopic: vi.fn(),
+    renameTopic: vi.fn(),
+    reparentTopic: vi.fn(),
+    deleteTopic: vi.fn(),
+    moveBookmarkToTopic: vi.fn(),
+    getAllHashtags: vi.fn(),
+    getBookmarkHashtags: vi.fn(),
+    attachHashtagToBookmark: vi.fn(),
+    detachHashtagFromBookmark: vi.fn(),
+    setBookmarkHashtags: vi.fn(),
+    searchArticles: vi.fn(),
   };
 });
 
@@ -85,7 +100,13 @@ afterEach(() => {
 });
 
 const renderWithIntl = (ui: React.ReactElement) =>
-  render(<IntlProvider locale="en" messages={messages}>{ui}</IntlProvider>);
+  render(
+    <IntlProvider locale="en" messages={messages}>
+      <LocaleContext.Provider value={{ locale: 'en', setLocale: vi.fn() }}>
+        {ui}
+      </LocaleContext.Provider>
+    </IntlProvider>
+  );
 
 const defaultConfig = {
   name: '',
