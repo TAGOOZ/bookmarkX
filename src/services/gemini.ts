@@ -1,42 +1,86 @@
-import { execFile } from 'child_process';
+interface RetryOptions {
+  maxRetries?: number;
+  initialDelayMs?: number;
+  maxDelayMs?: number;
+}
 
-function runCurl(args: string[]): Promise<string> {
-  return new Promise((resolve, reject) => {
-    execFile('curl', args, (error, stdout, _stderr) => {
-      if (error) return reject(error);
-      resolve(stdout);
-    });
-  });
+const DEFAULT_RETRY: RetryOptions = {
+  maxRetries: 3,
+  initialDelayMs: 1000,
+  maxDelayMs: 10000,
+};
+
+function isRetryableStatus(status: number): boolean {
+  return status === 429 || status >= 500;
+}
+
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
 export async function callGemini(
   prompt: string,
-  options: { apiKey: string; model: string },
+  options: { apiKey: string; model: string; retry?: RetryOptions },
 ): Promise<string> {
+  const retry = { ...DEFAULT_RETRY, ...options.retry };
   const payload = JSON.stringify({
     contents: [{ parts: [{ text: prompt }] }],
   });
 
   const url = `https://generativelanguage.googleapis.com/v1beta/models/${options.model}:generateContent?key=${options.apiKey}`;
 
-  const stdout = await runCurl([
-    '-s',
-    '-X', 'POST',
-    '-H', 'Content-Type: application/json',
-    '-d', payload,
-    url,
-  ]);
+  let lastError: Error | undefined;
 
-  const response = JSON.parse(stdout);
+  for (let attempt = 0; attempt <= retry.maxRetries; attempt++) {
+    try {
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: payload,
+      });
 
-  if (response.error) {
-    throw new Error(response.error.message || 'Gemini API error');
+      if (!response.ok) {
+        const body = await response.text().catch(() => '');
+        if (isRetryableStatus(response.status) && attempt < retry.maxRetries) {
+          const delay = Math.min(
+            retry.initialDelayMs! * Math.pow(2, attempt),
+            retry.maxDelayMs!,
+          );
+          await sleep(delay);
+          continue;
+        }
+        throw new Error(
+          `Gemini API error: ${response.status} ${response.statusText}${body ? ` — ${body}` : ''}`,
+        );
+      }
+
+      const json = await response.json();
+
+      if (json.error) {
+        throw new Error(`Gemini API error: ${json.error.message || 'unknown'}`);
+      }
+
+      const text = json.candidates?.[0]?.content?.parts?.[0]?.text;
+      if (!text) {
+        throw new Error('Gemini API error: invalid response — no text in candidates');
+      }
+
+      return text.replace(/```json\n?|\n?```/g, '').trim();
+    } catch (err) {
+      lastError = err instanceof Error ? err : new Error(String(err));
+
+      if (attempt < retry.maxRetries && !lastError.message.startsWith('Gemini API error:')) {
+        const delay = Math.min(
+          retry.initialDelayMs! * Math.pow(2, attempt),
+          retry.maxDelayMs!,
+        );
+        await sleep(delay);
+        continue;
+      }
+
+      throw lastError;
+    }
   }
 
-  const text = response.candidates?.[0]?.content?.parts?.[0]?.text;
-  if (!text) {
-    throw new Error('Invalid Gemini API response');
-  }
-
-  return text.replace(/```json\n?|\n?```/g, '').trim();
+  throw lastError ?? new Error('Gemini API failed after retries');
 }
