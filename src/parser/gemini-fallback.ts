@@ -5,9 +5,11 @@ import type { ParserResult, ParseOptions } from './types';
 const GEMINI_PROMPT = `Extract the main article content from this URL. Return a JSON array of BlockNote blocks.
 Each block has: type (heading|paragraph|bulletListItem|numberedListItem), content (string or inline array).
 Inline content: { type: "text", text: "...", styles: { bold?: true, italic?: true, code?: true, link?: "url" } }
-For headings include props: { level: 1|2|3 }
+For headings include props: { level: 1|2|3|4|5|6 }
 For images use: { type: "paragraph", content: [{ type: "text", text: "[Image: alt text]", styles: { italic: true } }] }
-For code blocks use: { type: "paragraph", content: [{ type: "text", text: "...", styles: { code: true } }] }
+For code blocks: detect language from class attributes (e.g. class="language-python") and include it in a comment or as part of the text.
+For tables, render as markdown table syntax.
+For iframes/embeds, use: { type: "paragraph", content: [{ type: "text", text: "[Embed: url]", styles: { link: "url" } }] }
 
 Return ONLY a valid JSON array, no markdown fences.
 URL: `;

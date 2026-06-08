@@ -1,8 +1,53 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import * as cheerio from 'cheerio';
 import type { PartialBlock } from '@blocknote/core';
 import type { ParserResult } from './types';
+import { extractContent } from './extract-content';
+import { createTurndownService } from './turndown-setup';
+import { parseMDToBlocks } from './parse-markdown';
 
-/* eslint-disable @typescript-eslint/no-explicit-any */
+function htmlToMarkdown(html: string): string {
+  const td = createTurndownService();
+  return td.turndown(html);
+}
+
+export async function parseURL(url: string, options: { timeoutMs?: number } = {}): Promise<ParserResult> {
+  const timeoutMs = options.timeoutMs || 15000;
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+
+  try {
+    const response = await fetch(url, {
+      headers: { 'User-Agent': 'BookmarkX/1.0' },
+      signal: controller.signal,
+    });
+    const html = await response.text();
+
+    let cleanHtml: string;
+    try {
+      const extracted = await extractContent(html, url);
+      cleanHtml = extracted.html;
+    } catch {
+      cleanHtml = html;
+    }
+
+    const markdown = htmlToMarkdown(cleanHtml);
+    const blocks = parseMDToBlocks(markdown);
+
+    const text = blocks
+      .filter((b: any) => typeof b.content === 'string')
+      .map((b: any) => b.content)
+      .join(' ');
+    const wordCount = text.split(/\s+/).filter(Boolean).length;
+    const readingTime = Math.max(1, Math.round(wordCount / 200));
+
+    return { blocks, wordCount, readingTime };
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+/* Legacy cheerio-based parser — kept as fallback */
 
 type InlineItem = { type: string; text: string; styles: Record<string, any> };
 
@@ -107,7 +152,7 @@ function parseNode($: any, el: any): PartialBlock[] {
     const level = parseInt(tag[1]);
     const text = textFromChildren(el);
     if (text) {
-      blocks.push({ type: 'heading', props: { level: Math.min(level, 3) as 1 | 2 | 3 }, content: text } as any);
+      blocks.push({ type: 'heading', props: { level: Math.min(level, 6) as 1 | 2 | 3 | 4 | 5 | 6 }, content: text } as any);
     }
     return blocks;
   }
@@ -213,30 +258,4 @@ export function parseHTMLToBlocks(html: string): PartialBlock[] {
     });
 
   return blocks;
-}
-
-export async function parseURL(url: string, options: { timeoutMs?: number } = {}): Promise<ParserResult> {
-  const timeoutMs = options.timeoutMs || 15000;
-  const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), timeoutMs);
-
-  try {
-    const response = await fetch(url, {
-      headers: { 'User-Agent': 'BookmarkX/1.0' },
-      signal: controller.signal,
-    });
-    const html = await response.text();
-    const blocks = parseHTMLToBlocks(html);
-
-    const text = blocks
-      .filter((b: any) => typeof b.content === 'string')
-      .map((b: any) => b.content)
-      .join(' ');
-    const wordCount = text.split(/\s+/).filter(Boolean).length;
-    const readingTime = Math.max(1, Math.round(wordCount / 200));
-
-    return { blocks, wordCount, readingTime };
-  } finally {
-    clearTimeout(timer);
-  }
 }
