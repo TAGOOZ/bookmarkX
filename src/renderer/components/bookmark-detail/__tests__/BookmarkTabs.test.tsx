@@ -129,4 +129,85 @@ describe('BookmarkTabs', () => {
     expect(tabBar?.className).not.toContain('rtl');
     expect(tabBar?.getAttribute('dir')).toBe('ltr');
   });
+
+  describe('drag-to-edge', () => {
+    it('sets draggable attribute on tabs', () => {
+      renderWithProviders(
+        <BookmarkTabs
+          openBookmarks={bookmarks}
+          activeBookmarkId="1"
+          onTabSelect={vi.fn()}
+          onTabClose={vi.fn()}
+          columnId="col-1"
+        />
+      );
+      const tabs = screen.getAllByRole('tab');
+      expect(tabs[0].getAttribute('draggable')).toBe('true');
+      expect(tabs[1].getAttribute('draggable')).toBe('true');
+    });
+
+    it('does not set draggable when columnId is not provided', () => {
+      renderWithProviders(
+        <BookmarkTabs
+          openBookmarks={bookmarks}
+          activeBookmarkId="1"
+          onTabSelect={vi.fn()}
+          onTabClose={vi.fn()}
+        />
+      );
+      const tabs = screen.getAllByRole('tab');
+      expect(tabs[0].getAttribute('draggable')).not.toBe('true');
+    });
+
+    it('sets bookmark ID and column ID in dataTransfer on dragStart', () => {
+      renderWithProviders(
+        <BookmarkTabs
+          openBookmarks={bookmarks}
+          activeBookmarkId="1"
+          onTabSelect={vi.fn()}
+          onTabClose={vi.fn()}
+          columnId="col-1"
+        />
+      );
+      const tabs = screen.getAllByRole('tab');
+      const dragStartEvent = new Event('dragstart', { bubbles: true });
+      const dataTransfer = { setData: vi.fn(), clearData: vi.fn() };
+      Object.defineProperty(dragStartEvent, 'dataTransfer', { value: dataTransfer });
+      tabs[0].dispatchEvent(dragStartEvent);
+      expect(dataTransfer.setData).toHaveBeenCalledWith('text/tab-bookmark-id', '1');
+      expect(dataTransfer.setData).toHaveBeenCalledWith('text/tab-column-id', 'col-1');
+    });
+
+    it('clears dataTransfer on dragEnd', () => {
+      renderWithProviders(
+        <BookmarkTabs
+          openBookmarks={bookmarks}
+          activeBookmarkId="1"
+          onTabSelect={vi.fn()}
+          onTabClose={vi.fn()}
+          columnId="col-1"
+        />
+      );
+      const tabs = screen.getAllByRole('tab');
+      const dragEndEvent = new Event('dragend', { bubbles: true });
+      const dataTransfer = { setData: vi.fn(), clearData: vi.fn() };
+      Object.defineProperty(dragEndEvent, 'dataTransfer', { value: dataTransfer });
+      tabs[0].dispatchEvent(dragEndEvent);
+      expect(dataTransfer.clearData).toHaveBeenCalled();
+    });
+
+    it('applies dragging class during drag', () => {
+      renderWithProviders(
+        <BookmarkTabs
+          openBookmarks={bookmarks}
+          activeBookmarkId="1"
+          onTabSelect={vi.fn()}
+          onTabClose={vi.fn()}
+          columnId="col-1"
+        />
+      );
+      const tabs = screen.getAllByRole('tab');
+      expect(tabs[0].className).not.toContain('dragging');
+    });
+  });
 });

@@ -3,7 +3,7 @@
  */
 import React from 'react';
 import { describe, it, expect, afterEach, vi } from 'vitest';
-import { render, screen, cleanup } from '@testing-library/react';
+import { render, screen, cleanup, fireEvent } from '@testing-library/react';
 import { IntlProvider } from 'react-intl';
 import { LocaleContext } from '../../../App';
 import SplitLayout from '../SplitLayout';
@@ -150,5 +150,62 @@ describe('SplitLayout', () => {
       <SplitLayout {...defaultProps} splitState={state} dir="rtl" />
     );
     expect((container.firstChild as HTMLElement).getAttribute('dir')).toBe('rtl');
+  });
+
+  describe('drag-to-edge drop zones', () => {
+    it('renders left and right drop zones', () => {
+      const state: SplitState = {
+        columns: [{ id: 'col-1', bookmarkId: '1', width: 1 }],
+        activeColumnId: 'col-1',
+      };
+      const { container } = renderWithProviders(
+        <SplitLayout {...defaultProps} splitState={state} />
+      );
+      expect(container.querySelector('[data-drop-zone="left"]')).toBeTruthy();
+      expect(container.querySelector('[data-drop-zone="right"]')).toBeTruthy();
+    });
+
+    it('calls onSplitColumn with position when drop occurs on left edge', () => {
+      const onSplitColumn = vi.fn();
+      const state: SplitState = {
+        columns: [{ id: 'col-1', bookmarkId: '1', width: 1 }],
+        activeColumnId: 'col-1',
+      };
+      const { container } = renderWithProviders(
+        <SplitLayout {...defaultProps} splitState={state} onSplitColumn={onSplitColumn} />
+      );
+      const leftZone = container.querySelector('[data-drop-zone="left"]')!;
+      fireEvent.drop(leftZone, { dataTransfer: { getData: vi.fn().mockReturnValue('bookmark-1') } });
+      expect(onSplitColumn).toHaveBeenCalledWith('col-1', 'bookmark-1');
+    });
+
+    it('disables drop zones when max columns reached', () => {
+      const state: SplitState = {
+        columns: [
+          { id: 'col-1', bookmarkId: '1', width: 0.5 },
+          { id: 'col-2', bookmarkId: '2', width: 0.5 },
+          { id: 'col-3', bookmarkId: null, width: 1 },
+        ],
+        activeColumnId: 'col-1',
+      };
+      const { container } = renderWithProviders(
+        <SplitLayout {...defaultProps} splitState={state} />
+      );
+      const leftZone = container.querySelector('[data-drop-zone="left"]') as HTMLElement;
+      expect(leftZone.getAttribute('aria-disabled')).toBe('true');
+    });
+
+    it('shows active state when dragging over drop zone', () => {
+      const state: SplitState = {
+        columns: [{ id: 'col-1', bookmarkId: '1', width: 1 }],
+        activeColumnId: 'col-1',
+      };
+      const { container } = renderWithProviders(
+        <SplitLayout {...defaultProps} splitState={state} />
+      );
+      const leftZone = container.querySelector('[data-drop-zone="left"]')!;
+      fireEvent.dragOver(leftZone, { dataTransfer: { types: ['text/tab-bookmark-id'], dropEffect: '' } });
+      expect(leftZone.className).toContain('dropZoneActive');
+    });
   });
 });
