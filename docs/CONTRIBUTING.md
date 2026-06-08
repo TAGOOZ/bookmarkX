@@ -33,6 +33,7 @@ We use **Conventional Commits** for all changes. Every commit must be small, foc
 | `main` | Electron main process |
 | `preload` | Preload scripts, IPC bridge |
 | `config` | Project config, forge, vite, ts |
+| `parser` | Article parsing (Defuddle, Turndown, Gemini fallback) |
 
 ### Rules
 
