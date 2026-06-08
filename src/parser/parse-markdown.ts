@@ -139,8 +139,9 @@ export function parseMDToBlocks(markdown: string): PartialBlock[] {
     const imgMatch = line.match(/^!\[(.*?)\]\((.*?)\)$/);
     if (imgMatch) {
       blocks.push({
-        type: 'paragraph',
-        content: [{ type: 'text', text: `[Image: ${imgMatch[1] || 'image'}]`, styles: { italic: true } }],
+        type: 'image',
+        props: { url: imgMatch[2], alt: imgMatch[1] || '' },
+        content: undefined,
       } as any);
       i++;
       continue;
@@ -159,20 +160,42 @@ export function parseMDToBlocks(markdown: string): PartialBlock[] {
       const rows = [headerCells, ...tableLines];
       const tableHtml = renderTableHtml(rows);
       blocks.push({
-        type: 'paragraph',
-        content: [{ type: 'text', text: tableHtml, styles: {} }],
+        type: 'tableHtml',
+        props: { html: tableHtml },
+        content: undefined,
       } as any);
       continue;
     }
 
-    if (line.match(/^\[Embed:\s*(.*?)\]\((.*?)\)$/)) {
-      const embedMatch = line.match(/^\[Embed:\s*(.*?)\]\((.*?)\)$/);
-      if (embedMatch) {
-        blocks.push({
-          type: 'paragraph',
-          content: [{ type: 'text', text: `[Embed: ${embedMatch[1]}]`, styles: { link: embedMatch[2] } }],
-        } as any);
-      }
+    const videoMatch = line.match(/^\[Video:\s*(.*?)\]\((.*?)\)$/);
+    if (videoMatch) {
+      blocks.push({
+        type: 'video',
+        props: { url: videoMatch[2] },
+        content: undefined,
+      } as any);
+      i++;
+      continue;
+    }
+
+    const audioMatch = line.match(/^\[Audio:\s*(.*?)\]\((.*?)\)$/);
+    if (audioMatch) {
+      blocks.push({
+        type: 'audio',
+        props: { url: audioMatch[2] },
+        content: undefined,
+      } as any);
+      i++;
+      continue;
+    }
+
+    const embedMatch = line.match(/^\[Embed:\s*(.*?)\]\((.*?)\)$/);
+    if (embedMatch) {
+      blocks.push({
+        type: 'embed',
+        props: { url: embedMatch[2] },
+        content: undefined,
+      } as any);
       i++;
       continue;
     }

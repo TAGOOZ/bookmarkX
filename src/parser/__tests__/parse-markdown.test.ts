@@ -95,7 +95,7 @@ describe('parseMDToBlocks', () => {
     const md = '![alt text](photo.jpg)';
     const blocks = parseMDToBlocks(md);
     expect(blocks).toEqual([
-      { type: 'paragraph', content: [{ type: 'text', text: '[Image: alt text]', styles: { italic: true } }] },
+      { type: 'image', props: { url: 'photo.jpg', alt: 'alt text' }, content: undefined },
     ]);
   });
 
@@ -103,7 +103,7 @@ describe('parseMDToBlocks', () => {
     const md = '![](photo.jpg)';
     const blocks = parseMDToBlocks(md);
     expect(blocks).toEqual([
-      { type: 'paragraph', content: [{ type: 'text', text: '[Image: image]', styles: { italic: true } }] },
+      { type: 'image', props: { url: 'photo.jpg', alt: '' }, content: undefined },
     ]);
   });
 
@@ -111,10 +111,11 @@ describe('parseMDToBlocks', () => {
     const md = '| Col1 | Col2 |\n|------|------|\n| A    | B    |';
     const blocks = parseMDToBlocks(md);
     expect(blocks).toHaveLength(1);
-    const content = (blocks[0] as any).content[0].text;
-    expect(content).toContain('<table>');
-    expect(content).toContain('<th>Col1</th>');
-    expect(content).toContain('<td>A</td>');
+    expect(blocks[0]).toMatchObject({ type: 'tableHtml' });
+    const html = (blocks[0] as any).props.html;
+    expect(html).toContain('<table>');
+    expect(html).toContain('<th>Col1</th>');
+    expect(html).toContain('<td>A</td>');
   });
 
   it('converts horizontal rules', () => {
@@ -128,10 +129,25 @@ describe('parseMDToBlocks', () => {
   it('converts embeds', () => {
     const md = '[Embed: https://youtube.com/watch?v=123](https://youtube.com/watch?v=123)';
     const blocks = parseMDToBlocks(md);
-    expect(blocks).toHaveLength(1);
-    const content = (blocks[0] as any).content;
-    expect(content[0].text).toBe('[Embed: https://youtube.com/watch?v=123]');
-    expect(content[0].styles.link).toBe('https://youtube.com/watch?v=123');
+    expect(blocks).toEqual([
+      { type: 'embed', props: { url: 'https://youtube.com/watch?v=123' }, content: undefined },
+    ]);
+  });
+
+  it('converts video', () => {
+    const md = '[Video: https://example.com/video.mp4](https://example.com/video.mp4)';
+    const blocks = parseMDToBlocks(md);
+    expect(blocks).toEqual([
+      { type: 'video', props: { url: 'https://example.com/video.mp4' }, content: undefined },
+    ]);
+  });
+
+  it('converts audio', () => {
+    const md = '[Audio: https://example.com/audio.mp3](https://example.com/audio.mp3)';
+    const blocks = parseMDToBlocks(md);
+    expect(blocks).toEqual([
+      { type: 'audio', props: { url: 'https://example.com/audio.mp3' }, content: undefined },
+    ]);
   });
 
   it('skips empty lines', () => {

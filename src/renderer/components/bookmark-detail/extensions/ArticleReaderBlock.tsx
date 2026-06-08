@@ -35,7 +35,10 @@ function renderBlock(block: any, index: number): React.ReactNode {
     const text = renderInline(content);
     if (level === 1) return <h1 key={index} className={styles.heading}>{text}</h1>;
     if (level === 2) return <h2 key={index} className={styles.heading}>{text}</h2>;
-    return <h3 key={index} className={styles.heading}>{text}</h3>;
+    if (level === 3) return <h3 key={index} className={styles.heading}>{text}</h3>;
+    if (level === 4) return <h4 key={index} className={styles.heading}>{text}</h4>;
+    if (level === 5) return <h5 key={index} className={styles.heading}>{text}</h5>;
+    return <h6 key={index} className={styles.heading}>{text}</h6>;
   }
 
   if (block.type === 'bulletListItem') {
@@ -46,19 +49,75 @@ function renderBlock(block: any, index: number): React.ReactNode {
     return <li key={index} className={styles.listItem}>{renderInline(content)}</li>;
   }
 
+  if (block.type === 'image') {
+    const url = block.props?.url || '';
+    const alt = block.props?.alt || '';
+    if (!url) return null;
+    return (
+      <figure key={index} className={styles.figure}>
+        <img
+          src={url}
+          alt={alt}
+          loading="lazy"
+          className={styles.image}
+          onError={(e) => {
+            (e.target as HTMLImageElement).style.display = 'none';
+          }}
+        />
+        {alt && <figcaption className={styles.figcaption}>{alt}</figcaption>}
+      </figure>
+    );
+  }
+
+  if (block.type === 'tableHtml') {
+    const html = block.props?.html || '';
+    return (
+      <div
+        key={index}
+        className={styles.tableWrapper}
+        dangerouslySetInnerHTML={{ __html: html }}
+      />
+    );
+  }
+
+  if (block.type === 'embed') {
+    const url = block.props?.url || '';
+    return (
+      <div key={index} className={styles.embed}>
+        <a href={url} target="_blank" rel="noopener noreferrer" className={styles.embedLink}>
+          {url}
+        </a>
+      </div>
+    );
+  }
+
+  if (block.type === 'video') {
+    const url = block.props?.url || '';
+    return (
+      <div key={index} className={styles.mediaWrapper}>
+        <video src={url} controls preload="metadata" className={styles.video}>
+          Your browser does not support the video element.
+        </video>
+      </div>
+    );
+  }
+
+  if (block.type === 'audio') {
+    const url = block.props?.url || '';
+    return (
+      <div key={index} className={styles.mediaWrapper}>
+        <audio src={url} controls preload="metadata" className={styles.audio}>
+          Your browser does not support the audio element.
+        </audio>
+      </div>
+    );
+  }
+
   // paragraph or fallback
   if (Array.isArray(content)) {
     const isCode = content.length === 1 && content[0].styles?.code;
     if (isCode) {
       return <pre key={index} className={styles.codeBlock}><code>{content[0].text}</code></pre>;
-    }
-    const isImage = content.length === 1 && content[0].styles?.italic && content[0].text?.startsWith('[Image');
-    if (isImage) {
-      return <p key={index} className={styles.imagePlaceholder}>{content[0].text}</p>;
-    }
-    const isTable = content.length === 1 && content[0].styles?.italic && content[0].text?.startsWith('[Table');
-    if (isTable) {
-      return <p key={index} className={styles.imagePlaceholder}>{content[0].text}</p>;
     }
     const isDivider = content.length === 1 && content[0].text === '---';
     if (isDivider) {
