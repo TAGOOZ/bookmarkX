@@ -10,7 +10,7 @@ function runBird(args: string[], env?: Record<string, string>): Promise<string> 
     if (env) {
       options.env = { ...process.env, ...env };
     }
-    execFile('bird', args, options, (error, stdout, stderr) => {
+    execFile('bird', args, options, (error, stdout, _stderr) => {
       if (error) return reject(error);
       resolve(stdout);
     });

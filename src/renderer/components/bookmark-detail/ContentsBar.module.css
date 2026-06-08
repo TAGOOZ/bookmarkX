@@ -10,6 +10,7 @@
   min-height: 28px;
   border-bottom: 1px solid var(--background-modifier-border);
   flex-shrink: 0;
+  flex-wrap: wrap;
 }
 
 .dash {
@@ -40,6 +41,16 @@
 .active .dashLine {
   background-color: var(--accent-color);
   width: 3px;
+}
+
+.level2 .dashLine {
+  height: 12px;
+  opacity: 0.7;
+}
+
+.level3 .dashLine {
+  height: 8px;
+  opacity: 0.5;
 }
 
 .label {

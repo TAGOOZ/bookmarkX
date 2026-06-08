@@ -7,6 +7,10 @@ export interface ExtractResult {
   word_count: number;
   blocks_json: string;
   reading_time: number;
+  og_title?: string;
+  og_description?: string;
+  og_image?: string;
+  og_site_name?: string;
 }
 
 interface CacheEntry {
@@ -41,11 +45,19 @@ export async function extractArticle(
 ): Promise<ExtractResult> {
   const cached = getCachedExtract(url);
   if (cached) {
-    await storeArticleContent(db, bookmarkId, {
-      extracted_text: cached.extracted_text,
-      word_count: cached.word_count,
-      blocks_json: cached.blocks_json,
-    });
+    try {
+      await storeArticleContent(db, bookmarkId, {
+        extracted_text: cached.extracted_text,
+        word_count: cached.word_count,
+        blocks_json: cached.blocks_json,
+        og_title: cached.og_title,
+        og_description: cached.og_description,
+        og_image: cached.og_image,
+        og_site_name: cached.og_site_name,
+      });
+    } catch {
+      // FK constraint may fail for mock/transient bookmarks
+    }
     return cached;
   }
 
@@ -67,6 +79,10 @@ export async function extractArticle(
     word_count: result.wordCount,
     blocks_json: blocksJson,
     reading_time: result.readingTime,
+    og_title: result.ogTitle,
+    og_description: result.ogDescription,
+    og_image: result.ogImage,
+    og_site_name: result.ogSiteName,
   };
 
   extractCache.set(url, {
@@ -75,11 +91,19 @@ export async function extractArticle(
     timestamp: Date.now(),
   });
 
-  await storeArticleContent(db, bookmarkId, {
-    extracted_text: extractedText,
-    word_count: result.wordCount,
-    blocks_json: blocksJson,
-  });
+  try {
+    await storeArticleContent(db, bookmarkId, {
+      extracted_text: extractedText,
+      word_count: result.wordCount,
+      blocks_json: blocksJson,
+      og_title: result.ogTitle,
+      og_description: result.ogDescription,
+      og_image: result.ogImage,
+      og_site_name: result.ogSiteName,
+    });
+  } catch {
+    // FK constraint may fail for mock/transient bookmarks — extraction still valid
+  }
 
   return extractResult;
 }

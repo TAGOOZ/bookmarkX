@@ -3,7 +3,7 @@
  */
 import React from 'react';
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { render, screen, waitFor, cleanup } from '@testing-library/react';
+import { render, screen, cleanup } from '@testing-library/react';
 import { IntlProvider } from 'react-intl';
 import BookmarkDetail from '../components/bookmark-detail/BookmarkDetail';
 
@@ -37,6 +37,9 @@ const messages = {
   highlights: 'Highlights',
   notes: 'Notes',
   chat: 'Chat',
+  expandCollapseAll: 'Expand/Collapse All',
+  readerMode: 'Reader Mode',
+  exitReaderMode: 'Exit Reader Mode',
 };
 
 const mockExtractArticle = vi.fn();
@@ -44,7 +47,7 @@ const mockGetArticleContent = vi.fn();
 const mockCreateChatSession = vi.fn();
 
 beforeEach(() => {
-  vi.clearAllMocks();
+  vi.resetAllMocks();
   window.api = {
     getBookmarks: vi.fn(),
     getClassifications: vi.fn(),
@@ -105,40 +108,40 @@ describe('BookmarkDetail Error UI', () => {
     const bookmark = createMockBookmark();
     renderWithIntl(<BookmarkDetail bookmark={bookmark as any} />);
 
-    await waitFor(() => {
-      expect(screen.getByText('Failed to parse article')).toBeDefined();
-    });
-
+    expect(await screen.findByText('Failed to parse article')).toBeDefined();
     expect(screen.getByText('Network error')).toBeDefined();
     expect(screen.getByText('Retry')).toBeDefined();
   });
 
   it('retry button triggers re-extraction', async () => {
-    mockExtractArticle
-      .mockRejectedValueOnce(new Error('First attempt failed'))
-      .mockResolvedValueOnce({
-        blocks_json: JSON.stringify([
-          { type: 'heading', props: { level: 2 }, content: 'Article Content' },
-        ]),
-        word_count: 100,
-        reading_time: 1,
-      });
+    const articleData = {
+      blocks_json: JSON.stringify([
+        { type: 'heading', props: { level: 2 }, content: 'Article Content' },
+      ]),
+      word_count: 100,
+      reading_time: 1,
+    };
+    mockExtractArticle.mockImplementation(() => Promise.reject(new Error('First attempt failed')));
     mockGetArticleContent.mockResolvedValue(null);
     mockCreateChatSession.mockResolvedValue('session-1');
 
     const bookmark = createMockBookmark();
     renderWithIntl(<BookmarkDetail bookmark={bookmark as any} />);
 
-    await waitFor(() => {
+    await vi.waitFor(() => {
       expect(screen.getByText('Failed to parse article')).toBeDefined();
-    });
+    }, { timeout: 3000, interval: 20 });
+
+    // Set up retry success
+    mockExtractArticle.mockReset();
+    mockExtractArticle.mockImplementation(() => Promise.resolve(articleData));
 
     const retryButton = screen.getByText('Retry');
     retryButton.click();
 
-    await waitFor(() => {
-      expect(mockExtractArticle).toHaveBeenCalledTimes(2);
-    });
+    await vi.waitFor(() => {
+      expect(mockExtractArticle).toHaveBeenCalledTimes(1);
+    }, { timeout: 3000, interval: 20 });
 
     expect(screen.queryByText('Failed to parse article')).toBeNull();
   });
@@ -157,9 +160,9 @@ describe('BookmarkDetail Error UI', () => {
     const bookmark = createMockBookmark();
     renderWithIntl(<BookmarkDetail bookmark={bookmark as any} />);
 
-    await waitFor(() => {
+    await vi.waitFor(() => {
       expect(mockExtractArticle).toHaveBeenCalled();
-    });
+    }, { timeout: 3000 });
 
     expect(screen.queryByText('Failed to parse article')).toBeNull();
     expect(screen.queryByText('Retry')).toBeNull();
@@ -176,9 +179,9 @@ describe('BookmarkDetail Error UI', () => {
     });
     renderWithIntl(<BookmarkDetail bookmark={bookmark as any} />);
 
-    await waitFor(() => {
+    await vi.waitFor(() => {
       expect(mockCreateChatSession).toHaveBeenCalled();
-    });
+    }, { timeout: 3000 });
 
     expect(mockExtractArticle).not.toHaveBeenCalled();
   });

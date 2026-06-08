@@ -162,6 +162,10 @@ export const createArticleReaderBlock = createReactBlockSpec(
       readingTime: { default: 0 },
       sourceUrl: { default: '' },
       isExpanded: { default: false },
+      ogTitle: { default: '' },
+      ogDescription: { default: '' },
+      ogImage: { default: '' },
+      ogSiteName: { default: '' },
     },
     content: 'none',
   },
@@ -172,6 +176,10 @@ export const createArticleReaderBlock = createReactBlockSpec(
       const wordCount = props.block.props.wordCount as number;
       const readingTime = props.block.props.readingTime as number;
       const sourceUrl = props.block.props.sourceUrl as string;
+      const ogTitle = props.block.props.ogTitle as string;
+      const ogDescription = props.block.props.ogDescription as string;
+      const ogImage = props.block.props.ogImage as string;
+      const ogSiteName = props.block.props.ogSiteName as string;
       const [expanded, setExpanded] = useState(
         () => props.block.props.isExpanded as boolean,
       );
@@ -222,6 +230,18 @@ export const createArticleReaderBlock = createReactBlockSpec(
                   <a href={sourceUrl} target="_blank" rel="noopener noreferrer">
                     {sourceUrl}
                   </a>
+                </div>
+              )}
+              {ogTitle && (
+                <div className={styles.previewCard}>
+                  {ogImage && (
+                    <img src={ogImage} alt="" className={styles.previewImage} />
+                  )}
+                  <div className={styles.previewText}>
+                    {ogSiteName && <span className={styles.previewSite}>{ogSiteName}</span>}
+                    <span className={styles.previewTitle}>{ogTitle}</span>
+                    {ogDescription && <span className={styles.previewDesc}>{ogDescription}</span>}
+                  </div>
                 </div>
               )}
               <div className={styles.content}>

@@ -24,9 +24,17 @@ export async function parseURL(url: string, options: { timeoutMs?: number } = {}
     const html = await response.text();
 
     let cleanHtml: string;
+    let ogTitle = '';
+    let ogDescription = '';
+    let ogImage = '';
+    let ogSiteName = '';
     try {
       const extracted = await extractContent(html, url);
       cleanHtml = extracted.html;
+      ogTitle = extracted.title;
+      ogDescription = extracted.description;
+      ogImage = extracted.image;
+      ogSiteName = extracted.siteName;
     } catch {
       cleanHtml = html;
     }
@@ -41,7 +49,7 @@ export async function parseURL(url: string, options: { timeoutMs?: number } = {}
     const wordCount = text.split(/\s+/).filter(Boolean).length;
     const readingTime = Math.max(1, Math.round(wordCount / 200));
 
-    return { blocks, wordCount, readingTime };
+    return { blocks, wordCount, readingTime, ogTitle, ogDescription, ogImage, ogSiteName };
   } finally {
     clearTimeout(timer);
   }

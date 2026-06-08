@@ -47,5 +47,5 @@ export async function parseWithGemini(
 
   const readingTime = Math.max(1, Math.round(wordCount / 200));
 
-  return { blocks, wordCount, readingTime };
+  return { blocks, wordCount, readingTime, ogTitle: '', ogDescription: '', ogImage: '', ogSiteName: '' };
 }

@@ -61,6 +61,7 @@
     "@libsql/client": "^0.17.3",
     "@mozilla/readability": "^0.6.0",
     "@steipete/bird": "^0.8.0",
+    "canvas": "^3.2.3",
     "cheerio": "^1.2.0",
     "dotenv": "^17.4.2",
     "electron-squirrel-startup": "^1.0.1",

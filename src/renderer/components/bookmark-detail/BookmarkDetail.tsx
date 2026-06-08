@@ -109,6 +109,7 @@ const BookmarkEditor: React.FC<BookmarkEditorProps> = ({
   const scrollRef = useRef<HTMLDivElement>(null);
   const [activeSection, setActiveSection] = useState('summary');
   const sectionRefs = useRef<Map<string, HTMLElement>>(new Map());
+  const [tocEntries, setTocEntries] = useState<Array<{ id: string; label: string; level: number }>>([]);
   const [chatSessionId, setChatSessionId] = useState<string | null>(null);
   const [selectionToolbar, setSelectionToolbar] = useState<{
     text: string;
@@ -117,14 +118,24 @@ const BookmarkEditor: React.FC<BookmarkEditorProps> = ({
   const [enhancedText, setEnhancedText] = useState<string | null>(null);
   const [isParsing, setIsParsing] = useState(false);
   const [parseError, setParseError] = useState<string | null>(null);
+  const [scrollProgress, setScrollProgress] = useState(0);
+  const [isReaderMode, setIsReaderMode] = useState(false);
 
   const getSections = useCallback(() => {
-    return SECTION_IDS.map((id) => ({
+    const base = SECTION_IDS.map((id) => ({
       id,
       label: intl.formatMessage({ id }),
       visible: true,
+      level: 0,
     }));
-  }, []);
+    const articleHeadings = tocEntries.map((e) => ({
+      id: e.id,
+      label: e.label,
+      visible: true,
+      level: e.level,
+    }));
+    return [...base, ...articleHeadings];
+  }, [tocEntries]);
 
   const detectDirection = useCallback(() => {
     const dir = detectDir(bookmark);
@@ -154,8 +165,8 @@ const BookmarkEditor: React.FC<BookmarkEditorProps> = ({
             setChatSessionId(sessionId);
             onBookmarkChange?.({ chatSessionId: sessionId });
           }
-        } catch {
-          // Failed to create chat session — chat section won't render
+        } catch (e) {
+          // createChatSession failed silently
         }
       }
     };
@@ -182,12 +193,24 @@ const BookmarkEditor: React.FC<BookmarkEditorProps> = ({
     const findSections = () => {
       const editorEl = editorRef.current;
       if (!editorEl) return;
-      const headings = editorEl.querySelectorAll('h2');
+      const headings = editorEl.querySelectorAll('h2, h3');
+      const toc: Array<{ id: string; label: string; level: number }> = [];
       headings.forEach((h) => {
-        const text = h.textContent?.toLowerCase().trim() || '';
+        const el = h as HTMLElement;
+        const text = el.textContent?.toLowerCase().trim() || '';
         if (SECTION_IDS.includes(text)) {
-          sectionRefs.current.set(text, h);
+          sectionRefs.current.set(text, el);
+        } else if (text && !text.startsWith('[')) {
+          const level = el.tagName === 'H3' ? 3 : 2;
+          const id = `heading-${toc.length}`;
+          el.id = id;
+          sectionRefs.current.set(id, el);
+          toc.push({ id, label: el.textContent?.trim() || '', level });
         }
+      });
+      setTocEntries((prev) => {
+        if (prev.length === toc.length && prev.every((e, i) => e.id === toc[i].id && e.label === toc[i].label && e.level === toc[i].level)) return prev;
+        return toc;
       });
     };
 
@@ -238,6 +261,18 @@ const BookmarkEditor: React.FC<BookmarkEditorProps> = ({
     onBookmarkChange?.(updated);
   }, [editor, onBlocksChange, onBookmarkChange, bookmark, detectDirection]);
 
+  useEffect(() => {
+    const scrollEl = scrollRef.current;
+    if (!scrollEl) return;
+    const onScroll = () => {
+      const { scrollTop, scrollHeight, clientHeight } = scrollEl;
+      const maxScroll = scrollHeight - clientHeight;
+      setScrollProgress(maxScroll > 0 ? Math.min(scrollTop / maxScroll, 1) : 0);
+    };
+    scrollEl.addEventListener('scroll', onScroll, { passive: true });
+    return () => scrollEl.removeEventListener('scroll', onScroll);
+  }, []);
+
   const handleSelectionChange = useCallback(() => {
     const selection = window.getSelection();
     if (!selection || selection.isCollapsed || !selection.rangeCount) {
@@ -271,17 +306,20 @@ const BookmarkEditor: React.FC<BookmarkEditorProps> = ({
   const runExtraction = useCallback(async (isRetry = false) => {
     if (!bookmark.url) return;
     if (!isRetry && (bookmark.articleBlocks || isParsing)) return;
-    let cancelled = false;
     setIsParsing(true);
     setParseError(null);
     try {
       const result = await (window as any).api?.extractArticle?.(bookmark.id, bookmark.url);
-      if (cancelled || !result?.blocks_json) return;
+      if (!result?.blocks_json) return;
       const newBlocks = parseStoredBlocks(result.blocks_json) || bookmarkToBlocks({
         ...bookmark,
         articleBlocks: result.blocks_json,
         articleWordCount: result.word_count,
         articleReadingTime: result.reading_time,
+        ogTitle: result.og_title,
+        ogDescription: result.og_description,
+        ogImage: result.og_image,
+        ogSiteName: result.og_site_name,
       });
       isExternalUpdate.current = true;
       editor.replaceBlocks(editor.document, newBlocks);
@@ -290,14 +328,18 @@ const BookmarkEditor: React.FC<BookmarkEditorProps> = ({
         articleBlocks: result.blocks_json,
         articleWordCount: result.word_count,
         articleReadingTime: result.reading_time,
+        ogTitle: result.og_title,
+        ogDescription: result.og_description,
+        ogImage: result.og_image,
+        ogSiteName: result.og_site_name,
       });
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Failed to parse article';
       setParseError(message);
     } finally {
-      if (!cancelled) setIsParsing(false);
+      setIsParsing(false);
     }
-  }, [bookmark, editor, onBookmarkChange, isParsing]);
+  }, [bookmark, editor, onBookmarkChange]);
 
   useEffect(() => {
     runExtraction(false);
@@ -334,8 +376,21 @@ const BookmarkEditor: React.FC<BookmarkEditorProps> = ({
     navigator.clipboard.writeText(ref).catch(() => { /* clipboard unavailable */ });
   }, [bookmark.title]);
 
+  const handleExpandCollapseAll = useCallback(() => {
+    const blocks = editor.document;
+    const anyCollapsed = blocks.some(
+      (b) => (b.type === 'articleReader' || b.type === 'collapsibleArticle') && !b.props.isExpanded,
+    );
+    const nextExpanded = anyCollapsed;
+    blocks.forEach((b) => {
+      if (b.type === 'articleReader' || b.type === 'collapsibleArticle') {
+        editor.updateBlock(b, { props: { isExpanded: nextExpanded } });
+      }
+    });
+  }, [editor]);
+
   return (
-    <div ref={editorRef} dir="ltr" className={styles.pageLayout}>
+    <div ref={editorRef} dir="ltr" className={`${styles.pageLayout} ${isReaderMode ? styles.readerMode : ''}`}>
       <style>{`
         .ProseMirror-selectednode > .bn-block-content > *,
         .bn-block-content.ProseMirror-selectednode > * {
@@ -343,11 +398,30 @@ const BookmarkEditor: React.FC<BookmarkEditorProps> = ({
           outline-offset: 2px;
         }
       `}</style>
+      <div className={styles.progressBar}>
+        <div className={styles.progressFill} style={{ width: `${scrollProgress * 100}%` }} />
+      </div>
       <ContentsBar
         sections={getSections()}
         activeSection={activeSection}
         onNavigate={handleNavigate}
       />
+      <div className={styles.toolbarRow}>
+        <button
+          className={styles.readerToggle}
+          onClick={handleExpandCollapseAll}
+          aria-label={intl.formatMessage({ id: 'expandCollapseAll' })}
+        >
+          ⇕
+        </button>
+        <button
+          className={styles.readerToggle}
+          onClick={() => setIsReaderMode(!isReaderMode)}
+          aria-label={intl.formatMessage({ id: isReaderMode ? 'exitReaderMode' : 'readerMode' })}
+        >
+          {isReaderMode ? '✕' : '⛶'}
+        </button>
+      </div>
       <EnhanceToolbar
         selectedText={selectionToolbar?.text || ''}
         position={selectionToolbar?.position || null}

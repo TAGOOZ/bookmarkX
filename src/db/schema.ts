@@ -52,6 +52,10 @@ const SCHEMA_SQL = `
     blocks_json TEXT,
     parser_version INTEGER DEFAULT 1,
     content_hash TEXT,
+    og_title TEXT,
+    og_description TEXT,
+    og_image TEXT,
+    og_site_name TEXT,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP
   );
 
@@ -134,6 +138,46 @@ export async function initializeSchema(db: Client): Promise<void> {
   try {
     await db.execute({
       sql: 'ALTER TABLE article_content ADD COLUMN content_hash TEXT',
+      args: [],
+    });
+  } catch {
+    // Column already exists — ignore
+  }
+
+  // Migration: add og_title if missing (existing databases)
+  try {
+    await db.execute({
+      sql: 'ALTER TABLE article_content ADD COLUMN og_title TEXT',
+      args: [],
+    });
+  } catch {
+    // Column already exists — ignore
+  }
+
+  // Migration: add og_description if missing (existing databases)
+  try {
+    await db.execute({
+      sql: 'ALTER TABLE article_content ADD COLUMN og_description TEXT',
+      args: [],
+    });
+  } catch {
+    // Column already exists — ignore
+  }
+
+  // Migration: add og_image if missing (existing databases)
+  try {
+    await db.execute({
+      sql: 'ALTER TABLE article_content ADD COLUMN og_image TEXT',
+      args: [],
+    });
+  } catch {
+    // Column already exists — ignore
+  }
+
+  // Migration: add og_site_name if missing (existing databases)
+  try {
+    await db.execute({
+      sql: 'ALTER TABLE article_content ADD COLUMN og_site_name TEXT',
       args: [],
     });
   } catch {

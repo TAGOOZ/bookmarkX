@@ -20,11 +20,11 @@ function styledText(text: string, styles: Record<string, boolean> = {}): { type:
   return { type: 'text', text, styles };
 }
 
-function bulletListItem(text: string): PartialBlock {
+function _bulletListItem(text: string): PartialBlock {
   return { type: 'bulletListItem', content: text };
 }
 
-function splitParagraphs(text: string): PartialBlock[] {
+function _splitParagraphs(text: string): PartialBlock[] {
   return text
     .split(/\n\n+/)
     .map((p) => p.trim())
@@ -130,6 +130,10 @@ export function bookmarkToBlocks(bookmark: BookmarkDetailData): PartialBlock[] {
           readingTime: bookmark.articleReadingTime || 0,
           sourceUrl: bookmark.url || '',
           isExpanded: false,
+          ogTitle: bookmark.ogTitle || '',
+          ogDescription: bookmark.ogDescription || '',
+          ogImage: bookmark.ogImage || '',
+          ogSiteName: bookmark.ogSiteName || '',
         }));
       } else if (bookmark.content) {
         blocks.push(heading('Article', 2));

@@ -5,6 +5,10 @@ export interface ArticleContentData {
   word_count: number;
   blocks_json?: string;
   parser_version?: number;
+  og_title?: string;
+  og_description?: string;
+  og_image?: string;
+  og_site_name?: string;
 }
 
 export interface ArticleContent extends ArticleContentData {
@@ -39,7 +43,8 @@ export async function storeArticleContent(
   if (existing.rows.length > 0) {
     await db.execute({
       sql: `UPDATE article_content
-            SET extracted_text = ?, word_count = ?, blocks_json = ?, parser_version = ?, content_hash = ?
+            SET extracted_text = ?, word_count = ?, blocks_json = ?, parser_version = ?, content_hash = ?,
+                og_title = ?, og_description = ?, og_image = ?, og_site_name = ?
             WHERE id = ?`,
       args: [
         data.extracted_text,
@@ -47,14 +52,19 @@ export async function storeArticleContent(
         data.blocks_json || null,
         data.parser_version || 1,
         contentHash,
+        data.og_title || null,
+        data.og_description || null,
+        data.og_image || null,
+        data.og_site_name || null,
         (existing.rows[0] as any).id,
       ],
     });
   } else {
     const id = crypto.randomUUID();
     await db.execute({
-      sql: `INSERT INTO article_content (id, bookmark_id, extracted_text, word_count, blocks_json, parser_version, content_hash)
-            VALUES (?, ?, ?, ?, ?, ?, ?)`,
+      sql: `INSERT INTO article_content (id, bookmark_id, extracted_text, word_count, blocks_json, parser_version, content_hash,
+                   og_title, og_description, og_image, og_site_name)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       args: [
         id,
         bookmarkId,
@@ -63,6 +73,10 @@ export async function storeArticleContent(
         data.blocks_json || null,
         data.parser_version || 1,
         contentHash,
+        data.og_title || null,
+        data.og_description || null,
+        data.og_image || null,
+        data.og_site_name || null,
       ],
     });
   }
@@ -88,6 +102,10 @@ export async function getArticleContent(
     blocks_json: row.blocks_json || undefined,
     parser_version: row.parser_version || 1,
     content_hash: row.content_hash || '',
+    og_title: row.og_title || undefined,
+    og_description: row.og_description || undefined,
+    og_image: row.og_image || undefined,
+    og_site_name: row.og_site_name || undefined,
     created_at: row.created_at,
   };
 }

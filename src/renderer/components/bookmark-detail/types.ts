@@ -31,4 +31,8 @@ export interface BookmarkDetailData extends Bookmark {
   articleBlocks?: string;
   articleWordCount?: number;
   articleReadingTime?: number;
+  ogTitle?: string;
+  ogDescription?: string;
+  ogImage?: string;
+  ogSiteName?: string;
 }

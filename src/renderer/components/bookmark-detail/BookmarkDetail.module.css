@@ -192,3 +192,69 @@
   background: var(--color-error);
   color: var(--text-on-accent);
 }
+
+.progressBar {
+  position: sticky;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: transparent;
+  z-index: 20;
+  flex-shrink: 0;
+}
+
+.progressFill {
+  height: 100%;
+  background: var(--accent-color);
+  transition: width 0.1s ease-out;
+  border-radius: 0 2px 2px 0;
+}
+
+.toolbarRow {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  padding: 4px 40px 0;
+  flex-shrink: 0;
+}
+
+.readerToggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border: 1px solid var(--background-modifier-border);
+  background: var(--background-secondary);
+  color: var(--text-muted);
+  border-radius: var(--radius-m);
+  cursor: pointer;
+  font-size: 14px;
+  transition: background 0.15s, color 0.15s;
+}
+
+.readerToggle:hover {
+  background: var(--background-modifier-hover);
+  color: var(--text-normal);
+}
+
+.readerMode {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  background: var(--background-primary);
+  padding: 0;
+}
+
+.readerMode .editorScroll {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 40px 24px;
+}
+
+.readerMode .toolbarRow {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 8px 24px 0;
+}

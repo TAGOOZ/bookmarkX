@@ -28,7 +28,7 @@ export function detectChromeProfiles(chromeDir: string): string[] {
     });
 }
 
-function decryptV10(encryptedValue: Buffer): string | null {
+function _decryptV10(_encryptedValue: Buffer): string | null {
   // v10 cookies are encrypted with a key from the Linux keyring
   // Try to get the key via secret-tool
   try {

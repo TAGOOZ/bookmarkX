@@ -154,11 +154,16 @@ ipcMain.handle('summarize-bookmark', async (_event, bookmarkId: string) => {
 
 // Phase 2 IPC handlers: Extract article
 ipcMain.handle('extract-article', async (_event, bookmarkId: string, url: string) => {
-  const { extractArticle } = await import('./services/extract');
-  const env = getConfigEnv();
-  return extractArticle(db, bookmarkId, url, {
-    apiKey: env.apiKey,
-  });
+  try {
+    const { extractArticle } = await import('./services/extract');
+    const env = getConfigEnv();
+    return await extractArticle(db, bookmarkId, url, {
+      apiKey: env.apiKey,
+    });
+  } catch (err) {
+    console.error('extract-article failed:', err);
+    throw err;
+  }
 });
 
 // Get article content (including blocks_json)
@@ -254,8 +259,15 @@ ipcMain.handle('generate-glossary', async (_event, bookmarkId: string, content: 
 
 // Phase 4 IPC handlers: Full-text search
 ipcMain.handle('search-articles', async (_event, query: string, limit?: number) => {
-  const { searchArticleContent } = await import('./db/article-content');
-  return searchArticleContent(db, query, limit);
+  if (!db) return [];
+  if (!query || query.trim().length < 2) return [];
+  try {
+    const { searchArticleContent } = await import('./db/article-content');
+    return await searchArticleContent(db, query, limit);
+  } catch (err) {
+    console.error('search-articles error:', err);
+    return [];
+  }
 });
 
 const createWindow = () => {

@@ -5,6 +5,7 @@ interface Section {
   id: string;
   label: string;
   visible: boolean;
+  level?: number;
 }
 
 interface ContentsBarProps {
@@ -26,7 +27,7 @@ const ContentsBar: React.FC<ContentsBarProps> = ({
       {visibleSections.map((section) => (
         <button
           key={section.id}
-          className={`${styles.dash} ${section.id === activeSection ? styles.active : ''}`}
+          className={`${styles.dash} ${section.id === activeSection ? styles.active : ''} ${section.level ? styles[`level${section.level}`] : ''}`}
           onClick={() => onNavigate(section.id)}
           onMouseEnter={() => setHoveredId(section.id)}
           onMouseLeave={() => setHoveredId(null)}
