@@ -230,12 +230,21 @@ const NavPanel: React.FC<NavPanelProps> = ({
     </div>
   );
 
+  const collapsedAvatar = userName && (
+    <div className="nav-panel-collapsed-avatar" title={userName}>
+      <div className="nav-panel-user-avatar">
+        {userName.charAt(0).toUpperCase()}
+      </div>
+    </div>
+  );
+
   return (
     <div
       className={`nav-panel ${isExpanded ? '' : 'nav-panel-collapsed'}`}
       onMouseEnter={() => { if (!isExpanded) setIsExpanded(true); }}
       onMouseLeave={() => { if (!isExpanded) setIsExpanded(false); }}
     >
+      {!isExpanded && collapsedAvatar}
       {isExpanded && (
         <>
           {userName && (
