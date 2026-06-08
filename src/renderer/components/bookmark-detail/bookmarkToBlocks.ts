@@ -120,10 +120,10 @@ export function bookmarkToBlocks(bookmark: BookmarkDetailData): PartialBlock[] {
   }
 
   if (bookmark.articleBlocks) {
-    blocks.push(heading('Article', 2));
     try {
       const parsed = JSON.parse(bookmark.articleBlocks);
       if (Array.isArray(parsed) && parsed.length > 0) {
+        blocks.push(heading('Article', 2));
         blocks.push(customBlock('articleReader', {
           blocksJson: bookmark.articleBlocks,
           wordCount: bookmark.articleWordCount || 0,
@@ -131,11 +131,17 @@ export function bookmarkToBlocks(bookmark: BookmarkDetailData): PartialBlock[] {
           sourceUrl: bookmark.url || '',
           isExpanded: false,
         }));
+      } else if (bookmark.content) {
+        blocks.push(heading('Article', 2));
+        const wordCount = bookmark.content.split(/\s+/).filter(Boolean).length;
+        blocks.push(customBlock('collapsibleArticle', { content: bookmark.content, wordCount, isExpanded: false }));
       }
     } catch {
-      // Fall back to collapsibleArticle
-      const wordCount = (bookmark.content || '').split(/\s+/).filter(Boolean).length;
-      blocks.push(customBlock('collapsibleArticle', { content: bookmark.content || '', wordCount, isExpanded: false }));
+      if (bookmark.content) {
+        blocks.push(heading('Article', 2));
+        const wordCount = bookmark.content.split(/\s+/).filter(Boolean).length;
+        blocks.push(customBlock('collapsibleArticle', { content: bookmark.content, wordCount, isExpanded: false }));
+      }
     }
   } else if (bookmark.content) {
     blocks.push(heading('Article', 2));
