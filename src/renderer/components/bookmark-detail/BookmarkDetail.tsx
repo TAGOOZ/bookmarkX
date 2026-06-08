@@ -11,6 +11,8 @@ import { blocksToBookmark } from './blocksToBookmark';
 import ContentsBar from './ContentsBar';
 import EnhanceToolbar from './EnhanceToolbar';
 import { detectDir } from './rtl-detect';
+import { blocksToMarkdown } from '../../../parser/blocks-to-markdown';
+import { markdownToBlocks } from '../../../parser/markdown-to-blocks';
 import {
   createDualLangBlock,
   createCollapsibleArticleBlock,
@@ -376,6 +378,46 @@ const BookmarkEditor: React.FC<BookmarkEditorProps> = ({
     navigator.clipboard.writeText(ref).catch(() => { /* clipboard unavailable */ });
   }, [bookmark.title]);
 
+  const handleExport = useCallback(async (format: 'md' | 'json') => {
+    const blocks = editor.document as any;
+    const title = bookmark.title || 'bookmark';
+    if (format === 'md') {
+      const md = blocksToMarkdown(blocks);
+      const result = await (window as any).api?.exportBookmark?.('md', md, `${title}.md`);
+      if (result?.success) {
+        setNotification(intl.formatMessage({ id: 'exportSuccess' }));
+      }
+    } else {
+      const json = JSON.stringify(blocks, null, 2);
+      const result = await (window as any).api?.exportBookmark?.('json', json, `${title}.json`);
+      if (result?.success) {
+        setNotification(intl.formatMessage({ id: 'exportSuccess' }));
+      }
+    }
+  }, [editor, bookmark, intl]);
+
+  const handleImportMarkdown = useCallback(async () => {
+    const result = await (window as any).api?.importMarkdown?.();
+    if (result?.content) {
+      const blocks = markdownToBlocks(result.content);
+      if (blocks.length > 0) {
+        isExternalUpdate.current = true;
+        editor.replaceBlocks(editor.document, blocks as any);
+        isExternalUpdate.current = false;
+        setNotification(intl.formatMessage({ id: 'importSuccess' }));
+      }
+    }
+  }, [editor, intl]);
+
+  const [notification, setNotification] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (notification) {
+      const t = setTimeout(() => setNotification(null), 3000);
+      return () => clearTimeout(t);
+    }
+  }, [notification]);
+
   const handleExpandCollapseAll = useCallback(() => {
     const blocks = editor.document;
     const anyCollapsed = blocks.some(
@@ -408,20 +450,49 @@ const BookmarkEditor: React.FC<BookmarkEditorProps> = ({
       />
       <div className={styles.toolbarRow}>
         <button
-          className={styles.readerToggle}
+          className={styles.toolbarBtn}
           onClick={handleExpandCollapseAll}
           aria-label={intl.formatMessage({ id: 'expandCollapseAll' })}
         >
           ⇕
         </button>
         <button
-          className={styles.readerToggle}
+          className={styles.toolbarBtn}
           onClick={() => setIsReaderMode(!isReaderMode)}
           aria-label={intl.formatMessage({ id: isReaderMode ? 'exitReaderMode' : 'readerMode' })}
         >
           {isReaderMode ? '✕' : '⛶'}
         </button>
+        <div className={styles.exportGroup}>
+          <button
+            className={styles.toolbarBtn}
+            onClick={() => handleExport('md')}
+            aria-label={intl.formatMessage({ id: 'exportMd' })}
+            title={intl.formatMessage({ id: 'exportMd' })}
+          >
+            ↓MD
+          </button>
+          <button
+            className={styles.toolbarBtn}
+            onClick={() => handleExport('json')}
+            aria-label={intl.formatMessage({ id: 'exportJson' })}
+            title={intl.formatMessage({ id: 'exportJson' })}
+          >
+            ↓JSON
+          </button>
+        </div>
+        <button
+          className={styles.toolbarBtn}
+          onClick={handleImportMarkdown}
+          aria-label={intl.formatMessage({ id: 'importMd' })}
+          title={intl.formatMessage({ id: 'importMd' })}
+        >
+          ↑MD
+        </button>
       </div>
+      {notification && (
+        <div className={styles.notification}>{notification}</div>
+      )}
       <EnhanceToolbar
         selectedText={selectionToolbar?.text || ''}
         position={selectionToolbar?.position || null}

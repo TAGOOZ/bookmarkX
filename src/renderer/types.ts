@@ -77,6 +77,9 @@ declare global {
       generateGlossary: (bookmarkId: string, content: string, title?: string) => Promise<Array<{ term: string; definition: string }>>;
       // Phase 2: Enhance
       enhanceNote: (selectedText: string, context?: string) => Promise<{ enhanced_text?: string } | null>;
+      // Phase 6: Export & Import
+      exportBookmark: (format: 'md' | 'json', content: string, defaultName: string) => Promise<{ success: boolean; path?: string; cancelled?: boolean }>;
+      importMarkdown: () => Promise<{ content?: string; fileName?: string; cancelled?: boolean }>;
     };
   }
 }

@@ -63,4 +63,8 @@ contextBridge.exposeInMainWorld('api', {
   // Phase 4: Full-text search
   searchArticles: (query: string, limit?: number) =>
     ipcRenderer.invoke('search-articles', query, limit),
+  // Phase 6: Export & Import
+  exportBookmark: (format: 'md' | 'json', content: string, defaultName: string) =>
+    ipcRenderer.invoke('export-bookmark', format, content, defaultName),
+  importMarkdown: () => ipcRenderer.invoke('import-markdown'),
 });
