@@ -40,7 +40,7 @@ interface LocaleContextValue {
 
 export const LocaleContext = createContext<LocaleContextValue>({
   locale: 'ar',
-  setLocale: () => {},
+  setLocale: () => {}, // eslint-disable-line @typescript-eslint/no-empty-function
 });
 
 export const useLocale = () => useContext(LocaleContext);
@@ -236,7 +236,7 @@ function App() {
     try {
       const stored = localStorage.getItem(LOCALE_KEY);
       if (stored === 'ar' || stored === 'en') return stored;
-    } catch {}
+    } catch { /* localStorage may be unavailable */ }
     return 'ar';
   });
 
@@ -244,7 +244,7 @@ function App() {
     setLocaleState(newLocale);
     try {
       localStorage.setItem(LOCALE_KEY, newLocale);
-    } catch {}
+    } catch { /* localStorage may be unavailable */ }
   }, []);
 
   useEffect(() => {

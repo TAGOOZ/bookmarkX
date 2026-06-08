@@ -57,6 +57,19 @@ export async function extractTwitterCookies(
     return { authToken: null, ct0: null };
   }
 
+  function extractValue(row: any): { value: string | null; encrypted: boolean } {
+    if (!row?.encrypted_value) return { value: null, encrypted: false };
+    const buf = Buffer.from(row.encrypted_value as string, 'latin1');
+    const raw = buf.toString('utf-8');
+
+    // Check for encryption prefixes
+    if (raw.startsWith('v10') || raw.startsWith('v11')) {
+      return { value: null, encrypted: true };
+    }
+
+    return { value: raw, encrypted: false };
+  }
+
   try {
     const { createClient } = await import('@libsql/client');
     const db = createClient({ url: `file:${cookiesDbPath}` });
@@ -72,19 +85,6 @@ export async function extractTwitterCookies(
     });
 
     await db.close();
-
-    function extractValue(row: any): { value: string | null; encrypted: boolean } {
-      if (!row?.encrypted_value) return { value: null, encrypted: false };
-      const buf = Buffer.from(row.encrypted_value as string, 'latin1');
-      const raw = buf.toString('utf-8');
-
-      // Check for encryption prefixes
-      if (raw.startsWith('v10') || raw.startsWith('v11')) {
-        return { value: null, encrypted: true };
-      }
-
-      return { value: raw, encrypted: false };
-    }
 
     const auth = extractValue(authRows[0]);
     const ct0 = extractValue(ct0Rows[0]);
