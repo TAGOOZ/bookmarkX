@@ -252,6 +252,12 @@ ipcMain.handle('generate-glossary', async (_event, bookmarkId: string, content: 
   return terms;
 });
 
+// Phase 4 IPC handlers: Full-text search
+ipcMain.handle('search-articles', async (_event, query: string, limit?: number) => {
+  const { searchArticleContent } = await import('./db/article-content');
+  return searchArticleContent(db, query, limit);
+});
+
 const createWindow = () => {
   Menu.setApplicationMenu(null);
 

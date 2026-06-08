@@ -337,6 +337,42 @@ body {
   color: var(--text-secondary);
 }
 
+.search-overlay-section-title {
+  font-size: var(--font-ui-small);
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  padding: var(--space-s) var(--space-m);
+  margin-top: var(--space-s);
+}
+
+.search-overlay-loading {
+  padding: var(--space-m);
+  text-align: center;
+  color: var(--text-secondary);
+  font-size: var(--font-ui-small);
+}
+
+.search-overlay-item-article {
+  border-left: 2px solid var(--accent-color);
+  padding-left: calc(var(--space-m) - 2px);
+}
+
+.search-overlay-item-snippet {
+  font-size: var(--font-ui-small);
+  color: var(--text-secondary);
+  line-height: 1.4;
+  margin-top: 4px;
+}
+
+.search-overlay-item-snippet mark {
+  background-color: var(--accent-color);
+  color: var(--text-on-accent);
+  padding: 0 2px;
+  border-radius: 2px;
+}
+
 .mock-mode-active {
   background-color: rgba(255, 165, 0, 0.2) !important;
   border: 1px solid orange;

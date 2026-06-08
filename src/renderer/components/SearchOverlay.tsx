@@ -2,6 +2,12 @@ import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { useIntl } from 'react-intl';
 import { Bookmark } from '../App';
 
+interface ArticleSearchResult {
+  bookmark_id: string;
+  snippet: string;
+  rank: number;
+}
+
 interface SearchOverlayProps {
   bookmarks: Bookmark[];
   onSelectBookmark: (bookmark: Bookmark) => void;
@@ -15,7 +21,10 @@ const SearchOverlay: React.FC<SearchOverlayProps> = ({
 }) => {
   const intl = useIntl();
   const [query, setQuery] = useState('');
+  const [articleResults, setArticleResults] = useState<ArticleSearchResult[]>([]);
+  const [isSearching, setIsSearching] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
+  const searchTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const filteredBookmarks = bookmarks.filter((bookmark) => {
     if (!query) return true;
@@ -25,6 +34,42 @@ const SearchOverlay: React.FC<SearchOverlayProps> = ({
       bookmark.url.toLowerCase().includes(q)
     );
   });
+
+  useEffect(() => {
+    if (searchTimeoutRef.current) {
+      clearTimeout(searchTimeoutRef.current);
+    }
+
+    if (!query || query.length < 2) {
+      setArticleResults([]);
+      return;
+    }
+
+    searchTimeoutRef.current = setTimeout(async () => {
+      setIsSearching(true);
+      try {
+        const results = await (window as any).api?.searchArticles?.(query, 10);
+        setArticleResults(results || []);
+      } catch {
+        setArticleResults([]);
+      } finally {
+        setIsSearching(false);
+      }
+    }, 300);
+
+    return () => {
+      if (searchTimeoutRef.current) {
+        clearTimeout(searchTimeoutRef.current);
+      }
+    };
+  }, [query]);
+
+  const articleBookmarks = articleResults
+    .map((result) => {
+      const bookmark = bookmarks.find((b) => b.id === result.bookmark_id);
+      return bookmark ? { bookmark, snippet: result.snippet } : null;
+    })
+    .filter(Boolean) as Array<{ bookmark: Bookmark; snippet: string }>;
 
   const handleKeyDown = useCallback(
     (e: React.KeyboardEvent) => {
@@ -64,6 +109,9 @@ const SearchOverlay: React.FC<SearchOverlayProps> = ({
     }
   };
 
+  const hasTitleResults = filteredBookmarks.length > 0;
+  const hasArticleResults = articleBookmarks.length > 0;
+
   return (
     <div
       className="search-overlay"
@@ -89,31 +137,76 @@ const SearchOverlay: React.FC<SearchOverlayProps> = ({
           </button>
         </div>
         <div className="search-overlay-results">
-          {filteredBookmarks.length === 0 ? (
+          {!hasTitleResults && !hasArticleResults && !isSearching && (
             <div className="search-overlay-empty">
               {intl.formatMessage({ id: 'noResults' })}
             </div>
-          ) : (
-            filteredBookmarks.map((bookmark) => (
-              <div
-                key={bookmark.id}
-                className="search-overlay-item"
-                role="button"
-                tabIndex={0}
-                onClick={() => handleSelect(bookmark)}
-                onKeyDown={(e) =>
-                  (e.key === 'Enter' || e.key === ' ') &&
-                  (e.preventDefault(), handleSelect(bookmark))
-                }
-              >
-                <div className="search-overlay-item-title">
-                  {bookmark.title}
-                </div>
-                <div className="search-overlay-item-domain">
-                  {getDomain(bookmark.url)}
-                </div>
+          )}
+
+          {hasTitleResults && (
+            <>
+              <div className="search-overlay-section-title">
+                {intl.formatMessage({ id: 'bookmarks' })}
               </div>
-            ))
+              {filteredBookmarks.slice(0, 5).map((bookmark) => (
+                <div
+                  key={bookmark.id}
+                  className="search-overlay-item"
+                  role="button"
+                  tabIndex={0}
+                  onClick={() => handleSelect(bookmark)}
+                  onKeyDown={(e) =>
+                    (e.key === 'Enter' || e.key === ' ') &&
+                    (e.preventDefault(), handleSelect(bookmark))
+                  }
+                >
+                  <div className="search-overlay-item-title">
+                    {bookmark.title}
+                  </div>
+                  <div className="search-overlay-item-domain">
+                    {getDomain(bookmark.url)}
+                  </div>
+                </div>
+              ))}
+            </>
+          )}
+
+          {isSearching && (
+            <div className="search-overlay-loading">
+              {intl.formatMessage({ id: 'searchingArticles' })}
+            </div>
+          )}
+
+          {hasArticleResults && (
+            <>
+              <div className="search-overlay-section-title">
+                {intl.formatMessage({ id: 'articleContent' })}
+              </div>
+              {articleBookmarks.map(({ bookmark, snippet }) => (
+                <div
+                  key={`article-${bookmark.id}`}
+                  className="search-overlay-item search-overlay-item-article"
+                  role="button"
+                  tabIndex={0}
+                  onClick={() => handleSelect(bookmark)}
+                  onKeyDown={(e) =>
+                    (e.key === 'Enter' || e.key === ' ') &&
+                    (e.preventDefault(), handleSelect(bookmark))
+                  }
+                >
+                  <div className="search-overlay-item-title">
+                    {bookmark.title}
+                  </div>
+                  <div
+                    className="search-overlay-item-snippet"
+                    dangerouslySetInnerHTML={{ __html: snippet }}
+                  />
+                  <div className="search-overlay-item-domain">
+                    {getDomain(bookmark.url)}
+                  </div>
+                </div>
+              ))}
+            </>
           )}
         </div>
       </div>

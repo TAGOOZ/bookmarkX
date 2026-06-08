@@ -60,4 +60,7 @@ contextBridge.exposeInMainWorld('api', {
   // Phase 2: Glossary generation
   generateGlossary: (bookmarkId: string, content: string, title?: string) =>
     ipcRenderer.invoke('generate-glossary', bookmarkId, content, title),
+  // Phase 4: Full-text search
+  searchArticles: (query: string, limit?: number) =>
+    ipcRenderer.invoke('search-articles', query, limit),
 });

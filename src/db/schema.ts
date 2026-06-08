@@ -50,7 +50,15 @@ const SCHEMA_SQL = `
     extracted_text TEXT,
     word_count INTEGER,
     blocks_json TEXT,
+    parser_version INTEGER DEFAULT 1,
+    content_hash TEXT,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  );
+
+  CREATE VIRTUAL TABLE IF NOT EXISTS article_content_fts USING fts5(
+    extracted_text,
+    content='article_content',
+    content_rowid='rowid'
   );
 
   CREATE TABLE IF NOT EXISTS highlights (
@@ -110,6 +118,56 @@ export async function initializeSchema(db: Client): Promise<void> {
     });
   } catch {
     // Column already exists — ignore
+  }
+
+  // Migration: add parser_version if missing (existing databases)
+  try {
+    await db.execute({
+      sql: 'ALTER TABLE article_content ADD COLUMN parser_version INTEGER DEFAULT 1',
+      args: [],
+    });
+  } catch {
+    // Column already exists — ignore
+  }
+
+  // Migration: add content_hash if missing (existing databases)
+  try {
+    await db.execute({
+      sql: 'ALTER TABLE article_content ADD COLUMN content_hash TEXT',
+      args: [],
+    });
+  } catch {
+    // Column already exists — ignore
+  }
+
+  // Migration: create FTS5 virtual table if missing
+  try {
+    await db.executeMultiple(`
+      CREATE VIRTUAL TABLE IF NOT EXISTS article_content_fts USING fts5(
+        extracted_text,
+        content='article_content',
+        content_rowid='rowid'
+      );
+
+      CREATE TRIGGER IF NOT EXISTS article_content_ai AFTER INSERT ON article_content BEGIN
+        INSERT INTO article_content_fts(rowid, extracted_text)
+        VALUES (new.rowid, new.extracted_text);
+      END;
+
+      CREATE TRIGGER IF NOT EXISTS article_content_ad AFTER DELETE ON article_content BEGIN
+        INSERT INTO article_content_fts(article_content_fts, rowid, extracted_text)
+        VALUES('delete', old.rowid, old.extracted_text);
+      END;
+
+      CREATE TRIGGER IF NOT EXISTS article_content_au AFTER UPDATE ON article_content BEGIN
+        INSERT INTO article_content_fts(article_content_fts, rowid, extracted_text)
+        VALUES('delete', old.rowid, old.extracted_text);
+        INSERT INTO article_content_fts(rowid, extracted_text)
+        VALUES (new.rowid, new.extracted_text);
+      END;
+    `);
+  } catch {
+    // FTS table or triggers already exist — ignore
   }
 
   // Migration: add title_ar and title_en if missing (existing databases)

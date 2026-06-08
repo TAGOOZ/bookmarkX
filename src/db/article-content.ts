@@ -4,12 +4,24 @@ export interface ArticleContentData {
   extracted_text: string;
   word_count: number;
   blocks_json?: string;
+  parser_version?: number;
 }
 
 export interface ArticleContent extends ArticleContentData {
   id: string;
   bookmark_id: string;
+  content_hash: string;
   created_at: string;
+}
+
+function computeContentHash(text: string): string {
+  let hash = 0;
+  for (let i = 0; i < text.length; i++) {
+    const char = text.charCodeAt(i);
+    hash = ((hash << 5) - hash) + char;
+    hash = hash & hash;
+  }
+  return Math.abs(hash).toString(36);
 }
 
 export async function storeArticleContent(
@@ -17,12 +29,43 @@ export async function storeArticleContent(
   bookmarkId: string,
   data: ArticleContentData,
 ): Promise<void> {
-  const id = crypto.randomUUID();
-  await db.execute({
-    sql: `INSERT INTO article_content (id, bookmark_id, extracted_text, word_count, blocks_json)
-          VALUES (?, ?, ?, ?, ?)`,
-    args: [id, bookmarkId, data.extracted_text, data.word_count, data.blocks_json || null],
+  const contentHash = computeContentHash(data.extracted_text);
+
+  const existing = await db.execute({
+    sql: 'SELECT id FROM article_content WHERE bookmark_id = ? ORDER BY created_at DESC LIMIT 1',
+    args: [bookmarkId],
   });
+
+  if (existing.rows.length > 0) {
+    await db.execute({
+      sql: `UPDATE article_content
+            SET extracted_text = ?, word_count = ?, blocks_json = ?, parser_version = ?, content_hash = ?
+            WHERE id = ?`,
+      args: [
+        data.extracted_text,
+        data.word_count,
+        data.blocks_json || null,
+        data.parser_version || 1,
+        contentHash,
+        (existing.rows[0] as any).id,
+      ],
+    });
+  } else {
+    const id = crypto.randomUUID();
+    await db.execute({
+      sql: `INSERT INTO article_content (id, bookmark_id, extracted_text, word_count, blocks_json, parser_version, content_hash)
+            VALUES (?, ?, ?, ?, ?, ?, ?)`,
+      args: [
+        id,
+        bookmarkId,
+        data.extracted_text,
+        data.word_count,
+        data.blocks_json || null,
+        data.parser_version || 1,
+        contentHash,
+      ],
+    });
+  }
 }
 
 export async function getArticleContent(
@@ -43,6 +86,32 @@ export async function getArticleContent(
     extracted_text: row.extracted_text,
     word_count: row.word_count,
     blocks_json: row.blocks_json || undefined,
+    parser_version: row.parser_version || 1,
+    content_hash: row.content_hash || '',
     created_at: row.created_at,
   };
+}
+
+export async function searchArticleContent(
+  db: Client,
+  query: string,
+  limit = 20,
+): Promise<Array<{ bookmark_id: string; snippet: string; rank: number }>> {
+  const { rows } = await db.execute({
+    sql: `SELECT bookmark_id,
+                 snippet(article_content_fts, 0, '<mark>', '</mark>', '...', 32) as snippet,
+                 rank
+          FROM article_content_fts
+          JOIN article_content ON article_content.rowid = article_content_fts.rowid
+          WHERE article_content_fts MATCH ?
+          ORDER BY rank
+          LIMIT ?`,
+    args: [query, limit],
+  });
+
+  return rows.map((row: any) => ({
+    bookmark_id: row.bookmark_id,
+    snippet: row.snippet,
+    rank: row.rank,
+  }));
 }
