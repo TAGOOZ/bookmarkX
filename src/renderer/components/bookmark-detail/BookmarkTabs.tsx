@@ -10,6 +10,7 @@ interface BookmarkTabsProps {
   onTabClose: (bookmarkId: string) => void;
   onTabCloseBatch?: (bookmarkIds: string[]) => void;
   onReopenClosedTab?: (bookmark: Bookmark) => void;
+  onSplitColumn?: (bookmarkId: string) => void;
   dir?: 'ltr' | 'rtl';
 }
 
@@ -50,6 +51,7 @@ const BookmarkTabs: React.FC<BookmarkTabsProps> = ({
   onTabClose,
   onTabCloseBatch,
   onReopenClosedTab,
+  onSplitColumn,
   dir = 'ltr',
 }) => {
   const { locale } = useLocale();
@@ -180,6 +182,12 @@ const BookmarkTabs: React.FC<BookmarkTabsProps> = ({
     setContextMenu(null);
   }, [closedTabs, onReopenClosedTab]);
 
+  const handleMenuOpenInNewColumn = useCallback(() => {
+    if (!contextMenu || !onSplitColumn) return;
+    onSplitColumn(contextMenu.targetBookmarkId);
+    setContextMenu(null);
+  }, [contextMenu, onSplitColumn]);
+
   if (openBookmarks.length === 0 && closedTabs.length === 0) return null;
 
   return (
@@ -215,6 +223,19 @@ const BookmarkTabs: React.FC<BookmarkTabsProps> = ({
               >
                 ×
               </button>
+              {onSplitColumn && (
+                <button
+                  className={styles.splitBtn}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onSplitColumn(bookmark.id);
+                  }}
+                  aria-label={`Open ${displayTitle} in new column`}
+                  title={intl.formatMessage({ id: 'openInNewColumn' })}
+                >
+                  ⧉
+                </button>
+              )}
             </div>
           );
         })}
@@ -242,6 +263,15 @@ const BookmarkTabs: React.FC<BookmarkTabsProps> = ({
             {intl.formatMessage({ id: 'closeOtherTabs' })}
           </button>
           <div className={styles.menuSeparator} />
+          {onSplitColumn && (
+            <button
+              className={styles.menuItem}
+              onClick={handleMenuOpenInNewColumn}
+              role="menuitem"
+            >
+              {intl.formatMessage({ id: 'openInNewColumn' })}
+            </button>
+          )}
           <button
             className={styles.menuItem}
             onClick={handleMenuReopen}

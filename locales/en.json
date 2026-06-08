@@ -128,5 +128,6 @@
   "closeTabsToRight": "Close to Right",
   "closeTabsToLeft": "Close to Left",
   "closeOtherTabs": "Close Others",
-  "reopenClosedTab": "Reopen Closed Tab"
+  "reopenClosedTab": "Reopen Closed Tab",
+  "openInNewColumn": "Open in New Column"
 }

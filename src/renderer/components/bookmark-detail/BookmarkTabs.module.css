@@ -78,6 +78,32 @@
   color: var(--text-normal);
 }
 
+.splitBtn {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  border: none;
+  background: none;
+  color: var(--text-faint);
+  cursor: pointer;
+  border-radius: var(--radius-xs);
+  font-size: 12px;
+  line-height: 1;
+  padding: 0;
+  flex-shrink: 0;
+}
+
+.tab:hover .splitBtn {
+  display: flex;
+}
+
+.splitBtn:hover {
+  background-color: var(--background-modifier-border);
+  color: var(--text-normal);
+}
+
 .contextMenu {
   position: fixed;
   z-index: 1000;

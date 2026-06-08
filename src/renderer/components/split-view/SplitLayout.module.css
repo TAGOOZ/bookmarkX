@@ -1,0 +1,19 @@
+.container {
+  display: flex;
+  flex-direction: row;
+  flex: 1;
+  overflow: hidden;
+  height: 100%;
+}
+
+.column {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  min-width: 0;
+}
+
+.columnActive {
+  /* subtle indicator for focused column — reserved for future use */
+}

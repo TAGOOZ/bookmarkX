@@ -1,13 +1,13 @@
 import React, { useState, useCallback, useMemo, useEffect, createContext, useContext } from 'react';
 import { IntlProvider, useIntl } from 'react-intl';
 import NavPanel from './components/NavPanel';
-import BookmarkDetail from './components/bookmark-detail/BookmarkDetail';
-import BookmarkTabs from './components/bookmark-detail/BookmarkTabs';
+import { SplitLayout } from './components/split-view';
 import Settings from './components/Settings';
 import { mockBookmarks } from './mockData';
 import arMessages from '../../locales/ar.json';
 import enMessages from '../../locales/en.json';
 import type { BookmarkDetailData } from './components/bookmark-detail/types';
+import type { SplitState, SplitColumn } from './components/split-view/types';
 
 export interface Bookmark {
   id: string;
@@ -25,6 +25,24 @@ export interface Bookmark {
 
 const MOCK_MODE_KEY = 'bookmarkx-mock-mode';
 const LOCALE_KEY = 'bookmarkx-locale';
+const SPLIT_STATE_KEY = 'bookmarkx-split-state';
+const MAX_COLUMNS = 3;
+
+function loadSplitState(): SplitState | null {
+  try {
+    const raw = localStorage.getItem(SPLIT_STATE_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    if (parsed?.columns?.length > 0 && parsed?.activeColumnId) return parsed;
+  } catch { /* ignore */ }
+  return null;
+}
+
+function saveSplitState(state: SplitState): void {
+  try {
+    localStorage.setItem(SPLIT_STATE_KEY, JSON.stringify(state));
+  } catch { /* ignore */ }
+}
 
 const messages: Record<string, Record<string, string>> = {
   ar: arMessages,
@@ -55,7 +73,12 @@ function AppContent() {
   const dir = locale === 'ar' ? 'rtl' : 'ltr';
 
   const [openBookmarks, setOpenBookmarks] = useState<Bookmark[]>([]);
-  const [activeBookmarkId, setActiveBookmarkId] = useState<string | null>(null);
+  const [splitState, setSplitState] = useState<SplitState>(() => {
+    return loadSplitState() ?? {
+      columns: [{ id: 'col-1', bookmarkId: null, width: 1 }],
+      activeColumnId: 'col-1',
+    };
+  });
   const [showSettings, setShowSettings] = useState(false);
   const [bookmarks, setBookmarks] = useState<Bookmark[]>([]);
   const [refreshKey, setRefreshKey] = useState(0);
@@ -75,10 +98,17 @@ function AppContent() {
     }
   }, [mockMode]);
 
-  const activeBookmark = useMemo(
-    () => openBookmarks.find((b) => b.id === activeBookmarkId) ?? null,
-    [openBookmarks, activeBookmarkId],
-  );
+  useEffect(() => {
+    saveSplitState(splitState);
+  }, [splitState]);
+
+  const activeBookmark = useMemo(() => {
+    const activeCol = splitState.columns.find(c => c.id === splitState.activeColumnId);
+    if (!activeCol?.bookmarkId) return null;
+    return openBookmarks.find(b => b.id === activeCol.bookmarkId) ?? null;
+  }, [splitState, openBookmarks]);
+
+  const activeBookmarkId = activeBookmark?.id ?? null;
 
   const handleBookmarkChange = useCallback((bookmarkId: string, updated: Partial<BookmarkDetailData>) => {
     setOpenBookmarks((prev) =>
@@ -100,36 +130,92 @@ function AppContent() {
       if (exists) return prev;
       return [...prev, bookmark];
     });
-    setActiveBookmarkId(bookmark.id);
-  }, []);
-
-  const handleTabSelect = useCallback((bookmarkId: string) => {
-    setActiveBookmarkId(bookmarkId);
-  }, []);
-
-  const handleTabClose = useCallback((bookmarkId: string) => {
-    setOpenBookmarks((prev) => prev.filter((b) => b.id !== bookmarkId));
-    setActiveBookmarkId((prev) => {
-      if (prev !== bookmarkId) return prev;
-      return null;
+    setSplitState((prev) => {
+      const activeCol = prev.columns.find(c => c.id === prev.activeColumnId);
+      if (!activeCol) return prev;
+      if (activeCol.bookmarkId === bookmark.id) return prev;
+      if (!activeCol.bookmarkId) {
+        return {
+          ...prev,
+          columns: prev.columns.map(c =>
+            c.id === activeCol.id ? { ...c, bookmarkId: bookmark.id } : c
+          ),
+        };
+      }
+      if (prev.columns.length < MAX_COLUMNS) {
+        const newCol: SplitColumn = {
+          id: `col-${Date.now()}`,
+          bookmarkId: bookmark.id,
+          width: 1,
+        };
+        return {
+          columns: [...prev.columns, newCol],
+          activeColumnId: newCol.id,
+        };
+      }
+      return {
+        ...prev,
+        columns: prev.columns.map(c =>
+          c.id === activeCol.id ? { ...c, bookmarkId: bookmark.id } : c
+        ),
+        activeColumnId: activeCol.id,
+      };
     });
   }, []);
 
-  const handleTabCloseBatch = useCallback((bookmarkIds: string[]) => {
-    const idSet = new Set(bookmarkIds);
-    setOpenBookmarks((prev) => prev.filter((b) => !idSet.has(b.id)));
-    setActiveBookmarkId((prev) => {
-      if (prev && idSet.has(prev)) return null;
-      return prev;
+  const handleSplitColumn = useCallback((columnId: string, bookmarkId: string) => {
+    setSplitState((prev) => {
+      if (prev.columns.length >= MAX_COLUMNS) return prev;
+      const sourceCol = prev.columns.find(c => c.id === columnId);
+      if (!sourceCol) return prev;
+      const newCol: SplitColumn = {
+        id: `col-${Date.now()}`,
+        bookmarkId,
+        width: 1,
+      };
+      const newCols = prev.columns.map(c =>
+        c.id === columnId ? { ...c, width: c.width } : c
+      );
+      const idx = newCols.findIndex(c => c.id === columnId);
+      newCols.splice(idx + 1, 0, newCol);
+      return { columns: newCols, activeColumnId: newCol.id };
     });
   }, []);
 
-  const handleReopenClosedTab = useCallback((bookmark: Bookmark) => {
-    setOpenBookmarks((prev) => {
-      if (prev.find((b) => b.id === bookmark.id)) return prev;
-      return [...prev, bookmark];
+  const handleMergeColumn = useCallback((columnId: string) => {
+    setSplitState((prev) => {
+      if (prev.columns.length === 1) {
+        return {
+          columns: [{ ...prev.columns[0], bookmarkId: null }],
+          activeColumnId: prev.columns[0].id,
+        };
+      }
+      const col = prev.columns.find(c => c.id === columnId);
+      if (col?.bookmarkId) {
+        setOpenBookmarks((p) => p.filter(b => b.id !== col.bookmarkId));
+      }
+      const remaining = prev.columns.filter(c => c.id !== columnId);
+      const newActive = prev.activeColumnId === columnId
+        ? remaining[remaining.length - 1].id
+        : prev.activeColumnId;
+      return { columns: remaining, activeColumnId: newActive };
     });
-    setActiveBookmarkId(bookmark.id);
+  }, []);
+
+  const handleColumnActive = useCallback((columnId: string) => {
+    setSplitState((prev) => {
+      if (prev.activeColumnId === columnId) return prev;
+      return { ...prev, activeColumnId: columnId };
+    });
+  }, []);
+
+  const handleColumnResize = useCallback((columnId: string, width: number) => {
+    setSplitState((prev) => ({
+      ...prev,
+      columns: prev.columns.map(c =>
+        c.id === columnId ? { ...c, width } : c
+      ),
+    }));
   }, []);
 
   const handleFetch = useCallback(async () => {
@@ -209,27 +295,15 @@ function AppContent() {
             overflow: 'hidden',
           }}
         >
-          <BookmarkTabs
+          <SplitLayout
+            splitState={splitState}
             openBookmarks={openBookmarks}
-            activeBookmarkId={activeBookmarkId}
-            onTabSelect={handleTabSelect}
-            onTabClose={handleTabClose}
-            onTabCloseBatch={handleTabCloseBatch}
-            onReopenClosedTab={handleReopenClosedTab}
+            onSplitColumn={handleSplitColumn}
+            onMergeColumn={handleMergeColumn}
+            onColumnActive={handleColumnActive}
+            onColumnResize={handleColumnResize}
+            onBookmarkChange={handleBookmarkChange}
             dir={dir}
-          />
-          <BookmarkDetail
-            bookmark={activeBookmark}
-            onBookmarkChange={
-              activeBookmark
-                ? (updated: Partial<BookmarkDetailData>) => handleBookmarkChange(activeBookmark.id, updated)
-                : undefined
-            }
-            onBlocksChange={
-              activeBookmark
-                ? (blocks: string) => handleBlocksChange(activeBookmark.id, blocks)
-                : undefined
-            }
           />
         </div>
         <NavPanel

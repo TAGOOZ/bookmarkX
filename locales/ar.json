@@ -127,5 +127,6 @@
   "closeTabsToRight": "إغلاق لليمين",
   "closeTabsToLeft": "إغلاق لليسار",
   "closeOtherTabs": "إغلاق البقية",
-  "reopenClosedTab": "إعادة فتح التаб المغلق"
+  "reopenClosedTab": "إعادة فتح التgl المغلق",
+  "openInNewColumn": "فتح في عمود جديد"
 }
