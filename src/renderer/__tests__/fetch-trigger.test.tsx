@@ -29,7 +29,18 @@ const messages = {
   علوم: 'علوم',
 };
 
-const mockBookmarks = [
+const mockBookmarks: Array<{
+  id: string;
+  title: string;
+  titleAr: string | null;
+  titleEn: string | null;
+  url: string;
+  topic: string;
+  priority: 'high' | 'medium' | 'low';
+  contentType: string;
+  content: string;
+  createdAt: string;
+}> = [
   {
     id: '1',
     title: 'Test Bookmark',
@@ -37,7 +48,7 @@ const mockBookmarks = [
     titleEn: 'Test Bookmark',
     url: 'https://example.com',
     topic: 'تكنولوجيا',
-    priority: 'high' as const,
+    priority: 'high',
     contentType: 'article',
     content: 'Test content',
     createdAt: '2024-01-01',

@@ -2,7 +2,7 @@ import React, { useState, useCallback, useEffect, useMemo } from 'react';
 import { useIntl } from 'react-intl';
 import {
   Search, Download, Tag, FlaskConical, FlaskConicalOff, Settings,
-  PanelRightOpen, PanelRightClose,
+  PanelRightOpen, PanelRightClose, Plus,
 } from 'lucide-react';
 import { Bookmark } from '../App';
 import TopicGroup from './TopicGroup';
@@ -64,6 +64,8 @@ const NavPanel: React.FC<NavPanelProps> = ({
   );
   const [topicTree, setTopicTree] = useState<TopicTreeNode[]>([]);
   const [userName, setUserName] = useState('');
+  const [showCreateTopic, setShowCreateTopic] = useState(false);
+  const [newTopicName, setNewTopicName] = useState('');
 
   useEffect(() => {
     try {
@@ -114,6 +116,40 @@ const NavPanel: React.FC<NavPanelProps> = ({
     setShowSearch(false);
   }, []);
 
+  const handleCreateTopic = useCallback(async () => {
+    if (!newTopicName.trim()) return;
+    try {
+      await (window as any).api?.createTopic?.(newTopicName.trim(), null);
+      const tree = await (window as any).api?.getTopicTree?.();
+      if (tree) setTopicTree(tree);
+      setNewTopicName('');
+      setShowCreateTopic(false);
+    } catch {
+      // createTopic failed silently
+    }
+  }, [newTopicName]);
+
+  const handleRenameTopic = useCallback(async (topicId: string, newName: string) => {
+    if (!newName.trim()) return;
+    try {
+      await (window as any).api?.renameTopic?.(topicId, newName.trim());
+      const tree = await (window as any).api?.getTopicTree?.();
+      if (tree) setTopicTree(tree);
+    } catch {
+      // renameTopic failed silently
+    }
+  }, []);
+
+  const handleDeleteTopic = useCallback(async (topicId: string) => {
+    try {
+      await (window as any).api?.deleteTopic?.(topicId);
+      const tree = await (window as any).api?.getTopicTree?.();
+      if (tree) setTopicTree(tree);
+    } catch {
+      // deleteTopic failed silently
+    }
+  }, []);
+
   const renderTopicNodes = (nodes: TopicTreeNode[], depth = 0) =>
     nodes.map((node) => {
       const bookmarksInTopic = bookmarkTopicMap.get(node.name) ?? [];
@@ -123,6 +159,7 @@ const NavPanel: React.FC<NavPanelProps> = ({
         <TopicGroup
           key={node.id}
           topic={node.name}
+          topicId={node.id}
           bookmarks={bookmarksInTopic}
           isExpanded={expanded}
           onToggle={handleToggleTopic}
@@ -131,6 +168,8 @@ const NavPanel: React.FC<NavPanelProps> = ({
           depth={depth}
           childCount={node.children.length}
           totalCount={node.bookmark_count}
+          onRename={handleRenameTopic}
+          onDelete={handleDeleteTopic}
         >
           {hasChildren && expanded && renderTopicNodes(node.children, depth + 1)}
         </TopicGroup>
@@ -227,6 +266,38 @@ const NavPanel: React.FC<NavPanelProps> = ({
               <div className="nav-panel-empty">
                 {intl.formatMessage({ id: 'noBookmarks' })}
               </div>
+            )}
+            {showCreateTopic ? (
+              <div className="topic-create-row">
+                <input
+                  className="topic-create-input"
+                  value={newTopicName}
+                  onChange={(e) => setNewTopicName(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') handleCreateTopic();
+                    if (e.key === 'Escape') { setShowCreateTopic(false); setNewTopicName(''); }
+                  }}
+                  placeholder={intl.formatMessage({ id: 'topicName' })}
+                  autoFocus
+                />
+                <button className="topic-create-btn" onClick={handleCreateTopic}>
+                  {intl.formatMessage({ id: 'createTopic' })}
+                </button>
+                <button
+                  className="topic-create-cancel"
+                  onClick={() => { setShowCreateTopic(false); setNewTopicName(''); }}
+                >
+                  {intl.formatMessage({ id: 'cancel' })}
+                </button>
+              </div>
+            ) : (
+              <button
+                className="topic-add-btn"
+                onClick={() => setShowCreateTopic(true)}
+              >
+                <Plus size={14} />
+                {intl.formatMessage({ id: 'addTopic' })}
+              </button>
             )}
           </div>
         </>

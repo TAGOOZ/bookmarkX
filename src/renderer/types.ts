@@ -47,6 +47,7 @@ declare global {
       getClassifications: () => Promise<Array<{
         bookmark_id: string;
         priority: string;
+        topic: string;
         reading_time_min: number;
       }>>;
       getBookmarkWithClassification: (bookmarkId: string) => Promise<ClassificationData | null>;
@@ -80,6 +81,45 @@ declare global {
       // Phase 6: Export & Import
       exportBookmark: (format: 'md' | 'json', content: string, defaultName: string) => Promise<{ success: boolean; path?: string; cancelled?: boolean }>;
       importMarkdown: () => Promise<{ content?: string; fileName?: string; cancelled?: boolean }>;
+      // Phase 1: Topics
+      getTopicTree: () => Promise<Array<{
+        id: string;
+        name: string;
+        parent_id: string | null;
+        created_by: 'ai' | 'user';
+        created_at: string;
+        bookmark_count: number;
+        children: Array<{
+          id: string;
+          name: string;
+          parent_id: string | null;
+          created_by: 'ai' | 'user';
+          created_at: string;
+          bookmark_count: number;
+          children: Array<{
+            id: string;
+            name: string;
+            parent_id: string | null;
+            created_by: 'ai' | 'user';
+            created_at: string;
+            bookmark_count: number;
+            children: Array<unknown>;
+          }>;
+        }>;
+      }>>;
+      createTopic: (name: string, parentId: string | null) => Promise<string>;
+      renameTopic: (topicId: string, newName: string) => Promise<void>;
+      reparentTopic: (topicId: string, newParentId: string | null) => Promise<void>;
+      deleteTopic: (topicId: string) => Promise<void>;
+      moveBookmarkToTopic: (bookmarkId: string, topicId: string | null) => Promise<void>;
+      // Phase 1: Hashtags
+      getAllHashtags: () => Promise<Array<{ id: string; name: string }>>;
+      getBookmarkHashtags: (bookmarkId: string) => Promise<Array<{ id: string; name: string }>>;
+      attachHashtagToBookmark: (bookmarkId: string, hashtagId: string) => Promise<void>;
+      detachHashtagFromBookmark: (bookmarkId: string, hashtagId: string) => Promise<void>;
+      setBookmarkHashtags: (bookmarkId: string, hashtagNames: string[]) => Promise<void>;
+      // Phase 4: Full-text search
+      searchArticles: (query: string, limit?: number) => Promise<Array<{ id: string; title: string; url: string }>>;
     };
   }
 }

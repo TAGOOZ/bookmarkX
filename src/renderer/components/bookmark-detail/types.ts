@@ -18,6 +18,11 @@ export interface ChatMessage {
   content: string;
 }
 
+export interface Hashtag {
+  id: string;
+  name: string;
+}
+
 export interface BookmarkDetailData extends Bookmark {
   summary?: string;
   summaryAr?: string;
@@ -35,4 +40,5 @@ export interface BookmarkDetailData extends Bookmark {
   ogDescription?: string;
   ogImage?: string;
   ogSiteName?: string;
+  hashtags?: Hashtag[];
 }

@@ -18,7 +18,7 @@ export function sendHighPriorityNotification(
 ): void {
   const title = bookmark.title || 'Untitled Bookmark';
   const author = bookmark.author_name || bookmark.author_handle;
-  const topics = classification.topics.join(', ');
+  const topics = classification.topic;
 
   sendNotification({
     title: 'High Priority Bookmark',

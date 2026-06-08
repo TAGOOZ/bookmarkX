@@ -122,6 +122,11 @@ const BookmarkEditor: React.FC<BookmarkEditorProps> = ({
   const [parseError, setParseError] = useState<string | null>(null);
   const [scrollProgress, setScrollProgress] = useState(0);
   const [isReaderMode, setIsReaderMode] = useState(false);
+  const [isSummarizing, setIsSummarizing] = useState(false);
+  const [isGeneratingGlossary, setIsGeneratingGlossary] = useState(false);
+  const notesSaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [hashtags, setHashtags] = useState<Array<{ id: string; name: string }>>([]);
+  const [newHashtag, setNewHashtag] = useState('');
 
   const getSections = useCallback(() => {
     const base = SECTION_IDS.map((id) => ({
@@ -275,6 +280,61 @@ const BookmarkEditor: React.FC<BookmarkEditorProps> = ({
     return () => scrollEl.removeEventListener('scroll', onScroll);
   }, []);
 
+  useEffect(() => {
+    if (!bookmark.id || !bookmark.notes) return;
+    if (notesSaveTimerRef.current) {
+      clearTimeout(notesSaveTimerRef.current);
+    }
+    notesSaveTimerRef.current = setTimeout(() => {
+      (window as any).api?.saveNote?.(bookmark.id, {
+        title: null,
+        content: bookmark.notes || null,
+      });
+    }, 1000);
+    return () => {
+      if (notesSaveTimerRef.current) {
+        clearTimeout(notesSaveTimerRef.current);
+      }
+    };
+  }, [bookmark.id, bookmark.notes]);
+
+  useEffect(() => {
+    if (!bookmark.id) return;
+    (window as any).api?.getBookmarkHashtags?.(bookmark.id)
+      .then((tags: Array<{ id: string; name: string }>) => {
+        if (tags) setHashtags(tags);
+      })
+      .catch(() => {});
+  }, [bookmark.id]);
+
+  const handleAddHashtag = useCallback(async () => {
+    if (!bookmark.id || !newHashtag.trim()) return;
+    try {
+      await (window as any).api?.setBookmarkHashtags?.(
+        bookmark.id,
+        [...hashtags.map((h) => h.name), newHashtag.trim()],
+      );
+      const updated = await (window as any).api?.getBookmarkHashtags?.(bookmark.id);
+      if (updated) setHashtags(updated);
+      setNewHashtag('');
+      onBookmarkChange?.({ hashtags: updated });
+    } catch {
+      // addHashtag failed silently
+    }
+  }, [bookmark.id, newHashtag, hashtags, onBookmarkChange]);
+
+  const handleRemoveHashtag = useCallback(async (hashtagId: string) => {
+    if (!bookmark.id) return;
+    try {
+      await (window as any).api?.detachHashtagFromBookmark?.(bookmark.id, hashtagId);
+      const updated = await (window as any).api?.getBookmarkHashtags?.(bookmark.id);
+      if (updated) setHashtags(updated);
+      onBookmarkChange?.({ hashtags: updated });
+    } catch {
+      // removeHashtag failed silently
+    }
+  }, [bookmark.id, onBookmarkChange]);
+
   const handleSelectionChange = useCallback(() => {
     const selection = window.getSelection();
     if (!selection || selection.isCollapsed || !selection.rangeCount) {
@@ -377,6 +437,45 @@ const BookmarkEditor: React.FC<BookmarkEditorProps> = ({
     const ref = `[[ref:${bookmark.title || 'section'}|${text}]]`;
     navigator.clipboard.writeText(ref).catch(() => { /* clipboard unavailable */ });
   }, [bookmark.title]);
+
+  const handleSummarize = useCallback(async () => {
+    if (!bookmark.id || isSummarizing) return;
+    setIsSummarizing(true);
+    try {
+      const result = await (window as any).api?.summarizeBookmark?.(bookmark.id);
+      if (result) {
+        onBookmarkChange?.({
+          summary: result.content_en || result.summary || '',
+          summaryAr: result.content_ar || result.summaryAr || '',
+        });
+        setNotification(intl.formatMessage({ id: 'summarizeSuccess' }));
+      }
+    } catch {
+      setNotification(intl.formatMessage({ id: 'summarizeError' }));
+    } finally {
+      setIsSummarizing(false);
+    }
+  }, [bookmark.id, bookmark.title, isSummarizing, onBookmarkChange, intl]);
+
+  const handleGenerateGlossary = useCallback(async () => {
+    if (!bookmark.id || isGeneratingGlossary) return;
+    setIsGeneratingGlossary(true);
+    try {
+      const content = bookmark.summary || bookmark.content || '';
+      const result = await (window as any).api?.generateGlossary?.(bookmark.id, content, bookmark.title);
+      if (result && Array.isArray(result)) {
+        const existing = bookmark.glossaryTerms || [];
+        onBookmarkChange?.({
+          glossaryTerms: [...existing, ...result],
+        });
+        setNotification(intl.formatMessage({ id: 'glossaryGenerated' }));
+      }
+    } catch {
+      setNotification(intl.formatMessage({ id: 'glossaryError' }));
+    } finally {
+      setIsGeneratingGlossary(false);
+    }
+  }, [bookmark.id, bookmark.title, bookmark.summary, bookmark.content, bookmark.glossaryTerms, isGeneratingGlossary, onBookmarkChange, intl]);
 
   const handleExport = useCallback(async (format: 'md' | 'json') => {
     const blocks = editor.document as any;
@@ -489,10 +588,60 @@ const BookmarkEditor: React.FC<BookmarkEditorProps> = ({
         >
           ↑MD
         </button>
+        <div className={styles.exportGroup}>
+          <button
+            className={styles.toolbarBtn}
+            onClick={handleSummarize}
+            disabled={isSummarizing}
+            aria-label={intl.formatMessage({ id: 'summarize' })}
+            title={intl.formatMessage({ id: 'summarize' })}
+          >
+            {isSummarizing ? '...' : 'Σ'}
+          </button>
+          <button
+            className={styles.toolbarBtn}
+            onClick={handleGenerateGlossary}
+            disabled={isGeneratingGlossary}
+            aria-label={intl.formatMessage({ id: 'generateGlossary' })}
+            title={intl.formatMessage({ id: 'generateGlossary' })}
+          >
+            {isGeneratingGlossary ? '...' : 'G'}
+          </button>
+        </div>
       </div>
       {notification && (
         <div className={styles.notification}>{notification}</div>
       )}
+      {hashtags.length > 0 || newHashtag ? (
+        <div className={styles.hashtagBar}>
+          <div className={styles.hashtagList}>
+            {hashtags.map((tag) => (
+              <span key={tag.id} className={styles.hashtagChip}>
+                #{tag.name}
+                <button
+                  className={styles.hashtagRemove}
+                  onClick={() => handleRemoveHashtag(tag.id)}
+                  aria-label={`Remove ${tag.name}`}
+                >
+                  ×
+                </button>
+              </span>
+            ))}
+          </div>
+          <div className={styles.hashtagAdd}>
+            <input
+              className={styles.hashtagInput}
+              value={newHashtag}
+              onChange={(e) => setNewHashtag(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') handleAddHashtag();
+              }}
+              placeholder="#"
+              aria-label={intl.formatMessage({ id: 'addHashtag' })}
+            />
+          </div>
+        </div>
+      ) : null}
       <EnhanceToolbar
         selectedText={selectionToolbar?.text || ''}
         position={selectionToolbar?.position || null}

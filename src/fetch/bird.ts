@@ -31,6 +31,8 @@ function mapBookmark(raw: any): Bookmark {
     url: raw.url || `https://x.com/i/status/${raw.id}`,
     content_type: classifyContentType(raw),
     title: raw.title || null,
+    title_ar: raw.title_ar || null,
+    title_en: raw.title_en || null,
     author_name: raw.author?.name || null,
     author_handle: raw.author?.screen_name || null,
     tweet_text: raw.text || null,

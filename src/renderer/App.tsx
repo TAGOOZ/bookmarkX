@@ -115,6 +115,23 @@ function AppContent() {
     });
   }, []);
 
+  const handleTabCloseBatch = useCallback((bookmarkIds: string[]) => {
+    const idSet = new Set(bookmarkIds);
+    setOpenBookmarks((prev) => prev.filter((b) => !idSet.has(b.id)));
+    setActiveBookmarkId((prev) => {
+      if (prev && idSet.has(prev)) return null;
+      return prev;
+    });
+  }, []);
+
+  const handleReopenClosedTab = useCallback((bookmark: Bookmark) => {
+    setOpenBookmarks((prev) => {
+      if (prev.find((b) => b.id === bookmark.id)) return prev;
+      return [...prev, bookmark];
+    });
+    setActiveBookmarkId(bookmark.id);
+  }, []);
+
   const handleFetch = useCallback(async () => {
     if (mockMode) return;
     await window.api.fetchBookmarks();
@@ -197,6 +214,8 @@ function AppContent() {
             activeBookmarkId={activeBookmarkId}
             onTabSelect={handleTabSelect}
             onTabClose={handleTabClose}
+            onTabCloseBatch={handleTabCloseBatch}
+            onReopenClosedTab={handleReopenClosedTab}
             dir={dir}
           />
           <BookmarkDetail

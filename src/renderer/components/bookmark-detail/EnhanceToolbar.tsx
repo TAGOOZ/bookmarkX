@@ -1,4 +1,5 @@
 import React, { useEffect, useRef } from 'react';
+import { useIntl } from 'react-intl';
 import styles from './EnhanceToolbar.module.css';
 
 interface EnhanceToolbarProps {
@@ -21,6 +22,7 @@ const EnhanceToolbar: React.FC<EnhanceToolbarProps> = ({
   onClose,
 }) => {
   const ref = useRef<HTMLDivElement>(null);
+  const intl = useIntl();
 
   useEffect(() => {
     if (!position) return;
@@ -49,7 +51,7 @@ const EnhanceToolbar: React.FC<EnhanceToolbarProps> = ({
       ref={ref}
       className={styles.toolbar}
       role="toolbar"
-      aria-label="Text actions"
+      aria-label={intl.formatMessage({ id: 'enhanceBtnAria' })}
       style={{ top: `${position.top}px`, left: `${position.left}px` }}
       tabIndex={-1}
     >
@@ -59,28 +61,28 @@ const EnhanceToolbar: React.FC<EnhanceToolbarProps> = ({
       <button
         className={styles.button}
         onClick={() => onEnhance(selectedText)}
-        aria-label="Enhance selected text"
+        aria-label={intl.formatMessage({ id: 'enhanceBtnAria' })}
       >
-        Enhance
+        {intl.formatMessage({ id: 'enhanceBtn' })}
       </button>
       <button
         className={styles.button}
         onClick={() => onHighlight(selectedText)}
-        aria-label="Highlight selected text"
+        aria-label={intl.formatMessage({ id: 'highlightBtnAria' })}
       >
-        Highlight
+        {intl.formatMessage({ id: 'highlightBtn' })}
       </button>
       <button
         className={styles.button}
         onClick={() => onReference(selectedText)}
-        aria-label="Copy reference link"
+        aria-label={intl.formatMessage({ id: 'referenceBtnAria' })}
       >
-        Reference
+        {intl.formatMessage({ id: 'referenceBtn' })}
       </button>
       <button
         className={styles.closeButton}
         onClick={onClose}
-        aria-label="Close toolbar"
+        aria-label={intl.formatMessage({ id: 'closeToolbarAria' })}
       >
         ×
       </button>

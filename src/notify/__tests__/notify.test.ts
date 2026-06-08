@@ -19,6 +19,8 @@ describe('Notification module', () => {
     url: 'https://x.com/user/status/111111',
     content_type: 'outer_link',
     title: 'Important Article',
+    title_ar: null,
+    title_en: null,
     author_name: 'Test Author',
     author_handle: 'testauthor',
     tweet_text: 'Check this out',
@@ -27,7 +29,8 @@ describe('Notification module', () => {
 
   const mockClassification: ClassificationResult = {
     priority: 'high',
-    topics: ['AI', 'Tech'],
+    topic: 'AI, Tech',
+    hashtags: [],
     reading_time_min: 5,
   };
 

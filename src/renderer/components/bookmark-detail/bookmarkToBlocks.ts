@@ -178,6 +178,12 @@ export function bookmarkToBlocks(bookmark: BookmarkDetailData): PartialBlock[] {
     }
   }
 
+  if (bookmark.hashtags && bookmark.hashtags.length > 0) {
+    blocks.push(heading('Hashtags', 2));
+    const hashtagText = bookmark.hashtags.map((h) => `#${h.name}`).join('  ');
+    blocks.push(paragraph(hashtagText));
+  }
+
   if (bookmark.chatSessionId) {
     blocks.push(heading('Chat', 2));
     blocks.push(customBlock('chat', { sessionId: bookmark.chatSessionId }));
