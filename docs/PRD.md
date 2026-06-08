@@ -194,7 +194,7 @@ The BookmarkDetail is a single continuous BlockNote document containing all sect
 2. `ContentsBar` — horizontal minimap aligned with app title (~60 lines)
 3. `PageHeader` — title + metadata line (~80 lines)
 4. `SectionRenderer` — renders each section type (custom)
-5. `ArticleView` — readability.js content, collapsible (custom)
+5. `ArticleView` — Defuddle-extracted content, collapsible (custom)
 6. `NotesEditor` — **BlockNote editor** (`@blocknote/react`, `@blocknote/core`, `@blocknote/mantine`) — Notion-style rich text, same as Docmost. Handles formatting, blocks, slash commands out of the box. Props change from `(content: string, onChange: (s: string) => void)` to `(initialContent: string, onChange: (blocks: Block[]) => void)`. Store as JSON string in DB.
 7. `ChatPanel` — inline chat UI (custom)
 8. `ReferenceChip` — inline reference link chip (custom)
@@ -224,7 +224,7 @@ The BookmarkDetail is a single continuous BlockNote document containing all sect
 
 **Acceptance Criteria:**
 - Summary generation completes in <30s for outer links
-- Reader mode renders articles cleanly (readability.js or similar)
+- Reader mode renders articles cleanly (Defuddle extraction + Turndown conversion)
 - Inline highlights persist across sessions
 - AI chat responds in <5s with full article context
 - Glossary terms are highlighted and hoverable in summary/reader view
@@ -242,38 +242,73 @@ The BookmarkDetail is a single continuous BlockNote document containing all sect
 **User Stories:**
 - As a user, articles are automatically parsed when I select a bookmark (one-time)
 - As a user, I see a spinner while the article is being parsed
-- As a user, parsed articles show structured content: headings, paragraphs, lists, code blocks, blockquotes
-- As a user, images in articles are shown as styled placeholders with alt text
+- As a user, parsed articles show structured content: headings, paragraphs, lists, code blocks, blockquotes, images, tables
+- As a user, images in articles are rendered inline with lazy loading (not placeholders)
+- As a user, tables in articles are rendered as actual table elements (not placeholders)
 - As a user, I can collapse/expand the article section
 - As a user, threads with outer URLs have the linked article parsed as the article section
+- As a user, embedded content (YouTube, CodePen, tweets) are preserved as clickable links
+- As a user, I can search within article content via full-text search
 
 **Acceptance Criteria:**
-- Local parser (Readability + Cheerio) extracts article content in <500ms for most pages
-- Gemini fallback activates when local parser fails (paywall, JS-rendered)
+- Defuddle extracts clean article content (no nav, footers, ads, sidebars) in <500ms for most pages
+- Turndown converts clean HTML to Markdown with full control over output rules
+- `parseMDToBlocks` maps Markdown to BlockNote `PartialBlock[]` blocks
+- Gemini fallback activates only when Defuddle fails (paywall, JS-rendered pages)
+- Current cheerio parser kept as intermediate fallback between Defuddle and Gemini
 - Parsed content stored as `PartialBlock[]` in `article_content.blocks_json`
 - Article section shows spinner during auto-parse, renders structured content after
-- Images render as `[Image: alt text]` placeholders (no download)
+- Images render as `<img>` elements with `loading="lazy"` and alt text
+- Tables render as `<table>` elements with proper cell structure
 - Inline formatting preserved: bold, italic, code, links
-- Code blocks rendered with monospace styling
+- Code blocks rendered with monospace styling and language detection (` ```language `)
 - Blockquotes rendered with indentation and italic styling
-- Tables rendered as formatted text
+- Heading levels preserved (h1-h6, no cap at h3)
+- Nested lists rendered with proper indentation
+- `<iframe>`/`<video>`/`<audio>` preserved as clickable links (not silently dropped)
+- `<figure>`/`<figcaption>` rendered with image + caption
 - Collapse/expand toggle persists across sessions
 - Thread bookmarks with outer URLs parse the linked article
 - Thread bookmarks without outer URLs show no article section
 - RTL articles render correctly with proper text direction
+- Re-parsing an existing article updates content (upsert, no duplicate rows)
+- `parser_version` column tracks which parser version produced the content
+- `content_hash` column detects when source HTML has changed
+- Full-text search via FTS5 index on `extracted_text` column
+
+**Pipeline:**
+```
+URL → fetch → HTML string
+  → Defuddle (content extraction) → clean HTML + metadata
+  → Turndown (HTML→Markdown) → Markdown string
+  → parseMDToBlocks → PartialBlock[] (BlockNote format)
+  → DB (blocks_json) → ArticleReaderBlock (renders blocks)
+
+Fallback chain:
+  1. Defuddle + Turndown + parseMDToBlocks (primary)
+  2. Current cheerio parser (if Defuddle fails)
+  3. Gemini API (last resort — JS-rendered, paywalled)
+```
 
 **Components to build:**
-1. `src/parser/local-parser.ts` — fetch → Readability → Cheerio → `PartialBlock[]`
-2. `src/parser/gemini-fallback.ts` — Gemini prompt returning structured blocks
-3. `src/parser/index.ts` — orchestrator: try local, fallback to Gemini
-4. `ArticleReaderBlock` — custom BlockNote block rendering `PartialBlock[]` as styled React
-5. `ArticleReaderBlock.module.css` — reader typography and layout
+1. `src/parser/extract-content.ts` — Defuddle wrapper (content extraction)
+2. `src/parser/local-parser.ts` — rewritten: Defuddle → Turndown → `parseMDToBlocks`
+3. `src/parser/gemini-fallback.ts` — Gemini prompt returning structured blocks (last resort)
+4. `src/parser/index.ts` — orchestrator: Defuddle → cheerio fallback → Gemini fallback
+5. `ArticleReaderBlock` — custom BlockNote block rendering `PartialBlock[]` as styled React (images, tables, TOC)
+6. `ArticleReaderBlock.module.css` — reader typography, image/table styles, print CSS
+
+**New dependencies:**
+- `defuddle` — article content extraction (by kepano/Obsidian creator)
+- `turndown` + `@types/turndown` — HTML→Markdown conversion with custom rules
+- `linkedom` — lightweight DOM for Defuddle (preferred over jsdom for Electron)
 
 **Agent-ready notes:**
 - Parser service (`parseArticle(url)`) must use service-layer abstraction with typed I/O
 - Parsed blocks stored in DB — agent can access structured article content for RAG, chat context
 - `getArticleContent()` returns `blocks_json` — agent uses this for article-aware features
 - Parser follows ADR-0013 boundaries: typed I/O, no UI coupling, DB as source of truth
+- See [ADR-0015](docs/adr/0015-article-parser.md) for full pipeline design and phased implementation
 
 ### Phase 3: Search & Sync
 
@@ -382,8 +417,8 @@ Agent as orchestrator using LangGraph TypeScript (ReAct loop). Pipeline keeps fe
 | X Fetcher | bird.fast CLI | Free, cookie-based, near-real-time |
 | AI (Primary) | Google Gemini API | Free tier, good Egyptian Arabic quality |
 | AI (Fallback) | Ollama (cloud models) | Cloud models via local Ollama runtime |
-| Article Reader | readability.js | Clean article extraction for reader mode |
-| Article Parser | @mozilla/readability + cheerio | Structured HTML → BlockNote blocks, hybrid with Gemini fallback |
+| Article Reader | defuddle + turndown | Clean article extraction (Defuddle) + HTML→Markdown (Turndown), with Gemini fallback |
+| Article Parser | defuddle + turndown + linkedom | Structured HTML → Markdown → BlockNote blocks, hybrid with Gemini fallback |
 | Rich Text Editor | @blocknote/react | Notion-style block editor, same as Docmost |
 | Agent Framework | @langchain/langgraph | ReAct loop, tool orchestration, state management |
 | Vector Search | sqlite-vec | Vector similarity search in SQLite, no external DB |
@@ -514,6 +549,8 @@ CREATE TABLE article_content (
   extracted_text TEXT NOT NULL,
   word_count INTEGER,
   blocks_json TEXT,  -- PartialBlock[] JSON for structured rendering (ADR-0015)
+  parser_version INTEGER DEFAULT 1,  -- tracks parser version for re-extraction
+  content_hash TEXT,  -- SHA-256 of source HTML for change detection
   created_at DATETIME DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -651,7 +688,7 @@ CREATE TABLE import_jobs (
 - **Theme**: Dual theme (dark + light) with Obsidian CSS custom properties
 - **Empty sections**: Hidden when no content exists
 - **Agent boundary**: AI services use service-layer abstraction with typed I/O, event emission, no UI coupling. Ready for future agent to call same functions autonomously.
-- **Article parser**: Hybrid (local Readability + Cheerio, Gemini fallback). Zero-conversion pipeline — parser outputs `PartialBlock[]` (BlockNote format) directly. Auto-parse on bookmark selection, one-time only. Images as `[Image: alt text]` placeholders. See [ADR-0015](docs/adr/0015-article-parser.md).
+- **Article parser**: Hybrid pipeline — Defuddle (content extraction) + Turndown (HTML→Markdown) + `parseMDToBlocks` (Markdown→BlockNote). Gemini as last-resort fallback. Images as `<img>` elements with lazy loading. Tables as `<table>` elements. Code blocks with language detection. Custom Turndown rules for `<iframe>`, `<video>`, `<audio>`. Current cheerio parser kept as intermediate fallback. See [ADR-0015](docs/adr/0015-article-parser.md).
 - **User config**: Single-user app. Flat JSON config file (`user.json`) in userData dir (`~/.config/bookmarkX/`). Stores identity (name, Twitter handle), auth tokens (Gemini API key, bird auth), and preferences (theme, language, notifications, fetch frequency, AI model). Replaces `.env` file entirely. See [ADR-0016](docs/adr/0016-user-config-auth.md).
 - **Chrome profile detection**: Linux-only auto-detection. Scans `~/.config/google-chrome/` for profiles, extracts `auth_token` and `ct0` from Chrome's unencrypted SQLite cookie DB. Fills settings automatically.
 - **Twitter login**: Electron BrowserWindow approach. Opens `x.com/login` in a session-partitioned window, captures cookies after login. Equal option alongside manual token entry.
