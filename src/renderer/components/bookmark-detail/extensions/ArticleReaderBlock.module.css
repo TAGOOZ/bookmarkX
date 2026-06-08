@@ -146,6 +146,17 @@ ol .listItem {
   color: var(--text-muted);
 }
 
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+@media print {
+  .blockquote {
+    border-inline-start-color: #ccc;
+    color: #555;
+  }
+}
+
 .figure {
   margin: 0 0 16px;
 }

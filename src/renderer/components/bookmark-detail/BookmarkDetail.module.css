@@ -196,8 +196,7 @@
 .progressBar {
   position: sticky;
   top: 0;
-  left: 0;
-  right: 0;
+  inset-inline: 0;
   height: 3px;
   background: transparent;
   z-index: 20;
@@ -209,6 +208,10 @@
   background: var(--accent-color);
   transition: width 0.1s ease-out;
   border-radius: 0 2px 2px 0;
+}
+
+[dir="rtl"] .progressFill {
+  border-radius: 2px 0 0 2px;
 }
 
 .toolbarRow {
@@ -286,6 +289,12 @@
   font-size: 13px;
   z-index: 200;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+[dir="rtl"] .notification {
+  left: auto;
+  right: 50%;
+  transform: translateX(50%);
 }
 
 .readerMode {

@@ -66,6 +66,12 @@
   z-index: 10;
 }
 
+[dir="rtl"] .label {
+  left: auto;
+  right: 50%;
+  transform: translateX(50%);
+}
+
 .dash:hover .label {
   color: var(--text-normal);
 }

@@ -318,7 +318,7 @@ body {
 .topic-context-menu {
   position: absolute;
   top: 100%;
-  right: 0;
+  inset-inline-end: 0;
   z-index: 100;
   min-width: 140px;
   background: var(--bg-secondary);
@@ -556,8 +556,8 @@ body {
 }
 
 .search-overlay-item-article {
-  border-left: 2px solid var(--accent-color);
-  padding-left: calc(var(--space-m) - 2px);
+  border-inline-start: 2px solid var(--accent-color);
+  padding-inline-start: calc(var(--space-m) - 2px);
 }
 
 .search-overlay-item-snippet {
@@ -698,6 +698,26 @@ body {
   max-height: 80vh;
   overflow-y: auto;
   border: 1px solid var(--border-color);
+  scrollbar-width: thin;
+  scrollbar-color: var(--bg-tertiary) transparent;
+}
+
+.settings-container::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.settings-container::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.settings-container::-webkit-scrollbar-thumb {
+  background-color: var(--bg-tertiary);
+  border-radius: 4px;
+}
+
+.settings-container::-webkit-scrollbar-thumb:hover {
+  background-color: var(--text-secondary);
 }
 
 .settings-header {
@@ -930,6 +950,17 @@ body {
   transform: translateX(-20px);
 }
 
+.progressFill {
+  height: 100%;
+  background: var(--accent-color);
+  transition: width 0.1s ease-out;
+  border-radius: 0 2px 2px 0;
+}
+
+[dir="rtl"] .progressFill {
+  border-radius: 2px 0 0 2px;
+}
+
 .pref-row {
   display: flex;
   align-items: center;
@@ -1072,5 +1103,40 @@ body {
 
   .bookmark-detail {
     padding: 15px;
+  }
+}
+
+@media print {
+  .titlebar,
+  .nav-panel,
+  .nav-panel-tabs,
+  .search-overlay,
+  .settings-panel,
+  .mock-mode-notice,
+  .enhancedBanner,
+  .parsingBanner,
+  .errorBanner,
+  .toolbarRow,
+  .hashtagBar,
+  .enhanceToolbar {
+    display: none !important;
+  }
+
+  .app-container {
+    padding-top: 0;
+  }
+
+  .bookmark-detail {
+    padding: 0;
+  }
+
+  .editorScroll {
+    padding-inline: 0;
+    padding-top: 0;
+  }
+
+  .readerMode .editorScroll {
+    padding: 0;
+    margin: 0;
   }
 }

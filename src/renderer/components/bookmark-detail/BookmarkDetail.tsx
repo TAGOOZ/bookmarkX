@@ -13,6 +13,7 @@ import EnhanceToolbar from './EnhanceToolbar';
 import { detectDir } from './rtl-detect';
 import { blocksToMarkdown } from '../../../parser/blocks-to-markdown';
 import { markdownToBlocks } from '../../../parser/markdown-to-blocks';
+import { useLocale } from '../../App';
 import {
   createDualLangBlock,
   createCollapsibleArticleBlock,
@@ -104,6 +105,8 @@ const BookmarkEditor: React.FC<BookmarkEditorProps> = ({
   onBookmarkChange,
 }) => {
   const intl = useIntl();
+  const { locale } = useLocale();
+  const dir = locale === 'ar' ? 'rtl' : 'ltr';
   const editor = useCreateBlockNote({ initialContent, schema });
   const isExternalUpdate = useRef(true);
   const lastBookmarkId = useRef<string | null>(null);
@@ -531,7 +534,7 @@ const BookmarkEditor: React.FC<BookmarkEditorProps> = ({
   }, [editor]);
 
   return (
-    <div ref={editorRef} dir="ltr" className={`${styles.pageLayout} ${isReaderMode ? styles.readerMode : ''}`}>
+    <div ref={editorRef} dir={dir} className={`${styles.pageLayout} ${isReaderMode ? styles.readerMode : ''}`}>
       <style>{`
         .ProseMirror-selectednode > .bn-block-content > *,
         .bn-block-content.ProseMirror-selectednode > * {
