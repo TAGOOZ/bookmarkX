@@ -1,6 +1,7 @@
 import { execFile } from 'child_process';
 import dotenv from 'dotenv';
-import type { Bookmark, ClassificationResult, ClassifierOptions } from './types';
+import type { Bookmark } from '../fetch/types';
+import type { ClassificationResult, ClassifierOptions } from './types';
 
 dotenv.config();
 
@@ -23,7 +24,8 @@ function buildPrompt(bookmark: Bookmark): string {
 
   return `Classify this bookmark. Return JSON with:
 - priority: "high" | "medium" | "low" (how important/useful is this to read?)
-- topics: string[] (1-3 topic tags, e.g. ["AI", "Web Development"])
+- topic: string (single best topic, e.g. "AI", "Web Development")
+- hashtags: string[] (2-5 relevant hashtags, e.g. ["machine-learning", "tutorial"])
 - reading_time_min: number (estimated minutes to read)
 
 Bookmark info:
@@ -73,8 +75,13 @@ export async function classifyBookmark(
   const cleaned = text.replace(/```json\n?|\n?```/g, '').trim();
   const result = JSON.parse(cleaned) as ClassificationResult;
 
-  if (!result.priority || !result.topics || !result.reading_time_min) {
+  if (!result.priority || !result.topic || !result.reading_time_min) {
     throw new Error('Invalid classification result');
+  }
+
+  // Ensure hashtags is an array
+  if (!Array.isArray(result.hashtags)) {
+    result.hashtags = [];
   }
 
   return result;

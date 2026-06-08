@@ -1,5 +1,7 @@
 import type { Client } from '@libsql/client';
 import type { ClassificationResult } from '../classify/types';
+import { getOrCreateTopic, moveBookmarkToTopic } from './topics';
+import { setBookmarkHashtags } from './hashtags';
 
 export async function storeClassification(
   db: Client,
@@ -13,29 +15,22 @@ export async function storeClassification(
     args: [classificationId, bookmarkId, result.priority, result.reading_time_min],
   });
 
-  for (const topicName of result.topics) {
-    const topicId = crypto.randomUUID();
-    await db.execute({
-      sql: 'INSERT OR IGNORE INTO topics (id, name) VALUES (?, ?)',
-      args: [topicId, topicName],
-    });
+  // Store single topic (ADR-0019: bookmark belongs to exactly one topic)
+  if (result.topic) {
+    const topic = await getOrCreateTopic(db, result.topic, null, 'ai');
+    await moveBookmarkToTopic(db, bookmarkId, topic.id);
+  }
 
-    const { rows } = await db.execute({
-      sql: 'SELECT id FROM topics WHERE name = ?',
-      args: [topicName],
-    });
-    const existing = rows[0] as any;
-    await db.execute({
-      sql: 'INSERT OR IGNORE INTO bookmark_topics (bookmark_id, topic_id) VALUES (?, ?)',
-      args: [bookmarkId, existing.id],
-    });
+  // Store hashtags
+  if (result.hashtags && result.hashtags.length > 0) {
+    await setBookmarkHashtags(db, bookmarkId, result.hashtags);
   }
 }
 
 export async function getClassification(
   db: Client,
   bookmarkId: string
-): Promise<(ClassificationResult & { topics: string[] }) | null> {
+): Promise<(ClassificationResult & { topic: string; hashtags: string[] }) | null> {
   const { rows } = await db.execute({
     sql: 'SELECT * FROM classifications WHERE bookmark_id = ?',
     args: [bookmarkId],
@@ -44,31 +39,57 @@ export async function getClassification(
   const row = rows[0] as any;
   if (!row) return null;
 
+  // Get topic from bookmarks.topic_id
   const { rows: topicRows } = await db.execute({
     sql: `SELECT t.name FROM topics t
-       JOIN bookmark_topics bt ON t.id = bt.topic_id
-       WHERE bt.bookmark_id = ?
-       ORDER BY t.name`,
+       JOIN bookmarks b ON t.id = b.topic_id
+       WHERE b.id = ?`,
     args: [bookmarkId],
   });
+  const topicName = (topicRows[0] as any)?.name || 'Uncategorized';
 
-  const topics = topicRows.map((t: any) => t.name);
+  // Get hashtags
+  const { rows: hashtagRows } = await db.execute({
+    sql: `SELECT h.name FROM hashtags h
+       JOIN bookmark_hashtags bh ON h.id = bh.hashtag_id
+       WHERE bh.bookmark_id = ?
+       ORDER BY h.name`,
+    args: [bookmarkId],
+  });
+  const hashtags = hashtagRows.map((h: any) => h.name);
 
   return {
     priority: row.priority,
     reading_time_min: row.reading_time_min,
-    topics,
+    topic: topicName,
+    hashtags,
   };
 }
 
 export async function getClassifiedBookmarks(
   db: Client
-): Promise<Array<{ bookmark_id: string; priority: string; reading_time_min: number }>> {
+): Promise<Array<{ bookmark_id: string; priority: string; reading_time_min: number; topic: string; hashtags: string[] }>> {
   const { rows } = await db.execute(
-    `SELECT c.bookmark_id, c.priority, c.reading_time_min
+    `SELECT c.bookmark_id, c.priority, c.reading_time_min,
+            COALESCE(t.name, 'Uncategorized') as topic
      FROM classifications c
+     LEFT JOIN bookmarks b ON c.bookmark_id = b.id
+     LEFT JOIN topics t ON b.topic_id = t.id
      ORDER BY c.created_at DESC`
   );
 
-  return rows as unknown as Array<{ bookmark_id: string; priority: string; reading_time_min: number }>;
+  const results = rows as any[];
+
+  // Get hashtags for each bookmark
+  for (const row of results) {
+    const { rows: hashtagRows } = await db.execute({
+      sql: `SELECT h.name FROM hashtags h
+            JOIN bookmark_hashtags bh ON h.id = bh.hashtag_id
+            WHERE bh.bookmark_id = ?`,
+      args: [row.bookmark_id],
+    });
+    row.hashtags = hashtagRows.map((h: any) => h.name);
+  }
+
+  return results;
 }

@@ -296,6 +296,70 @@ ipcMain.handle('search-articles', async (_event, query: string, limit?: number) 
   }
 });
 
+// Phase 1 IPC handlers: Topics
+ipcMain.handle('get-topic-tree', async () => {
+  const { getTopicTree } = await import('./db/topics');
+  return getTopicTree(db);
+});
+
+ipcMain.handle('create-topic', async (_event, name: string, parentId: string | null) => {
+  const { createTopic } = await import('./db/topics');
+  return createTopic(db, name, parentId, 'user');
+});
+
+ipcMain.handle('rename-topic', async (_event, topicId: string, newName: string) => {
+  const { renameTopic } = await import('./db/topics');
+  await renameTopic(db, topicId, newName);
+  return { success: true };
+});
+
+ipcMain.handle('reparent-topic', async (_event, topicId: string, newParentId: string | null) => {
+  const { reparentTopic } = await import('./db/topics');
+  await reparentTopic(db, topicId, newParentId);
+  return { success: true };
+});
+
+ipcMain.handle('delete-topic', async (_event, topicId: string) => {
+  const { deleteTopic } = await import('./db/topics');
+  await deleteTopic(db, topicId);
+  return { success: true };
+});
+
+ipcMain.handle('move-bookmark-to-topic', async (_event, bookmarkId: string, topicId: string | null) => {
+  const { moveBookmarkToTopic } = await import('./db/topics');
+  await moveBookmarkToTopic(db, bookmarkId, topicId);
+  return { success: true };
+});
+
+// Phase 1 IPC handlers: Hashtags
+ipcMain.handle('get-all-hashtags', async () => {
+  const { getAllHashtags } = await import('./db/hashtags');
+  return getAllHashtags(db);
+});
+
+ipcMain.handle('get-bookmark-hashtags', async (_event, bookmarkId: string) => {
+  const { getBookmarkHashtags } = await import('./db/hashtags');
+  return getBookmarkHashtags(db, bookmarkId);
+});
+
+ipcMain.handle('attach-hashtag-to-bookmark', async (_event, bookmarkId: string, hashtagId: string) => {
+  const { attachHashtagToBookmark } = await import('./db/hashtags');
+  await attachHashtagToBookmark(db, bookmarkId, hashtagId);
+  return { success: true };
+});
+
+ipcMain.handle('detach-hashtag-from-bookmark', async (_event, bookmarkId: string, hashtagId: string) => {
+  const { detachHashtagFromBookmark } = await import('./db/hashtags');
+  await detachHashtagFromBookmark(db, bookmarkId, hashtagId);
+  return { success: true };
+});
+
+ipcMain.handle('set-bookmark-hashtags', async (_event, bookmarkId: string, hashtagNames: string[]) => {
+  const { setBookmarkHashtags } = await import('./db/hashtags');
+  await setBookmarkHashtags(db, bookmarkId, hashtagNames);
+  return { success: true };
+});
+
 const createWindow = () => {
   Menu.setApplicationMenu(null);
 

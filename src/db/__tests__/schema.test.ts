@@ -46,20 +46,48 @@ describe('Database Schema', () => {
 
     expect(names).toContain('id');
     expect(names).toContain('name');
+    expect(names).toContain('parent_id');
+    expect(names).toContain('created_by');
+    expect(names).toContain('created_at');
   });
 
-  it('creates bookmark_topics junction table', async () => {
-    const { rows } = await db.execute({ sql: 'PRAGMA table_info(bookmark_topics)' });
+  it('creates hashtags table', async () => {
+    const { rows } = await db.execute({ sql: 'PRAGMA table_info(hashtags)' });
+    const names = rows.map((c: any) => c.name);
+
+    expect(names).toContain('id');
+    expect(names).toContain('name');
+    expect(names).toContain('created_at');
+  });
+
+  it('creates bookmark_hashtags junction table', async () => {
+    const { rows } = await db.execute({ sql: 'PRAGMA table_info(bookmark_hashtags)' });
     const names = rows.map((c: any) => c.name);
 
     expect(names).toContain('bookmark_id');
-    expect(names).toContain('topic_id');
+    expect(names).toContain('hashtag_id');
   });
 
-  it('enforces unique topic names', async () => {
-    await db.execute({ sql: 'INSERT INTO topics (id, name) VALUES (?, ?)', args: ['t1', 'AI'] });
+  it('creates import_jobs table', async () => {
+    const { rows } = await db.execute({ sql: 'PRAGMA table_info(import_jobs)' });
+    const names = rows.map((c: any) => c.name);
+
+    expect(names).toContain('id');
+    expect(names).toContain('status');
+    expect(names).toContain('cursor');
+    expect(names).toContain('total_fetched');
+    expect(names).toContain('total_classified');
+    expect(names).toContain('started_at');
+    expect(names).toContain('completed_at');
+  });
+
+  it('enforces unique topic names within parent', async () => {
+    // Create a parent topic first
+    await db.execute({ sql: 'INSERT INTO topics (id, name, parent_id) VALUES (?, ?, ?)', args: ['tp', 'Tech', null] });
+    // Try to create duplicate child under same parent
+    await db.execute({ sql: 'INSERT INTO topics (id, name, parent_id) VALUES (?, ?, ?)', args: ['t1', 'AI', 'tp'] });
     await expect(
-      db.execute({ sql: 'INSERT INTO topics (id, name) VALUES (?, ?)', args: ['t2', 'AI'] })
+      db.execute({ sql: 'INSERT INTO topics (id, name, parent_id) VALUES (?, ?, ?)', args: ['t2', 'AI', 'tp'] })
     ).rejects.toThrow();
   });
 

@@ -12,6 +12,7 @@ const SCHEMA_SQL = `
     author_name TEXT,
     author_handle TEXT,
     tweet_text TEXT,
+    topic_id TEXT REFERENCES topics(id) ON DELETE SET NULL,
     fetched_at DATETIME,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP
   );
@@ -26,13 +27,33 @@ const SCHEMA_SQL = `
 
   CREATE TABLE IF NOT EXISTS topics (
     id TEXT PRIMARY KEY,
-    name TEXT UNIQUE NOT NULL
+    name TEXT NOT NULL,
+    parent_id TEXT REFERENCES topics(id) ON DELETE CASCADE,
+    created_by TEXT CHECK(created_by IN ('ai', 'user')) DEFAULT 'user',
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(name, parent_id)
   );
 
-  CREATE TABLE IF NOT EXISTS bookmark_topics (
-    bookmark_id TEXT REFERENCES bookmarks(id),
-    topic_id TEXT REFERENCES topics(id),
-    PRIMARY KEY (bookmark_id, topic_id)
+  CREATE TABLE IF NOT EXISTS hashtags (
+    id TEXT PRIMARY KEY,
+    name TEXT UNIQUE NOT NULL,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  );
+
+  CREATE TABLE IF NOT EXISTS bookmark_hashtags (
+    bookmark_id TEXT REFERENCES bookmarks(id) ON DELETE CASCADE,
+    hashtag_id TEXT REFERENCES hashtags(id) ON DELETE CASCADE,
+    PRIMARY KEY (bookmark_id, hashtag_id)
+  );
+
+  CREATE TABLE IF NOT EXISTS import_jobs (
+    id TEXT PRIMARY KEY,
+    status TEXT CHECK(status IN ('running', 'paused', 'completed', 'failed')) DEFAULT 'running',
+    cursor TEXT,
+    total_fetched INTEGER DEFAULT 0,
+    total_classified INTEGER DEFAULT 0,
+    started_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    completed_at DATETIME
   );
 
   CREATE TABLE IF NOT EXISTS summaries (
@@ -230,5 +251,64 @@ export async function initializeSchema(db: Client): Promise<void> {
     });
   } catch {
     // Column already exists — ignore
+  }
+
+  // Migration: add topic_id to bookmarks if missing (Phase 1 hierarchical topics)
+  try {
+    await db.execute({
+      sql: 'ALTER TABLE bookmarks ADD COLUMN topic_id TEXT REFERENCES topics(id) ON DELETE SET NULL',
+      args: [],
+    });
+  } catch {
+    // Column already exists — ignore
+  }
+
+  // Migration: migrate data from bookmark_topics to bookmarks.topic_id
+  // Take the first topic per bookmark (old model was many-to-many, new is single)
+  try {
+    await db.executeMultiple(`
+      UPDATE bookmarks SET topic_id = (
+        SELECT bt.topic_id FROM bookmark_topics bt
+        WHERE bt.bookmark_id = bookmarks.id
+        LIMIT 1
+      ) WHERE topic_id IS NULL AND EXISTS (
+        SELECT 1 FROM bookmark_topics bt WHERE bt.bookmark_id = bookmarks.id
+      );
+    `);
+  } catch {
+    // bookmark_topics may not exist yet — ignore
+  }
+
+  // Migration: upgrade topics table to support hierarchy
+  try {
+    await db.execute({
+      sql: "ALTER TABLE topics ADD COLUMN parent_id TEXT REFERENCES topics(id) ON DELETE CASCADE",
+      args: [],
+    });
+  } catch {
+    // Column already exists — ignore
+  }
+  try {
+    await db.execute({
+      sql: "ALTER TABLE topics ADD COLUMN created_by TEXT CHECK(created_by IN ('ai', 'user')) DEFAULT 'user'",
+      args: [],
+    });
+  } catch {
+    // Column already exists — ignore
+  }
+  try {
+    await db.execute({
+      sql: 'ALTER TABLE topics ADD COLUMN created_at DATETIME DEFAULT CURRENT_TIMESTAMP',
+      args: [],
+    });
+  } catch {
+    // Column already exists — ignore
+  }
+
+  // Migration: drop old bookmark_topics junction (replaced by bookmarks.topic_id + bookmark_hashtags)
+  try {
+    await db.execute('DROP TABLE IF EXISTS bookmark_topics');
+  } catch {
+    // Table may not exist — ignore
   }
 }

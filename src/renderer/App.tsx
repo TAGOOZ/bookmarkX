@@ -160,7 +160,7 @@ function AppContent() {
           titleAr,
           titleEn,
           url: dbBookmark.url,
-          topic: classification?.priority || 'medium',
+          topic: classification?.topic || 'Uncategorized',
           priority:
             (classification?.priority as 'high' | 'medium' | 'low') || 'medium',
           contentType: dbBookmark.content_type,

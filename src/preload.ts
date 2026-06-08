@@ -67,4 +67,26 @@ contextBridge.exposeInMainWorld('api', {
   exportBookmark: (format: 'md' | 'json', content: string, defaultName: string) =>
     ipcRenderer.invoke('export-bookmark', format, content, defaultName),
   importMarkdown: () => ipcRenderer.invoke('import-markdown'),
+  // Phase 1: Topics
+  getTopicTree: () => ipcRenderer.invoke('get-topic-tree'),
+  createTopic: (name: string, parentId: string | null) =>
+    ipcRenderer.invoke('create-topic', name, parentId),
+  renameTopic: (topicId: string, newName: string) =>
+    ipcRenderer.invoke('rename-topic', topicId, newName),
+  reparentTopic: (topicId: string, newParentId: string | null) =>
+    ipcRenderer.invoke('reparent-topic', topicId, newParentId),
+  deleteTopic: (topicId: string) =>
+    ipcRenderer.invoke('delete-topic', topicId),
+  moveBookmarkToTopic: (bookmarkId: string, topicId: string | null) =>
+    ipcRenderer.invoke('move-bookmark-to-topic', bookmarkId, topicId),
+  // Phase 1: Hashtags
+  getAllHashtags: () => ipcRenderer.invoke('get-all-hashtags'),
+  getBookmarkHashtags: (bookmarkId: string) =>
+    ipcRenderer.invoke('get-bookmark-hashtags', bookmarkId),
+  attachHashtagToBookmark: (bookmarkId: string, hashtagId: string) =>
+    ipcRenderer.invoke('attach-hashtag-to-bookmark', bookmarkId, hashtagId),
+  detachHashtagFromBookmark: (bookmarkId: string, hashtagId: string) =>
+    ipcRenderer.invoke('detach-hashtag-from-bookmark', bookmarkId, hashtagId),
+  setBookmarkHashtags: (bookmarkId: string, hashtagNames: string[]) =>
+    ipcRenderer.invoke('set-bookmark-hashtags', bookmarkId, hashtagNames),
 });

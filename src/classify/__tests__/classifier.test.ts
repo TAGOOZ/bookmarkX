@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { classifyBookmark } from '../classifier';
-import type { Bookmark, ClassificationResult } from '../types';
+import type { ClassificationResult } from '../types';
+import type { Bookmark } from '../../fetch/types';
 
 vi.mock('child_process', () => ({
   execFile: vi.fn(),
@@ -43,16 +44,19 @@ describe('classifyBookmark', () => {
     url: 'https://x.com/user/status/123456',
     content_type: 'outer_link',
     title: 'Understanding AI',
+    title_ar: null,
+    title_en: null,
     author_name: 'AI Expert',
     author_handle: 'aiexpert',
     tweet_text: 'Check out this article about machine learning and neural networks',
     fetched_at: '2024-01-15T10:00:00Z',
   };
 
-  it('returns classification with priority, topics, and reading time', async () => {
+  it('returns classification with priority, topic, hashtags, and reading time', async () => {
     const mockResult: ClassificationResult = {
       priority: 'high',
-      topics: ['AI', 'Machine Learning'],
+      topic: 'AI',
+      hashtags: ['machine-learning', 'tutorial'],
       reading_time_min: 5,
     };
     mockGeminiResponse(mockResult);
@@ -65,7 +69,8 @@ describe('classifyBookmark', () => {
   it('calls Gemini API with correct prompt', async () => {
     mockGeminiResponse({
       priority: 'medium',
-      topics: ['Tech'],
+      topic: 'Tech',
+      hashtags: ['javascript'],
       reading_time_min: 3,
     });
 
@@ -92,14 +97,15 @@ describe('classifyBookmark', () => {
 
     mockGeminiResponse({
       priority: 'low',
-      topics: ['General'],
+      topic: 'General',
+      hashtags: ['misc'],
       reading_time_min: 2,
     });
 
     const result = await classifyBookmark(bookmarkNoTitle, { apiKey: 'test-key' });
 
     expect(result.priority).toBe('low');
-    expect(result.topics).toContain('General');
+    expect(result.topic).toBe('General');
   });
 
   it('throws on API errors', async () => {

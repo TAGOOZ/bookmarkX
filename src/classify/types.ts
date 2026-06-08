@@ -1,6 +1,7 @@
 export interface ClassificationResult {
   priority: 'high' | 'medium' | 'low';
-  topics: string[];
+  topic: string;
+  hashtags: string[];
   reading_time_min: number;
 }
 
