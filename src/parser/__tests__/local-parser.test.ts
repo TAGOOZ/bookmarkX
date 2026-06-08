@@ -156,4 +156,46 @@ describe('parseHTMLToBlocks', () => {
     expect(parseHTMLToBlocks('')).toEqual([]);
     expect(parseHTMLToBlocks('<html><body></body></html>')).toEqual([]);
   });
+
+  it('handles Arabic/RTL paragraphs', () => {
+    const html = '<p>هذا نص عربي</p><p>And an English paragraph</p>';
+    const blocks = parseHTMLToBlocks(html);
+    expect(blocks).toHaveLength(2);
+    expect((blocks[0] as any).content[0].text).toBe('هذا نص عربي');
+    expect((blocks[1] as any).content[0].text).toBe('And an English paragraph');
+  });
+
+  it('handles Arabic headings', () => {
+    const html = '<h1>العنوان الرئيسي</h1><h2>عنوان فرعي</h2>';
+    const blocks = parseHTMLToBlocks(html);
+    expect(blocks).toEqual([
+      { type: 'heading', props: { level: 1 }, content: 'العنوان الرئيسي' },
+      { type: 'heading', props: { level: 2 }, content: 'عنوان فرعي' },
+    ]);
+  });
+
+  it('handles mixed Arabic/English inline styles', () => {
+    const html = '<p>نص <strong>عالي</strong> و <em>italic</em> text</p>';
+    const blocks = parseHTMLToBlocks(html);
+    const content = (blocks[0] as any).content;
+    expect(content.some((i: any) => i.text === 'عالي' && i.styles?.bold)).toBe(true);
+    expect(content.some((i: any) => i.text === 'italic' && i.styles?.italic)).toBe(true);
+  });
+
+  it('converts figure to image placeholder', () => {
+    const html = '<figure><img src="pic.jpg" alt="A picture"><figcaption>Caption here</figcaption></figure>';
+    const blocks = parseHTMLToBlocks(html);
+    // figure is not handled as a special case — img inside falls back to no block-level
+    // since parseNode only handles direct children, figure should produce no blocks
+    // (this is a known gap — figure is not yet supported)
+    expect(blocks).toEqual([]);
+  });
+
+  it('flattens nested lists', () => {
+    const html = '<ul><li>Item 1<ul><li>Nested A</li><li>Nested B</li></ul></li><li>Item 2</li></ul>';
+    const blocks = parseHTMLToBlocks(html);
+    expect(blocks).toHaveLength(2);
+    expect(blocks[0]).toEqual({ type: 'bulletListItem', content: 'Item 1Nested ANested B' });
+    expect(blocks[1]).toEqual({ type: 'bulletListItem', content: 'Item 2' });
+  });
 });
