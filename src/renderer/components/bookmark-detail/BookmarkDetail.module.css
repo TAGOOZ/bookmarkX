@@ -121,3 +121,74 @@
 @keyframes spin {
   to { transform: rotate(360deg); }
 }
+
+.errorBanner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 14px;
+  margin: 0 40px 8px;
+  background: var(--background-secondary);
+  border: 1px solid var(--color-error);
+  border-radius: var(--radius-m);
+  font-size: 13px;
+}
+
+.errorContent {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  flex: 1;
+  min-width: 0;
+}
+
+.errorIcon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--color-error);
+  color: var(--text-on-accent);
+  font-weight: 700;
+  font-size: 12px;
+  flex-shrink: 0;
+}
+
+.errorText {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.errorTitle {
+  font-weight: 600;
+  color: var(--color-error);
+}
+
+.errorMessage {
+  color: var(--text-muted);
+  word-break: break-word;
+  line-height: 1.4;
+}
+
+.retryButton {
+  border: 1px solid var(--color-error);
+  background: transparent;
+  color: var(--color-error);
+  padding: 6px 14px;
+  border-radius: var(--radius-m);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: background 0.15s, color 0.15s;
+}
+
+.retryButton:hover {
+  background: var(--color-error);
+  color: var(--text-on-accent);
+}

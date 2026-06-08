@@ -116,6 +116,7 @@ const BookmarkEditor: React.FC<BookmarkEditorProps> = ({
   } | null>(null);
   const [enhancedText, setEnhancedText] = useState<string | null>(null);
   const [isParsing, setIsParsing] = useState(false);
+  const [parseError, setParseError] = useState<string | null>(null);
 
   const getSections = useCallback(() => {
     return SECTION_IDS.map((id) => ({
@@ -267,36 +268,39 @@ const BookmarkEditor: React.FC<BookmarkEditorProps> = ({
     };
   }, [handleSelectionChange]);
 
-  useEffect(() => {
-    if (!bookmark.url || bookmark.articleBlocks || isParsing) return;
+  const runExtraction = useCallback(async (isRetry = false) => {
+    if (!bookmark.url) return;
+    if (!isRetry && (bookmark.articleBlocks || isParsing)) return;
     let cancelled = false;
-    const run = async () => {
-      setIsParsing(true);
-      try {
-        const result = await (window as any).api?.extractArticle?.(bookmark.id, bookmark.url);
-        if (cancelled || !result?.blocks_json) return;
-        const newBlocks = parseStoredBlocks(result.blocks_json) || bookmarkToBlocks({
-          ...bookmark,
-          articleBlocks: result.blocks_json,
-          articleWordCount: result.word_count,
-          articleReadingTime: result.reading_time,
-        });
-        isExternalUpdate.current = true;
-        editor.replaceBlocks(editor.document, newBlocks);
-        isExternalUpdate.current = false;
-        onBookmarkChange?.({
-          articleBlocks: result.blocks_json,
-          articleWordCount: result.word_count,
-          articleReadingTime: result.reading_time,
-        });
-      } catch {
-        // extraction failed — article section stays empty
-      } finally {
-        if (!cancelled) setIsParsing(false);
-      }
-    };
-    run();
-    return () => { cancelled = true; };
+    setIsParsing(true);
+    setParseError(null);
+    try {
+      const result = await (window as any).api?.extractArticle?.(bookmark.id, bookmark.url);
+      if (cancelled || !result?.blocks_json) return;
+      const newBlocks = parseStoredBlocks(result.blocks_json) || bookmarkToBlocks({
+        ...bookmark,
+        articleBlocks: result.blocks_json,
+        articleWordCount: result.word_count,
+        articleReadingTime: result.reading_time,
+      });
+      isExternalUpdate.current = true;
+      editor.replaceBlocks(editor.document, newBlocks);
+      isExternalUpdate.current = false;
+      onBookmarkChange?.({
+        articleBlocks: result.blocks_json,
+        articleWordCount: result.word_count,
+        articleReadingTime: result.reading_time,
+      });
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Failed to parse article';
+      setParseError(message);
+    } finally {
+      if (!cancelled) setIsParsing(false);
+    }
+  }, [bookmark, editor, onBookmarkChange, isParsing]);
+
+  useEffect(() => {
+    runExtraction(false);
   }, [bookmark.id, bookmark.url, bookmark.articleBlocks]);
 
   const handleEnhance = useCallback(async (text: string) => {
@@ -369,6 +373,23 @@ const BookmarkEditor: React.FC<BookmarkEditorProps> = ({
         <div className={styles.parsingBanner}>
           <span className={styles.spinner} />
           <span>{intl.formatMessage({ id: 'parsingArticle' })}</span>
+        </div>
+      )}
+      {parseError && !isParsing && (
+        <div className={styles.errorBanner}>
+          <div className={styles.errorContent}>
+            <span className={styles.errorIcon}>!</span>
+            <div className={styles.errorText}>
+              <span className={styles.errorTitle}>{intl.formatMessage({ id: 'parseErrorTitle' })}</span>
+              <span className={styles.errorMessage}>{parseError}</span>
+            </div>
+          </div>
+          <button
+            className={styles.retryButton}
+            onClick={() => runExtraction(true)}
+          >
+            {intl.formatMessage({ id: 'retry' })}
+          </button>
         </div>
       )}
       <div ref={scrollRef} className={styles.editorScroll}>
