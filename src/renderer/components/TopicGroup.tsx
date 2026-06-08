@@ -1,7 +1,12 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useRef } from 'react';
 import { useIntl } from 'react-intl';
+import { useVirtualizer } from '@tanstack/react-virtual';
 import { ChevronDown, ChevronRight, MoreHorizontal, Pencil, Trash2 } from 'lucide-react';
 import type { Bookmark } from '../types';
+
+const VIRTUALIZE_THRESHOLD = 50;
+const ITEM_HEIGHT = 56;
+const MAX_VIRTUAL_HEIGHT = 400;
 
 interface TopicGroupProps {
   topic: string;
@@ -40,9 +45,18 @@ const TopicGroup: React.FC<TopicGroupProps> = ({
   const [showContextMenu, setShowContextMenu] = useState(false);
   const [isRenaming, setIsRenaming] = useState(false);
   const [renameValue, setRenameValue] = useState(topic);
-  const visibleBookmarks = showAll ? bookmarks : bookmarks.slice(0, maxVisible);
   const hasMore = bookmarks.length > maxVisible;
+  const shouldVirtualize = bookmarks.length > VIRTUALIZE_THRESHOLD;
+  const visibleBookmarks = showAll ? bookmarks : bookmarks.slice(0, maxVisible);
   const displayCount = totalCount ?? bookmarks.length;
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+
+  const virtualizer = useVirtualizer({
+    count: shouldVirtualize && showAll ? bookmarks.length : 0,
+    getScrollElement: () => scrollContainerRef.current,
+    estimateSize: () => ITEM_HEIGHT,
+    overscan: 5,
+  });
 
   const getPriorityColor = (priority: string) => {
     switch (priority) {
@@ -159,31 +173,78 @@ const TopicGroup: React.FC<TopicGroupProps> = ({
       </div>
       {isExpanded && (
         <div className="topic-group-items">
-          {visibleBookmarks.map((bookmark) => (
+          {shouldVirtualize && showAll ? (
             <div
-              key={bookmark.id}
-              className={`topic-bookmark-item ${selectedBookmarkId === bookmark.id ? 'selected' : ''}`}
-              role="button"
-              tabIndex={0}
-              aria-selected={selectedBookmarkId === bookmark.id}
-              onClick={() => onSelectBookmark(bookmark)}
-              onKeyDown={(e) =>
-                (e.key === 'Enter' || e.key === ' ') &&
-                (e.preventDefault(), onSelectBookmark(bookmark))
-              }
+              ref={scrollContainerRef}
+              className="topic-group-virtual-list"
+              style={{ height: Math.min(bookmarks.length * ITEM_HEIGHT, MAX_VIRTUAL_HEIGHT), overflow: 'auto' }}
             >
-              <div className="topic-bookmark-title">{bookmark.title}</div>
-              <div className="topic-bookmark-meta">
-                <span className="topic-bookmark-domain">
-                  {getDomain(bookmark.url)}
-                </span>
-                <span
-                  className="topic-bookmark-priority"
-                  style={{ backgroundColor: getPriorityColor(bookmark.priority) }}
-                />
+              <div style={{ height: virtualizer.getTotalSize(), position: 'relative' }}>
+                {virtualizer.getVirtualItems().map((virtualRow) => {
+                  const bookmark = bookmarks[virtualRow.index];
+                  return (
+                    <div
+                      key={bookmark.id}
+                      className={`topic-bookmark-item ${selectedBookmarkId === bookmark.id ? 'selected' : ''}`}
+                      role="button"
+                      tabIndex={0}
+                      aria-selected={selectedBookmarkId === bookmark.id}
+                      onClick={() => onSelectBookmark(bookmark)}
+                      onKeyDown={(e) =>
+                        (e.key === 'Enter' || e.key === ' ') &&
+                        (e.preventDefault(), onSelectBookmark(bookmark))
+                      }
+                      style={{
+                        position: 'absolute',
+                        top: 0,
+                        left: 0,
+                        width: '100%',
+                        height: virtualRow.size,
+                        transform: `translateY(${virtualRow.start}px)`,
+                      }}
+                    >
+                      <div className="topic-bookmark-title">{bookmark.title}</div>
+                      <div className="topic-bookmark-meta">
+                        <span className="topic-bookmark-domain">
+                          {getDomain(bookmark.url)}
+                        </span>
+                        <span
+                          className="topic-bookmark-priority"
+                          style={{ backgroundColor: getPriorityColor(bookmark.priority) }}
+                        />
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
             </div>
-          ))}
+          ) : (
+            visibleBookmarks.map((bookmark) => (
+              <div
+                key={bookmark.id}
+                className={`topic-bookmark-item ${selectedBookmarkId === bookmark.id ? 'selected' : ''}`}
+                role="button"
+                tabIndex={0}
+                aria-selected={selectedBookmarkId === bookmark.id}
+                onClick={() => onSelectBookmark(bookmark)}
+                onKeyDown={(e) =>
+                  (e.key === 'Enter' || e.key === ' ') &&
+                  (e.preventDefault(), onSelectBookmark(bookmark))
+                }
+              >
+                <div className="topic-bookmark-title">{bookmark.title}</div>
+                <div className="topic-bookmark-meta">
+                  <span className="topic-bookmark-domain">
+                    {getDomain(bookmark.url)}
+                  </span>
+                  <span
+                    className="topic-bookmark-priority"
+                    style={{ backgroundColor: getPriorityColor(bookmark.priority) }}
+                  />
+                </div>
+              </div>
+            ))
+          )}
           {hasMore && (
             <button className="topic-show-more" onClick={handleShowMore}>
               {showAll
