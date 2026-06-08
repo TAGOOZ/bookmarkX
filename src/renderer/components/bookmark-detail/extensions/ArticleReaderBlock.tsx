@@ -27,6 +27,32 @@ function renderInline(items: InlineItem[]): React.ReactNode {
   });
 }
 
+function ImageBlock({ url, alt }: { url: string; alt: string }) {
+  const [error, setError] = useState(false);
+
+  if (error) {
+    return (
+      <div className={styles.imageError}>
+        <span className={styles.imageErrorIcon}>!</span>
+        <span>Image failed to load: {alt || url}</span>
+      </div>
+    );
+  }
+
+  return (
+    <figure className={styles.figure}>
+      <img
+        src={url}
+        alt={alt}
+        loading="lazy"
+        className={styles.image}
+        onError={() => setError(true)}
+      />
+      {alt && <figcaption className={styles.figcaption}>{alt}</figcaption>}
+    </figure>
+  );
+}
+
 function renderBlock(block: any, index: number): React.ReactNode {
   const content = block.content;
 
@@ -54,18 +80,7 @@ function renderBlock(block: any, index: number): React.ReactNode {
     const alt = block.props?.alt || '';
     if (!url) return null;
     return (
-      <figure key={index} className={styles.figure}>
-        <img
-          src={url}
-          alt={alt}
-          loading="lazy"
-          className={styles.image}
-          onError={(e) => {
-            (e.target as HTMLImageElement).style.display = 'none';
-          }}
-        />
-        {alt && <figcaption className={styles.figcaption}>{alt}</figcaption>}
-      </figure>
+      <ImageBlock key={index} url={url} alt={alt} />
     );
   }
 

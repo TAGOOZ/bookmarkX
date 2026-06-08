@@ -94,36 +94,40 @@ describe('parseHTMLToBlocks', () => {
     ]);
   });
 
-  it('converts img to placeholder paragraph', () => {
+  it('converts img to image block with url and alt', () => {
     const html = '<img src="photo.jpg" alt="A photo">';
     const blocks = parseHTMLToBlocks(html);
     expect(blocks).toEqual([
-      { type: 'paragraph', content: [{ type: 'text', text: '[Image: A photo]', styles: { italic: true } }] },
+      { type: 'image', props: { url: 'photo.jpg', alt: 'A photo' }, content: undefined },
     ]);
   });
 
-  it('converts img without alt to generic placeholder', () => {
+  it('converts img without alt to image block with empty alt', () => {
     const html = '<img src="photo.jpg">';
     const blocks = parseHTMLToBlocks(html);
     expect(blocks).toEqual([
-      { type: 'paragraph', content: [{ type: 'text', text: '[Image]', styles: { italic: true } }] },
+      { type: 'image', props: { url: 'photo.jpg', alt: '' }, content: undefined },
     ]);
   });
 
-  it('converts table to placeholder paragraph', () => {
+  it('converts table to tableHtml block', () => {
     const html = '<table><caption>My Table</caption><tr><td>A</td></tr></table>';
     const blocks = parseHTMLToBlocks(html);
-    expect(blocks).toEqual([
-      { type: 'paragraph', content: [{ type: 'text', text: '[Table: My Table]', styles: { italic: true } }] },
-    ]);
+    expect(blocks).toHaveLength(1);
+    expect(blocks[0]).toMatchObject({ type: 'tableHtml' });
+    const tableHtml = (blocks[0] as any).props.html;
+    expect(tableHtml).toContain('<table>');
+    expect(tableHtml).toContain('<td>A</td>');
   });
 
-  it('converts table without caption', () => {
+  it('converts table without caption to tableHtml block', () => {
     const html = '<table><tr><td>A</td></tr></table>';
     const blocks = parseHTMLToBlocks(html);
-    expect(blocks).toEqual([
-      { type: 'paragraph', content: [{ type: 'text', text: '[Table]', styles: { italic: true } }] },
-    ]);
+    expect(blocks).toHaveLength(1);
+    expect(blocks[0]).toMatchObject({ type: 'tableHtml' });
+    const tableHtml = (blocks[0] as any).props.html;
+    expect(tableHtml).toContain('<table>');
+    expect(tableHtml).toContain('<td>A</td>');
   });
 
   it('converts hr to divider paragraph', () => {

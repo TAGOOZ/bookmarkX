@@ -216,21 +216,24 @@ function parseNode($: any, el: any): PartialBlock[] {
   }
 
   if (tag === 'img') {
+    const src = el.attribs?.src || '';
     const alt = el.attribs?.alt || '';
-    const placeholder = alt ? `[Image: ${alt}]` : '[Image]';
-    blocks.push({
-      type: 'paragraph',
-      content: [{ type: 'text', text: placeholder, styles: { italic: true } }],
-    } as any);
+    if (src) {
+      blocks.push({
+        type: 'image',
+        props: { url: src, alt },
+        content: undefined,
+      } as any);
+    }
     return blocks;
   }
 
   if (tag === 'table') {
-    const caption = $(el).find('caption').first().text().trim();
-    const placeholder = caption ? `[Table: ${caption}]` : '[Table]';
+    const tableHtml = $.html(el);
     blocks.push({
-      type: 'paragraph',
-      content: [{ type: 'text', text: placeholder, styles: { italic: true } }],
+      type: 'tableHtml',
+      props: { html: tableHtml },
+      content: undefined,
     } as any);
     return blocks;
   }
