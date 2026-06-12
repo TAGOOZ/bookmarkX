@@ -19,6 +19,7 @@ function runBird(args: string[], env?: Record<string, string>): Promise<string> 
 
 function classifyContentType(raw: any): Bookmark['content_type'] {
   if (raw.is_thread || raw.thread_tweet_count > 1) return 'thread';
+  if (raw.is_video || raw.video) return 'video';
   if (raw.urls && raw.urls.length > 0) return 'outer_link';
   if (raw.is_article) return 'x_article';
   return 'outer_link';

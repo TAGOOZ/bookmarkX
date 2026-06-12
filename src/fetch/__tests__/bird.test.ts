@@ -108,6 +108,38 @@ describe('fetchBookmarks', () => {
     expect(result[0].content_type).toBe('outer_link');
   });
 
+  it('detects video content type for video bookmarks', async () => {
+    const raw = [
+      {
+        id: '3',
+        url: 'https://x.com/user/status/3',
+        author: { name: 'V', screen_name: 'v' },
+        text: 'a video tweet',
+        is_video: true,
+      },
+    ];
+    mockBirdOutput(raw);
+
+    const result = await fetchBookmarks({ authToken: 'token', ct0: 'ct0' });
+    expect(result[0].content_type).toBe('video');
+  });
+
+  it('detects video content type when raw.video is truthy', async () => {
+    const raw = [
+      {
+        id: '4',
+        url: 'https://x.com/user/status/4',
+        author: { name: 'W', screen_name: 'w' },
+        text: 'another video tweet',
+        video: true,
+      },
+    ];
+    mockBirdOutput(raw);
+
+    const result = await fetchBookmarks({ authToken: 'token', ct0: 'ct0' });
+    expect(result[0].content_type).toBe('video');
+  });
+
   it('detects thread content type for thread entries', async () => {
     const raw = [
       {
