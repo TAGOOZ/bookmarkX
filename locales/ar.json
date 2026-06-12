@@ -135,5 +135,8 @@
   "notificationFetchComplete": "اكتمل الجلب",
   "notificationClassifyComplete": "اكتمل التصنيف",
   "notificationSummarizeComplete": "اكتمل التلخيص",
-  "notificationError": "حدث خطأ"
+  "notificationError": "حدث خطأ",
+  "firstRunBanner": "أكمل إعدادك لبدء جلب الإشارات المرجعية",
+  "firstRunBannerAction": "فتح الإعدادات",
+  "dismissSetupBanner": "إخفاء"
 }

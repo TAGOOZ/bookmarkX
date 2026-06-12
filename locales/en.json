@@ -136,5 +136,8 @@
   "notificationFetchComplete": "Fetch complete",
   "notificationClassifyComplete": "Classification complete",
   "notificationSummarizeComplete": "Summarize complete",
-  "notificationError": "Error occurred"
+  "notificationError": "Error occurred",
+  "firstRunBanner": "Complete your setup to start fetching bookmarks",
+  "firstRunBannerAction": "Open Settings",
+  "dismissSetupBanner": "Dismiss"
 }

@@ -163,6 +163,7 @@ const Settings: React.FC<SettingsProps> = ({ onClose, mockMode = false }) => {
     setError(null);
     try {
       await window.api.saveSettings(formData);
+      try { localStorage.setItem('bookmarkx-setup-complete', 'true'); } catch { /* localStorage unavailable */ }
       if (formData.language !== initialLanguage) {
         setLocale(formData.language);
         setShowRestartPrompt(true);

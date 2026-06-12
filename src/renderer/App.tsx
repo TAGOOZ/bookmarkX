@@ -3,6 +3,7 @@ import { IntlProvider, useIntl } from 'react-intl';
 import NavPanel from './components/NavPanel';
 import { SplitLayout } from './components/split-view';
 import Settings from './components/Settings';
+import FirstRunBanner from './components/FirstRunBanner';
 import arMessages from '../../locales/ar.json';
 import enMessages from '../../locales/en.json';
 import { useBookmarkStore } from './stores/bookmarkStore';
@@ -80,6 +81,7 @@ function AppContent() {
   return (
     <>
       <Titlebar />
+      <FirstRunBanner onOpenSettings={() => setShowSettings(true)} />
       <div className="app-container" style={{ flexDirection: dir === 'rtl' ? 'row' : 'row-reverse' }}>
         <div
           style={{
