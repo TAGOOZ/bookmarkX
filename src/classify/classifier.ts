@@ -51,12 +51,13 @@ export async function classifyBookmark(
     contents: [{ parts: [{ text: prompt }] }],
   });
 
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`;
 
   const stdout = await runCurl([
     '-s',
     '-X', 'POST',
     '-H', 'Content-Type: application/json',
+    '-H', `x-goog-api-key: ${apiKey}`,
     '-d', payload,
     url,
   ]);
