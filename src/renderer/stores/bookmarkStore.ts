@@ -8,6 +8,18 @@ const MOCK_MODE_KEY = 'bookmarkx-mock-mode';
 const SPLIT_STATE_KEY = 'bookmarkx-split-state';
 const MAX_COLUMNS = 3;
 
+function computeOpenBookmarks(
+  columns: SplitColumn[],
+  bookmarks: Bookmark[],
+): Bookmark[] {
+  const referencedIds = new Set(
+    columns
+      .map((c) => c.bookmarkId)
+      .filter((id): id is string => id !== null),
+  );
+  return bookmarks.filter((b) => referencedIds.has(b.id));
+}
+
 function loadSplitState(): SplitState | null {
   try {
     const raw = localStorage.getItem(SPLIT_STATE_KEY);
@@ -173,24 +185,24 @@ export const useBookmarkStore = create<BookmarkStore>((set, get) => ({
     set((state) => {
       if (state.splitState.columns.length === 0) return state;
       if (state.splitState.columns.length === 1) {
+        const clearedCol: SplitColumn = { ...state.splitState.columns[0], bookmarkId: null };
         const newSplit: SplitState = {
-          columns: [{ ...state.splitState.columns[0], bookmarkId: null }],
+          columns: [clearedCol],
           activeColumnId: state.splitState.columns[0].id,
         };
+        const newOpen = computeOpenBookmarks([clearedCol], state.openBookmarks);
         saveSplitState(newSplit);
-        return { splitState: newSplit };
+        return { splitState: newSplit, openBookmarks: newOpen };
       }
-      const col = state.splitState.columns.find((c) => c.id === columnId);
-      const newOpen = col?.bookmarkId
-        ? state.openBookmarks.filter((b) => b.id !== col.bookmarkId)
-        : state.openBookmarks;
       const remaining = state.splitState.columns.filter((c) => c.id !== columnId);
       const allEmpty = remaining.every((c) => c.bookmarkId === null);
       if (allEmpty) {
+        const clearedRemaining: SplitColumn = { ...remaining[0], bookmarkId: null };
         const newSplit: SplitState = {
-          columns: [{ ...remaining[0], bookmarkId: null }],
+          columns: [clearedRemaining],
           activeColumnId: remaining[0].id,
         };
+        const newOpen = computeOpenBookmarks([clearedRemaining], state.openBookmarks);
         saveSplitState(newSplit);
         return { splitState: newSplit, openBookmarks: newOpen };
       }
@@ -199,22 +211,24 @@ export const useBookmarkStore = create<BookmarkStore>((set, get) => ({
           ? remaining[remaining.length - 1].id
           : state.splitState.activeColumnId;
       const newSplit: SplitState = { columns: remaining, activeColumnId: newActive };
+      const newOpen = computeOpenBookmarks(remaining, state.openBookmarks);
       saveSplitState(newSplit);
       return { splitState: newSplit, openBookmarks: newOpen };
     });
   },
 
-  handleTabCloseTab: (columnId, bookmarkId) => {
+  handleTabCloseTab: (columnId, _bookmarkId) => {
     set((state) => {
       const col = state.splitState.columns.find((c) => c.id === columnId);
       if (!col) return state;
 
       if (state.splitState.columns.length === 1) {
+        const clearedCol: SplitColumn = { ...col, bookmarkId: null };
         const newSplit: SplitState = {
-          columns: [{ ...col, bookmarkId: null }],
+          columns: [clearedCol],
           activeColumnId: col.id,
         };
-        const newOpen = state.openBookmarks.filter((b) => b.id !== bookmarkId);
+        const newOpen = computeOpenBookmarks([clearedCol], state.openBookmarks);
         saveSplitState(newSplit);
         return { splitState: newSplit, openBookmarks: newOpen };
       }
@@ -222,7 +236,6 @@ export const useBookmarkStore = create<BookmarkStore>((set, get) => ({
       const newColumns = state.splitState.columns.map((c) =>
         c.id === columnId ? { ...c, bookmarkId: null } : c,
       );
-      const newOpen = state.openBookmarks.filter((b) => b.id !== bookmarkId);
 
       let newActiveId = state.splitState.activeColumnId;
       if (newActiveId === columnId) {
@@ -231,6 +244,7 @@ export const useBookmarkStore = create<BookmarkStore>((set, get) => ({
       }
 
       const newSplit: SplitState = { columns: newColumns, activeColumnId: newActiveId };
+      const newOpen = computeOpenBookmarks(newColumns, state.openBookmarks);
       saveSplitState(newSplit);
       return { splitState: newSplit, openBookmarks: newOpen };
     });
