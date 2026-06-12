@@ -50,15 +50,17 @@ const SplitLayout: React.FC<SplitLayoutProps> = ({
     setActiveDropZone(null);
   }, []);
 
-  const handleDrop = useCallback((e: React.DragEvent, _edge: 'left' | 'right') => {
+  const handleDrop = useCallback((e: React.DragEvent, edge: 'left' | 'right') => {
     e.preventDefault();
     setActiveDropZone(null);
     const bookmarkId = e.dataTransfer.getData('text/tab-bookmark-id');
     if (!bookmarkId || isMaxColumns) return;
 
-    const firstColumn = splitState.columns[0];
-    if (firstColumn) {
-      onSplitColumn(firstColumn.id, bookmarkId);
+    const targetColumn = edge === 'right'
+      ? splitState.columns[splitState.columns.length - 1]
+      : splitState.columns[0];
+    if (targetColumn) {
+      onSplitColumn(targetColumn.id, bookmarkId);
     }
   }, [isMaxColumns, splitState.columns, onSplitColumn]);
 

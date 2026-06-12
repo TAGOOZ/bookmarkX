@@ -130,6 +130,7 @@ const BookmarkTabs: React.FC<BookmarkTabsProps> = ({
   const handleMenuCloseToRight = useCallback(() => {
     if (!contextMenu) return;
     const idx = openBookmarks.findIndex((b) => b.id === contextMenu.targetBookmarkId);
+    if (idx === -1) { setContextMenu(null); return; }
     const ids = openBookmarks.slice(idx + 1).map((b) => b.id);
     setClosedTabs((prev) => {
       const toClose = openBookmarks.slice(idx + 1);
@@ -148,6 +149,7 @@ const BookmarkTabs: React.FC<BookmarkTabsProps> = ({
   const handleMenuCloseToLeft = useCallback(() => {
     if (!contextMenu) return;
     const idx = openBookmarks.findIndex((b) => b.id === contextMenu.targetBookmarkId);
+    if (idx === -1) { setContextMenu(null); return; }
     const ids = openBookmarks.slice(0, idx).map((b) => b.id);
     setClosedTabs((prev) => {
       const toClose = openBookmarks.slice(0, idx);
