@@ -111,10 +111,9 @@ export async function getArticleContent(
 }
 
 export function sanitizeFtsQuery(query: string): string {
-  return query
-    .replace(/[*]/g, '\\*')
-    .replace(/[-]/g, '\\-')
-    .replace(/["]/g, '""');
+  // Escape existing double quotes, then wrap in quotes for exact phrase match
+  const escaped = query.replace(/"/g, '""');
+  return `"${escaped}"`;
 }
 
 export async function searchArticleContent(
