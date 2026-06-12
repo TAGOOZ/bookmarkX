@@ -34,15 +34,15 @@ honor its STOP conditions, and update your row when done.
 | 024 | Fix incomplete FTS5 query sanitization | P1 | S | — | DONE |
 | 025 | Wrap setBookmarkHashtags in transaction | P1 | S | — | DONE |
 | 026 | Add selected_text column to chat_messages | P2 | S | — | DONE |
-| 027 | Fix tab close to remove single tab instead of merging entire column | P1 | S | — | TODO |
-| 028 | Fix openBookmarks to track all open tabs globally across columns | P1 | M | 027 | TODO |
-| 029 | Guard reopen closed tab against duplicates | P2 | S | — | TODO |
-| 030 | Fix context menu to stay within viewport bounds | P3 | S | — | TODO |
-| 031 | Add auto-scroll active tab into view | P3 | S | — | TODO |
-| 032 | Add keyboard navigation to tabs | P2 | M | — | TODO |
+| 027 | Fix tab close to remove single tab instead of merging entire column | P1 | S | — | DONE |
+| 028 | Fix openBookmarks to track all open tabs globally across columns | P1 | M | 027 | DONE |
+| 029 | Guard reopen closed tab against duplicates | P2 | S | — | DONE |
+| 030 | Fix context menu to stay within viewport bounds | P3 | S | — | DONE |
+| 031 | Add auto-scroll active tab into view | P3 | S | — | DONE |
+| 032 | Add keyboard navigation to tabs | P2 | M | — | DONE |
 | 033 | Fix stale closed tabs by storing only IDs | P3 | S | — | REJECTED — complexity outweighs benefit for edge case |
-| 034 | Fix RTL context menu positioning | P3 | S | 030 | TODO |
-| 035 | Add comprehensive test coverage for tabs | P2 | M | 027,028,029,030,031,032 | TODO |
+| 034 | Fix RTL context menu positioning | P3 | S | 030 | DONE |
+| 035 | Add comprehensive test coverage for tabs | P2 | M | 027,028,029,030,031,032 | DONE |
 
 Status values: TODO | IN PROGRESS | DONE | BLOCKED (with one-line reason) | REJECTED (with one-line rationale)
 
