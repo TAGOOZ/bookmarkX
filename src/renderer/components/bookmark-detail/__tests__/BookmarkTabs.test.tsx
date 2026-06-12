@@ -2,11 +2,15 @@
  * @vitest-environment jsdom
  */
 import React from 'react';
-import { describe, it, expect, afterEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { screen, cleanup } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import BookmarkTabs from '../BookmarkTabs';
 import { renderWithIntl } from '../../../__tests__/test-utils';
+
+beforeEach(() => {
+  Element.prototype.scrollIntoView = vi.fn();
+});
 
 afterEach(() => {
   cleanup();
