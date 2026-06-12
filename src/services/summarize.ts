@@ -1,13 +1,26 @@
 import type { Client } from '@libsql/client';
 import { callGemini } from './gemini';
 import { storeSummary } from '../db/summaries';
+import { getArticleContent } from '../db/article-content';
 import type { ServiceOptions, SummarizeResult } from './types';
 
-function buildSummarizePrompt(title: string | null, tweetText: string | null, url: string): string {
+function buildSummarizePrompt(
+  title: string | null,
+  tweetText: string | null,
+  url: string,
+  articleText?: string,
+): string {
   const parts = [];
   if (title) parts.push(`Title: ${title}`);
   if (tweetText) parts.push(`Tweet: ${tweetText}`);
   parts.push(`URL: ${url}`);
+  if (articleText) {
+    // Truncate to ~8000 chars to stay within token limits
+    const truncated = articleText.length > 8000
+      ? articleText.substring(0, 8000) + '\n\n[Content truncated...]'
+      : articleText;
+    parts.push(`\nFull article content:\n${truncated}`);
+  }
 
   return `Summarize this bookmark in both English and Arabic.
 
@@ -34,7 +47,13 @@ export async function summarizeBookmark(
     throw new Error('GEMINI_API_KEY is required');
   }
 
-  const prompt = buildSummarizePrompt(bookmark.title, bookmark.tweet_text, bookmark.url);
+  const articleContent = await getArticleContent(db, bookmarkId);
+  const prompt = buildSummarizePrompt(
+    bookmark.title,
+    bookmark.tweet_text,
+    bookmark.url,
+    articleContent?.extracted_text,
+  );
   const text = await callGemini(prompt, { apiKey, model });
 
   let result: SummarizeResult;
