@@ -3,32 +3,14 @@
  */
 import React from 'react';
 import { describe, it, expect, vi, afterEach } from 'vitest';
-import { render, screen, fireEvent, cleanup } from '@testing-library/react';
-import { IntlProvider } from 'react-intl';
-import { LocaleContext } from '../../App';
+import { screen, fireEvent, cleanup } from '@testing-library/react';
 import TopicGroup from '../TopicGroup';
 import type { Bookmark } from '../../types';
+import { renderWithIntl } from '../../__tests__/test-utils';
 
 afterEach(() => {
   cleanup();
 });
-
-const messages = {
-  showMore: 'Show {count} more',
-  showLess: 'Show less',
-  settings: 'Settings',
-  renameTopic: 'Rename topic',
-  deleteTopic: 'Delete topic',
-};
-
-const renderWithProviders = (ui: React.ReactElement) =>
-  render(
-    <IntlProvider locale="en" messages={messages}>
-      <LocaleContext.Provider value={{ locale: 'en', setLocale: vi.fn() }}>
-        {ui}
-      </LocaleContext.Provider>
-    </IntlProvider>
-  );
 
 const createBookmark = (id: string, title: string): Bookmark => ({
   id,
@@ -55,7 +37,7 @@ describe('TopicGroup', () => {
 
   it('renders topic name', () => {
     const bookmarks = [createBookmark('1', 'Bookmark 1')];
-    renderWithProviders(<TopicGroup {...defaultProps} bookmarks={bookmarks} />);
+    renderWithIntl(<TopicGroup {...defaultProps} bookmarks={bookmarks} />);
     expect(screen.getByText('Test Topic')).toBeDefined();
   });
 
@@ -63,7 +45,7 @@ describe('TopicGroup', () => {
     const bookmarks = Array.from({ length: 10 }, (_, i) =>
       createBookmark(String(i), `Bookmark ${i}`)
     );
-    renderWithProviders(
+    renderWithIntl(
       <TopicGroup {...defaultProps} bookmarks={bookmarks} maxVisible={3} />
     );
     expect(screen.getByText('Bookmark 0')).toBeDefined();
@@ -75,7 +57,7 @@ describe('TopicGroup', () => {
     const bookmarks = Array.from({ length: 10 }, (_, i) =>
       createBookmark(String(i), `Bookmark ${i}`)
     );
-    const { container } = renderWithProviders(
+    const { container } = renderWithIntl(
       <TopicGroup {...defaultProps} bookmarks={bookmarks} maxVisible={3} />
     );
     const showMoreBtn = container.querySelector('.topic-show-more');
@@ -88,7 +70,7 @@ describe('TopicGroup', () => {
     const bookmarks = Array.from({ length: 100 }, (_, i) =>
       createBookmark(String(i), `Bookmark ${i}`)
     );
-    const { container } = renderWithProviders(
+    const { container } = renderWithIntl(
       <TopicGroup
         {...defaultProps}
         bookmarks={bookmarks}
@@ -108,7 +90,7 @@ describe('TopicGroup', () => {
     const bookmarks = Array.from({ length: 10 }, (_, i) =>
       createBookmark(String(i), `Bookmark ${i}`)
     );
-    const { container } = renderWithProviders(
+    const { container } = renderWithIntl(
       <TopicGroup
         {...defaultProps}
         bookmarks={bookmarks}
@@ -124,7 +106,7 @@ describe('TopicGroup', () => {
   it('calls onSelectBookmark when bookmark is clicked', () => {
     const onSelectBookmark = vi.fn();
     const bookmarks = [createBookmark('1', 'Bookmark 1')];
-    renderWithProviders(
+    renderWithIntl(
       <TopicGroup {...defaultProps} bookmarks={bookmarks} onSelectBookmark={onSelectBookmark} />
     );
     fireEvent.click(screen.getByText('Bookmark 1'));
@@ -133,7 +115,7 @@ describe('TopicGroup', () => {
 
   it('calls onToggle when header is clicked', () => {
     const onToggle = vi.fn();
-    renderWithProviders(
+    renderWithIntl(
       <TopicGroup {...defaultProps} onToggle={onToggle} />
     );
     fireEvent.click(screen.getByText('Test Topic'));

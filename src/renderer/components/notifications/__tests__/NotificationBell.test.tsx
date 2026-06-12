@@ -3,53 +3,38 @@
  */
 import React from 'react';
 import { describe, it, expect, afterEach, vi } from 'vitest';
-import { render, screen, cleanup, fireEvent } from '@testing-library/react';
-import { IntlProvider } from 'react-intl';
-import { LocaleContext } from '../../../App';
+import { screen, cleanup, fireEvent } from '@testing-library/react';
 import NotificationBell from '../NotificationBell';
-
-const messages = {
-  notifications: 'Notifications',
-  noNotifications: 'No notifications',
-};
+import { renderWithIntl } from '../../../__tests__/test-utils';
 
 afterEach(() => {
   cleanup();
 });
 
-const renderWithProviders = (ui: React.ReactElement) =>
-  render(
-    <IntlProvider locale="en" messages={messages}>
-      <LocaleContext.Provider value={{ locale: 'en', setLocale: vi.fn() }}>
-        {ui}
-      </LocaleContext.Provider>
-    </IntlProvider>
-  );
-
 describe('NotificationBell', () => {
   it('renders bell icon', () => {
-    renderWithProviders(
+    renderWithIntl(
       <NotificationBell unreadCount={0} onClick={vi.fn()} />
     );
     expect(screen.getByRole('button')).toBeTruthy();
   });
 
   it('shows unread count badge when count > 0', () => {
-    renderWithProviders(
+    renderWithIntl(
       <NotificationBell unreadCount={5} onClick={vi.fn()} />
     );
     expect(screen.getByText('5')).toBeTruthy();
   });
 
   it('does not show badge when count is 0', () => {
-    const { container } = renderWithProviders(
+    const { container } = renderWithIntl(
       <NotificationBell unreadCount={0} onClick={vi.fn()} />
     );
     expect(container.querySelector('[data-testid="unread-badge"]')).toBeNull();
   });
 
   it('shows 99+ for counts > 99', () => {
-    renderWithProviders(
+    renderWithIntl(
       <NotificationBell unreadCount={150} onClick={vi.fn()} />
     );
     expect(screen.getByText('99+')).toBeTruthy();
@@ -57,7 +42,7 @@ describe('NotificationBell', () => {
 
   it('calls onClick when clicked', async () => {
     const onClick = vi.fn();
-    renderWithProviders(
+    renderWithIntl(
       <NotificationBell unreadCount={1} onClick={onClick} />
     );
     fireEvent.click(screen.getByRole('button'));

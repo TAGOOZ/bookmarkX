@@ -3,31 +3,10 @@
  */
 import React from 'react';
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { render, screen, cleanup } from '@testing-library/react';
+import { screen, cleanup } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { IntlProvider } from 'react-intl';
 import NavPanel from '../components/NavPanel';
-
-const messages = {
-  appName: 'بوكماركس',
-  bookmarks: 'الإشارات المرجعية',
-  settings: 'الإعدادات',
-  fetchNow: 'جلب الآن',
-  classifyNow: 'تصنيف الآن',
-  searchTooltip: 'بحث',
-  fetchNowTooltip: 'جلب الآن',
-  classifyNowTooltip: 'تصنيف الآن',
-  mockModeTooltip: 'وضع التجريب',
-  stopMockModeTooltip: 'إيقاف وضع التجريب',
-  settingsTooltip: 'الإعدادات',
-  noBookmarks: 'لا توجد إشارات مرجعية',
-  collapseNav: 'طي الشريط الجانبي',
-  expandNav: 'توسيع الشريط الجانبي',
-  تكنولوجيا: 'تكنولوجيا',
-  تصميم: 'تصميم',
-  أعمال: 'أعمال',
-  علوم: 'علوم',
-};
+import { renderWithIntl } from './test-utils';
 
 const mockBookmarks: Array<{
   id: string;
@@ -102,12 +81,12 @@ afterEach(() => {
   cleanup();
 });
 
-const renderWithIntl = (ui: React.ReactElement) =>
-  render(<IntlProvider locale="ar" messages={messages}>{ui}</IntlProvider>);
+const renderAr = (ui: React.ReactElement) =>
+  renderWithIntl(ui, { locale: 'ar' });
 
 describe('NavPanel', () => {
   it('shows action buttons', () => {
-    renderWithIntl(
+    renderAr(
       <NavPanel
         bookmarks={mockBookmarks}
         onSettingsClick={vi.fn()}
@@ -129,7 +108,7 @@ describe('NavPanel', () => {
 
   it('calls onFetchClick when fetch button is clicked', async () => {
     const onFetchClick = vi.fn();
-    renderWithIntl(
+    renderAr(
       <NavPanel
         bookmarks={mockBookmarks}
         onSettingsClick={vi.fn()}
@@ -148,7 +127,7 @@ describe('NavPanel', () => {
 
   it('calls onClassifyClick when classify button is clicked', async () => {
     const onClassifyClick = vi.fn();
-    renderWithIntl(
+    renderAr(
       <NavPanel
         bookmarks={mockBookmarks}
         onSettingsClick={vi.fn()}
@@ -167,7 +146,7 @@ describe('NavPanel', () => {
 
   it('calls onSettingsClick when settings button is clicked', async () => {
     const onSettingsClick = vi.fn();
-    renderWithIntl(
+    renderAr(
       <NavPanel
         bookmarks={mockBookmarks}
         onSettingsClick={onSettingsClick}
@@ -185,7 +164,7 @@ describe('NavPanel', () => {
   });
 
   it('displays bookmark grouped by topic', () => {
-    renderWithIntl(
+    renderAr(
       <NavPanel
         bookmarks={mockBookmarks}
         onSettingsClick={vi.fn()}
@@ -203,7 +182,7 @@ describe('NavPanel', () => {
   });
 
   it('hides fetch and classify buttons in mock mode', () => {
-    renderWithIntl(
+    renderAr(
       <NavPanel
         bookmarks={mockBookmarks}
         onSettingsClick={vi.fn()}
@@ -223,7 +202,7 @@ describe('NavPanel', () => {
 
   it('calls onToggleMockMode when mock mode button is clicked', async () => {
     const onToggleMockMode = vi.fn();
-    renderWithIntl(
+    renderAr(
       <NavPanel
         bookmarks={mockBookmarks}
         onSettingsClick={vi.fn()}

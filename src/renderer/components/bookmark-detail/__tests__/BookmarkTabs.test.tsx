@@ -3,20 +3,10 @@
  */
 import React from 'react';
 import { describe, it, expect, afterEach, vi } from 'vitest';
-import { render, screen, cleanup } from '@testing-library/react';
+import { screen, cleanup } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { IntlProvider } from 'react-intl';
 import BookmarkTabs from '../BookmarkTabs';
-import { LocaleContext } from '../../../App';
-
-const messages = {
-  closeTab: 'Close',
-  closeAllTabs: 'Close All',
-  closeTabsToRight: 'Close to Right',
-  closeTabsToLeft: 'Close to Left',
-  closeOtherTabs: 'Close Others',
-  reopenClosedTab: 'Reopen Closed Tab',
-};
+import { renderWithIntl } from '../../../__tests__/test-utils';
 
 afterEach(() => {
   cleanup();
@@ -39,25 +29,16 @@ const bookmarks: Array<{
   { id: '3', title: 'A Very Long Bookmark Title That Should Be Truncated Someday', titleAr: null, titleEn: 'A Very Long Bookmark Title That Should Be Truncated Someday', url: 'https://c.com', topic: 'science', priority: 'low', contentType: 'article', content: '', createdAt: '' },
 ];
 
-const renderWithProviders = (ui: React.ReactElement) =>
-  render(
-    <IntlProvider locale="en" messages={messages}>
-      <LocaleContext.Provider value={{ locale: 'en', setLocale: vi.fn() }}>
-        {ui}
-      </LocaleContext.Provider>
-    </IntlProvider>
-  );
-
 describe('BookmarkTabs', () => {
   it('renders nothing when no open bookmarks', () => {
-    const { container } = renderWithProviders(
+    const { container } = renderWithIntl(
       <BookmarkTabs openBookmarks={[]} activeBookmarkId={null} onTabSelect={vi.fn()} onTabClose={vi.fn()} />
     );
     expect(container.firstChild).toBeNull();
   });
 
   it('renders tabs for open bookmarks', () => {
-    renderWithProviders(
+    renderWithIntl(
       <BookmarkTabs openBookmarks={bookmarks} activeBookmarkId="1" onTabSelect={vi.fn()} onTabClose={vi.fn()} />
     );
     expect(screen.getByText('First Bookmark')).toBeDefined();
@@ -65,7 +46,7 @@ describe('BookmarkTabs', () => {
   });
 
   it('truncates long titles beyond 32 chars', () => {
-    renderWithProviders(
+    renderWithIntl(
       <BookmarkTabs openBookmarks={bookmarks} activeBookmarkId="1" onTabSelect={vi.fn()} onTabClose={vi.fn()} />
     );
     const longTab = screen.getAllByRole('tab')[2];
@@ -76,7 +57,7 @@ describe('BookmarkTabs', () => {
   it('calls onTabSelect when tab is clicked', async () => {
     const onTabSelect = vi.fn();
     const user = userEvent.setup();
-    renderWithProviders(
+    renderWithIntl(
       <BookmarkTabs openBookmarks={bookmarks} activeBookmarkId="1" onTabSelect={onTabSelect} onTabClose={vi.fn()} />
     );
     await user.click(screen.getByText('Second Bookmark'));
@@ -86,7 +67,7 @@ describe('BookmarkTabs', () => {
   it('calls onTabClose when close button is clicked', async () => {
     const onTabClose = vi.fn();
     const user = userEvent.setup();
-    renderWithProviders(
+    renderWithIntl(
       <BookmarkTabs openBookmarks={bookmarks} activeBookmarkId="1" onTabSelect={vi.fn()} onTabClose={onTabClose} />
     );
     const closeButtons = screen.getAllByRole('button');
@@ -95,7 +76,7 @@ describe('BookmarkTabs', () => {
   });
 
   it('marks active tab with aria-selected', () => {
-    renderWithProviders(
+    renderWithIntl(
       <BookmarkTabs openBookmarks={bookmarks} activeBookmarkId="2" onTabSelect={vi.fn()} onTabClose={vi.fn()} />
     );
     const tabs = screen.getAllByRole('tab');
@@ -104,7 +85,7 @@ describe('BookmarkTabs', () => {
   });
 
   it('applies active class to active tab', () => {
-    renderWithProviders(
+    renderWithIntl(
       <BookmarkTabs openBookmarks={bookmarks} activeBookmarkId="1" onTabSelect={vi.fn()} onTabClose={vi.fn()} />
     );
     const tabs = screen.getAllByRole('tab');
@@ -113,7 +94,7 @@ describe('BookmarkTabs', () => {
   });
 
   it('applies rtl class when dir=rtl', () => {
-    const { container } = renderWithProviders(
+    const { container } = renderWithIntl(
       <BookmarkTabs openBookmarks={bookmarks} activeBookmarkId="1" onTabSelect={vi.fn()} onTabClose={vi.fn()} dir="rtl" />
     );
     const tabBar = container.querySelector('[role="tablist"]');
@@ -122,7 +103,7 @@ describe('BookmarkTabs', () => {
   });
 
   it('does not apply rtl class when dir=ltr', () => {
-    const { container } = renderWithProviders(
+    const { container } = renderWithIntl(
       <BookmarkTabs openBookmarks={bookmarks} activeBookmarkId="1" onTabSelect={vi.fn()} onTabClose={vi.fn()} dir="ltr" />
     );
     const tabBar = container.querySelector('[role="tablist"]');
@@ -132,7 +113,7 @@ describe('BookmarkTabs', () => {
 
   describe('drag-to-edge', () => {
     it('sets draggable attribute on tabs', () => {
-      renderWithProviders(
+      renderWithIntl(
         <BookmarkTabs
           openBookmarks={bookmarks}
           activeBookmarkId="1"
@@ -147,7 +128,7 @@ describe('BookmarkTabs', () => {
     });
 
     it('does not set draggable when columnId is not provided', () => {
-      renderWithProviders(
+      renderWithIntl(
         <BookmarkTabs
           openBookmarks={bookmarks}
           activeBookmarkId="1"
@@ -160,7 +141,7 @@ describe('BookmarkTabs', () => {
     });
 
     it('sets bookmark ID and column ID in dataTransfer on dragStart', () => {
-      renderWithProviders(
+      renderWithIntl(
         <BookmarkTabs
           openBookmarks={bookmarks}
           activeBookmarkId="1"
@@ -179,7 +160,7 @@ describe('BookmarkTabs', () => {
     });
 
     it('clears dataTransfer on dragEnd', () => {
-      renderWithProviders(
+      renderWithIntl(
         <BookmarkTabs
           openBookmarks={bookmarks}
           activeBookmarkId="1"
@@ -197,7 +178,7 @@ describe('BookmarkTabs', () => {
     });
 
     it('applies dragging class during drag', () => {
-      renderWithProviders(
+      renderWithIntl(
         <BookmarkTabs
           openBookmarks={bookmarks}
           activeBookmarkId="1"

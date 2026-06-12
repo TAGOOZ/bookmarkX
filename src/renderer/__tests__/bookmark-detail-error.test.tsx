@@ -3,9 +3,9 @@
  */
 import React from 'react';
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { render, screen, cleanup } from '@testing-library/react';
-import { IntlProvider } from 'react-intl';
+import { screen, cleanup } from '@testing-library/react';
 import BookmarkDetail from '../components/bookmark-detail/BookmarkDetail';
+import { renderWithIntl } from './test-utils';
 
 Object.defineProperty(window, 'matchMedia', {
   writable: true,
@@ -20,27 +20,6 @@ Object.defineProperty(window, 'matchMedia', {
     dispatchEvent: vi.fn(),
   })),
 });
-
-const messages = {
-  selectBookmark: 'Select a bookmark',
-  article: 'Article',
-  words: 'words',
-  minRead: 'min read',
-  noArticleContent: 'No article content',
-  enhanced: 'Enhanced:',
-  dismissEnhanced: 'Dismiss enhanced text',
-  parsingArticle: 'Parsing article...',
-  parseErrorTitle: 'Failed to parse article',
-  retry: 'Retry',
-  summary: 'Summary',
-  glossary: 'Glossary',
-  highlights: 'Highlights',
-  notes: 'Notes',
-  chat: 'Chat',
-  expandCollapseAll: 'Expand/Collapse All',
-  readerMode: 'Reader Mode',
-  exitReaderMode: 'Exit Reader Mode',
-};
 
 const mockExtractArticle = vi.fn();
 const mockGetArticleContent = vi.fn();
@@ -79,9 +58,6 @@ beforeEach(() => {
 afterEach(() => {
   cleanup();
 });
-
-const renderWithIntl = (ui: React.ReactElement) =>
-  render(<IntlProvider locale="en" messages={messages}>{ui}</IntlProvider>);
 
 const createMockBookmark = (overrides: Record<string, unknown> = {}) => ({
   id: 'test-bookmark-1',

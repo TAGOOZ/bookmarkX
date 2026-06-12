@@ -3,24 +3,11 @@
  */
 import React from 'react';
 import { describe, it, expect, vi, afterEach } from 'vitest';
-import { render, screen, cleanup, fireEvent } from '@testing-library/react';
-import { IntlProvider } from 'react-intl';
+import { screen, cleanup, fireEvent } from '@testing-library/react';
 import EnhanceToolbar from '../EnhanceToolbar';
-
-const messages = {
-  enhanceBtn: 'Enhance',
-  highlightBtn: 'Highlight',
-  referenceBtn: 'Reference',
-  enhanceBtnAria: 'Enhance selected text',
-  highlightBtnAria: 'Highlight selected text',
-  referenceBtnAria: 'Copy reference link',
-  closeToolbarAria: 'Close toolbar',
-};
+import { renderWithIntl } from '../../../__tests__/test-utils';
 
 afterEach(() => { cleanup(); });
-
-const renderWithIntl = (ui: React.ReactElement) =>
-  render(<IntlProvider locale="en" messages={messages}>{ui}</IntlProvider>);
 
 describe('EnhanceToolbar', () => {
   const defaultProps = {

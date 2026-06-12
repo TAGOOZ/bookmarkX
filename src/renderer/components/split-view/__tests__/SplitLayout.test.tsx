@@ -3,12 +3,11 @@
  */
 import React from 'react';
 import { describe, it, expect, afterEach, vi } from 'vitest';
-import { render, screen, cleanup, fireEvent } from '@testing-library/react';
-import { IntlProvider } from 'react-intl';
-import { LocaleContext } from '../../../App';
+import { screen, cleanup, fireEvent } from '@testing-library/react';
 import SplitLayout from '../SplitLayout';
 import SplitDivider from '../SplitDivider';
 import type { SplitState } from '../types';
+import { renderWithIntl } from '../../../__tests__/test-utils';
 
 vi.mock('../../bookmark-detail/BookmarkDetail', () => ({
   default: ({ bookmark }: { bookmark: { title: string } | null }) => (
@@ -25,11 +24,6 @@ vi.mock('../../bookmark-detail/BookmarkTabs', () => ({
     </div>
   ),
 }));
-
-const messages = {
-  openInNewColumn: 'Open in New Column',
-  closeTab: 'Close',
-};
 
 afterEach(() => {
   cleanup();
@@ -51,18 +45,9 @@ const bookmarks: Array<{
   { id: '2', title: 'Second', titleAr: null, titleEn: 'Second', url: 'https://b.com', topic: 'design', priority: 'medium', contentType: 'video', content: '', createdAt: '' },
 ];
 
-const renderWithProviders = (ui: React.ReactElement) =>
-  render(
-    <IntlProvider locale="en" messages={messages}>
-      <LocaleContext.Provider value={{ locale: 'en', setLocale: vi.fn() }}>
-        {ui}
-      </LocaleContext.Provider>
-    </IntlProvider>
-  );
-
 describe('SplitDivider', () => {
   it('renders a separator element', () => {
-    const { container } = renderWithProviders(
+    const { container } = renderWithIntl(
       <SplitDivider onResize={vi.fn()} dir="ltr" />
     );
     expect(container.querySelector('[role="separator"]')).toBeTruthy();
@@ -70,7 +55,7 @@ describe('SplitDivider', () => {
 
   it('calls onResize with delta on pointer drag', () => {
     const onResize = vi.fn();
-    const { container } = renderWithProviders(
+    const { container } = renderWithIntl(
       <SplitDivider onResize={onResize} dir="ltr" />
     );
     const separator = container.querySelector('[role="separator"]')!;
@@ -105,7 +90,7 @@ describe('SplitLayout', () => {
       columns: [{ id: 'col-1', bookmarkId: null, width: 1 }],
       activeColumnId: 'col-1',
     };
-    const { container } = renderWithProviders(
+    const { container } = renderWithIntl(
       <SplitLayout {...defaultProps} splitState={state} />
     );
     expect(container.querySelector('[role="separator"]')).toBeNull();
@@ -117,7 +102,7 @@ describe('SplitLayout', () => {
       columns: [{ id: 'col-1', bookmarkId: '1', width: 1 }],
       activeColumnId: 'col-1',
     };
-    renderWithProviders(
+    renderWithIntl(
       <SplitLayout {...defaultProps} splitState={state} />
     );
     expect(screen.getByTestId('bookmark-detail').textContent).toBe('First');
@@ -131,7 +116,7 @@ describe('SplitLayout', () => {
       ],
       activeColumnId: 'col-1',
     };
-    const { container } = renderWithProviders(
+    const { container } = renderWithIntl(
       <SplitLayout {...defaultProps} splitState={state} />
     );
     const details = screen.getAllByTestId('bookmark-detail');
@@ -146,7 +131,7 @@ describe('SplitLayout', () => {
       columns: [{ id: 'col-1', bookmarkId: null, width: 1 }],
       activeColumnId: 'col-1',
     };
-    const { container } = renderWithProviders(
+    const { container } = renderWithIntl(
       <SplitLayout {...defaultProps} splitState={state} dir="rtl" />
     );
     expect((container.firstChild as HTMLElement).getAttribute('dir')).toBe('rtl');
@@ -158,7 +143,7 @@ describe('SplitLayout', () => {
         columns: [{ id: 'col-1', bookmarkId: '1', width: 1 }],
         activeColumnId: 'col-1',
       };
-      const { container } = renderWithProviders(
+      const { container } = renderWithIntl(
         <SplitLayout {...defaultProps} splitState={state} />
       );
       expect(container.querySelector('[data-drop-zone="left"]')).toBeTruthy();
@@ -171,7 +156,7 @@ describe('SplitLayout', () => {
         columns: [{ id: 'col-1', bookmarkId: '1', width: 1 }],
         activeColumnId: 'col-1',
       };
-      const { container } = renderWithProviders(
+      const { container } = renderWithIntl(
         <SplitLayout {...defaultProps} splitState={state} onSplitColumn={onSplitColumn} />
       );
       const leftZone = container.querySelector('[data-drop-zone="left"]')!;
@@ -188,7 +173,7 @@ describe('SplitLayout', () => {
         ],
         activeColumnId: 'col-1',
       };
-      const { container } = renderWithProviders(
+      const { container } = renderWithIntl(
         <SplitLayout {...defaultProps} splitState={state} />
       );
       const leftZone = container.querySelector('[data-drop-zone="left"]') as HTMLElement;
@@ -200,7 +185,7 @@ describe('SplitLayout', () => {
         columns: [{ id: 'col-1', bookmarkId: '1', width: 1 }],
         activeColumnId: 'col-1',
       };
-      const { container } = renderWithProviders(
+      const { container } = renderWithIntl(
         <SplitLayout {...defaultProps} splitState={state} />
       );
       const leftZone = container.querySelector('[data-drop-zone="left"]')!;

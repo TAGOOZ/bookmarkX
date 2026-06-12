@@ -3,9 +3,9 @@
  */
 import React from 'react';
 import { describe, it, expect, beforeAll, afterEach, vi } from 'vitest';
-import { render, screen, cleanup } from '@testing-library/react';
-import { IntlProvider } from 'react-intl';
+import { screen, cleanup } from '@testing-library/react';
 import BookmarkDetail from '../BookmarkDetail';
+import { renderWithIntl } from '../../../__tests__/test-utils';
 
 afterEach(() => { cleanup(); });
 
@@ -24,11 +24,6 @@ beforeAll(() => {
     })),
   });
 });
-
-const messages = { selectBookmark: 'Select a bookmark' };
-
-const renderWithIntl = (ui: React.ReactElement) =>
-  render(<IntlProvider locale="en" messages={messages}>{ui}</IntlProvider>);
 
 const baseBookmark = {
   id: '1',
