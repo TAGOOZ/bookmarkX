@@ -124,15 +124,24 @@ export async function setBookmarkHashtags(
   bookmarkId: string,
   hashtagNames: string[],
 ): Promise<void> {
-  // Remove existing
-  await db.execute({
-    sql: 'DELETE FROM bookmark_hashtags WHERE bookmark_id = ?',
-    args: [bookmarkId],
-  });
-
-  // Add new
+  // First, get or create all hashtags
+  const hashtagIds: string[] = [];
   for (const name of hashtagNames) {
     const hashtag = await getOrCreateHashtag(db, name);
-    await attachHashtagToBookmark(db, bookmarkId, hashtag.id);
+    hashtagIds.push(hashtag.id);
   }
+
+  // Execute delete + inserts in a single batch
+  const statements = [
+    {
+      sql: 'DELETE FROM bookmark_hashtags WHERE bookmark_id = ?',
+      args: [bookmarkId],
+    },
+    ...hashtagIds.map((id) => ({
+      sql: 'INSERT OR IGNORE INTO bookmark_hashtags (bookmark_id, hashtag_id) VALUES (?, ?)',
+      args: [bookmarkId, id],
+    })),
+  ];
+
+  await db.batch(statements);
 }
