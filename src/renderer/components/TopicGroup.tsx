@@ -23,6 +23,8 @@ interface TopicGroupProps {
   children?: React.ReactNode;
   onRename?: (topicId: string, newName: string) => void;
   onDelete?: (topicId: string) => void;
+  onMoveBookmark?: (bookmarkId: string, targetTopicId: string | null) => void;
+  isDragOver?: boolean;
 }
 
 const TopicGroup: React.FC<TopicGroupProps> = ({
@@ -39,12 +41,15 @@ const TopicGroup: React.FC<TopicGroupProps> = ({
   children,
   onRename,
   onDelete,
+  onMoveBookmark,
+  isDragOver,
 }) => {
   const intl = useIntl();
   const [showAll, setShowAll] = useState(false);
   const [showContextMenu, setShowContextMenu] = useState(false);
   const [isRenaming, setIsRenaming] = useState(false);
   const [renameValue, setRenameValue] = useState(topic);
+  const [localDragOver, setLocalDragOver] = useState(false);
   const hasMore = bookmarks.length > maxVisible;
   const shouldVirtualize = bookmarks.length > VIRTUALIZE_THRESHOLD;
   const visibleBookmarks = showAll ? bookmarks : bookmarks.slice(0, maxVisible);
@@ -108,8 +113,39 @@ const TopicGroup: React.FC<TopicGroupProps> = ({
     setShowContextMenu(false);
   }, [topicId, onDelete]);
 
+  const handleDragStart = useCallback((e: React.DragEvent, bookmark: Bookmark) => {
+    e.dataTransfer.setData('application/bookmark-id', bookmark.id);
+    e.dataTransfer.setData('text/plain', bookmark.id);
+    e.dataTransfer.effectAllowed = 'move';
+  }, []);
+
+  const handleDragOver = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+    setLocalDragOver(true);
+  }, []);
+
+  const handleDragLeave = useCallback(() => {
+    setLocalDragOver(false);
+  }, []);
+
+  const handleDrop = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    setLocalDragOver(false);
+    const draggedBookmarkId = e.dataTransfer.getData('application/bookmark-id');
+    if (draggedBookmarkId && onMoveBookmark) {
+      onMoveBookmark(draggedBookmarkId, topicId || null);
+    }
+  }, [topicId, onMoveBookmark]);
+
   return (
-    <div className="topic-group" style={{ paddingInlineStart: depth > 0 ? `${depth * 12}px` : undefined }}>
+    <div
+      className={`topic-group ${isDragOver || localDragOver ? 'topic-group-drag-over' : ''}`}
+      style={{ paddingInlineStart: depth > 0 ? `${depth * 12}px` : undefined }}
+      onDragOver={handleDragOver}
+      onDragLeave={handleDragLeave}
+      onDrop={handleDrop}
+    >
       <div className="topic-group-header-row">
         <button
           className="topic-group-header"
@@ -189,6 +225,8 @@ const TopicGroup: React.FC<TopicGroupProps> = ({
                       role="button"
                       tabIndex={0}
                       aria-selected={selectedBookmarkId === bookmark.id}
+                      draggable
+                      onDragStart={(e) => handleDragStart(e, bookmark)}
                       onClick={() => onSelectBookmark(bookmark)}
                       onKeyDown={(e) =>
                         (e.key === 'Enter' || e.key === ' ') &&
@@ -226,6 +264,8 @@ const TopicGroup: React.FC<TopicGroupProps> = ({
                 role="button"
                 tabIndex={0}
                 aria-selected={selectedBookmarkId === bookmark.id}
+                draggable
+                onDragStart={(e) => handleDragStart(e, bookmark)}
                 onClick={() => onSelectBookmark(bookmark)}
                 onKeyDown={(e) =>
                   (e.key === 'Enter' || e.key === ' ') &&

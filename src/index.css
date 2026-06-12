@@ -185,6 +185,13 @@ body {
   margin-bottom: var(--space-xs);
 }
 
+.topic-group-drag-over {
+  background-color: var(--accent-color-alpha, rgba(99, 102, 241, 0.1));
+  border-radius: var(--radius-m);
+  outline: 2px dashed var(--accent-color);
+  outline-offset: -2px;
+}
+
 .topic-group-header {
   display: flex;
   align-items: center;
@@ -1236,4 +1243,90 @@ body {
     padding: 0;
     margin: 0;
   }
+}
+
+/* Import Progress */
+.import-progress {
+  padding: var(--space-m);
+  background-color: var(--bg-secondary);
+  border-radius: var(--radius-m);
+  margin: var(--space-s) var(--space-m);
+}
+
+.import-progress-header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-s);
+  margin-bottom: var(--space-s);
+}
+
+.import-progress-status {
+  font-size: var(--font-ui-small);
+  font-weight: 500;
+}
+
+.import-control-btn {
+  margin-inline-start: auto;
+  background: none;
+  border: none;
+  color: var(--text-secondary);
+  cursor: pointer;
+  padding: var(--space-xs);
+  border-radius: var(--radius-s);
+}
+
+.import-control-btn:hover {
+  background-color: var(--bg-tertiary);
+  color: var(--text-primary);
+}
+
+.import-progress-stats {
+  display: flex;
+  gap: var(--space-m);
+  font-size: var(--font-ui-small);
+  color: var(--text-secondary);
+  margin-bottom: var(--space-s);
+}
+
+.import-progress-bar {
+  height: 4px;
+  background-color: var(--bg-tertiary);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.import-progress-bar-fill {
+  height: 100%;
+  background-color: var(--accent-color);
+  border-radius: 2px;
+  animation: import-progress-indeterminate 1.5s infinite;
+}
+
+@keyframes import-progress-indeterminate {
+  0% { width: 0%; margin-inline-start: 0; }
+  50% { width: 40%; margin-inline-start: 30%; }
+  100% { width: 0%; margin-inline-start: 100%; }
+}
+
+.import-spinning {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.import-success {
+  color: var(--color-success, #22c55e);
+}
+
+.import-error {
+  color: var(--color-error, #ef4444);
+}
+
+.import-progress-error {
+  font-size: var(--font-ui-small);
+  color: var(--color-error, #ef4444);
+  margin-top: var(--space-s);
 }

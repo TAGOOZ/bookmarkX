@@ -93,7 +93,7 @@ describe('blocksToMarkdown', () => {
 
   it('converts images', () => {
     const blocks = [
-      { type: 'image', props: { url: 'photo.jpg', alt: 'alt text' }, content: undefined },
+      { type: 'image', props: { url: 'photo.jpg', alt: 'alt text' }, content: undefined as any },
     ];
     const md = blocksToMarkdown(blocks);
     expect(md).toBe('![alt text](photo.jpg)');
@@ -101,7 +101,7 @@ describe('blocksToMarkdown', () => {
 
   it('converts images without alt', () => {
     const blocks = [
-      { type: 'image', props: { url: 'photo.jpg', alt: '' }, content: undefined },
+      { type: 'image', props: { url: 'photo.jpg', alt: '' }, content: undefined as any },
     ];
     const md = blocksToMarkdown(blocks);
     expect(md).toBe('![](photo.jpg)');

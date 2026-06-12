@@ -12,23 +12,23 @@ const mockExecFile = vi.mocked(execFile);
 
 function mockBirdOutput(data: any[]) {
   mockExecFile.mockImplementation(
-    (_cmd: any, _args: any, _opts: any, cb: any) => {
+    ((_cmd: any, _args: any, _opts: any, cb: any) => {
       if (typeof _opts === 'function') {
         cb = _opts;
       }
       cb(null, JSON.stringify(data), '');
-    }
+    }) as any
   );
 }
 
 function mockBirdError(message: string) {
   mockExecFile.mockImplementation(
-    (_cmd: any, _args: any, _opts: any, cb: any) => {
+    ((_cmd: any, _args: any, _opts: any, cb: any) => {
       if (typeof _opts === 'function') {
         cb = _opts;
       }
       cb(new Error(message), '', '');
-    }
+    }) as any
   );
 }
 
@@ -151,12 +151,12 @@ describe('fetchBookmarks', () => {
   });
 
   it('throws on invalid JSON output', async () => {
-    mockExecFile.mockImplementation((_cmd, _args, _opts, cb: any) => {
+    mockExecFile.mockImplementation(((_cmd: any, _args: any, _opts: any, cb: any) => {
       if (typeof _opts === 'function') {
         cb = _opts;
       }
       cb(null, 'not json', '');
-    });
+    }) as any);
 
     await expect(fetchBookmarks({ authToken: 'token', ct0: 'ct0' })).rejects.toThrow();
   });

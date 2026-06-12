@@ -45,4 +45,32 @@ export function registerPipelineIpc(ipcMain: IpcMain, db: Client) {
       apiKey: env.apiKey,
     });
   });
+
+  ipcMain.handle('start-batch-import', async () => {
+    const { startBatchImport } = await import('../../pipeline/batch-import');
+    const env = getConfigEnv();
+    const jobId = await startBatchImport(db, {
+      authToken: env.authToken,
+      ct0: env.ct0,
+      chromeProfile: env.chromeProfile,
+      apiKey: env.apiKey,
+    });
+    return { jobId };
+  });
+
+  ipcMain.handle('pause-batch-import', async () => {
+    const { pauseImport } = await import('../../pipeline/batch-import');
+    pauseImport();
+    return { success: true };
+  });
+
+  ipcMain.handle('get-import-status', async (_event, jobId: string) => {
+    const { getImportStatus } = await import('../../pipeline/batch-import');
+    return getImportStatus(db, jobId);
+  });
+
+  ipcMain.handle('get-active-import', async () => {
+    const { getActiveImport } = await import('../../pipeline/batch-import');
+    return getActiveImport(db);
+  });
 }

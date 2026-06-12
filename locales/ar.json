@@ -150,5 +150,14 @@
   "editSection": "تعديل القسم",
   "moveSectionUp": "نقل القسم لأعلى",
   "moveSectionDown": "نقل القسم لأسفل",
-  "deleteSection": "حذف القسم"
+  "deleteSection": "حذف القسم",
+  "startImport": "بدء الاستيراد",
+  "importing": "جاري الاستيراد...",
+  "importPaused": "تم إيقاف الاستيراد",
+  "importComplete": "اكتمل الاستيراد",
+  "importFailed": "فشل الاستيراد",
+  "pauseImport": "إيقاف مؤقت",
+  "resumeImport": "استئناف",
+  "fetched": "تم الجلب",
+  "classified": "تم التصنيف"
 }

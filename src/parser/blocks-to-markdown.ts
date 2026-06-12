@@ -1,5 +1,3 @@
-import type { PartialBlock } from '@blocknote/core';
-
 type InlineItem = { type: string; text?: string; styles?: Record<string, any>; props?: Record<string, any> };
 
 function serializeInline(content: any): string {
@@ -94,7 +92,7 @@ interface BlockGroup {
   text: string;
 }
 
-export function blocksToMarkdown(blocks: PartialBlock[]): string {
+export function blocksToMarkdown(blocks: any[]): string {
   const groups: BlockGroup[] = [];
 
   for (const raw of blocks) {

@@ -1,6 +1,6 @@
 import { execFile } from 'child_process';
 import dotenv from 'dotenv';
-import type { Bookmark, FetchOptions } from './types';
+import type { Bookmark, FetchOptions, FetchResult } from './types';
 
 dotenv.config();
 
@@ -43,9 +43,15 @@ function mapBookmark(raw: any): Bookmark {
 export async function fetchBookmarks(
   options: FetchOptions = {}
 ): Promise<Bookmark[]> {
-  const { count = 20, authToken, ct0, chromeProfile, firefoxProfile } = options;
+  const result = await fetchBookmarksPaginated(options);
+  return result.bookmarks;
+}
 
-  // Validate credentials before calling bird
+export async function fetchBookmarksPaginated(
+  options: FetchOptions = {}
+): Promise<FetchResult> {
+  const { count = 20, cursor, authToken, ct0, chromeProfile, firefoxProfile } = options;
+
   if (!authToken || !ct0) {
     throw new Error(
       'Missing X/Twitter credentials. Open Settings and either:\n' +
@@ -55,6 +61,7 @@ export async function fetchBookmarks(
   }
 
   const args = ['bookmarks', '--json', '--count', String(count)];
+  if (cursor) args.push('--cursor', cursor);
 
   const env: Record<string, string> = {};
   if (authToken) env.AUTH_TOKEN = authToken;
@@ -71,9 +78,21 @@ export async function fetchBookmarks(
   } catch {
     throw new Error(`Failed to parse bird output as JSON: ${stdout.substring(0, 200)}`);
   }
-  if (!Array.isArray(raw)) {
+
+  let bookmarks: Bookmark[];
+  let nextCursor: string | null = null;
+  let hasMore = false;
+
+  if (Array.isArray(raw)) {
+    bookmarks = raw.map(mapBookmark);
+  } else if (raw && typeof raw === 'object' && 'bookmarks' in raw) {
+    const data = raw as { bookmarks: any[]; cursor?: string; has_more?: boolean };
+    bookmarks = (data.bookmarks || []).map(mapBookmark);
+    nextCursor = data.cursor || null;
+    hasMore = data.has_more ?? bookmarks.length >= count;
+  } else {
     throw new Error(`Unexpected bird output: ${typeof raw}`);
   }
 
-  return raw.map(mapBookmark);
+  return { bookmarks, nextCursor, hasMore };
 }

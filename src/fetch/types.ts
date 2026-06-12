@@ -14,8 +14,15 @@ export interface Bookmark {
 
 export interface FetchOptions {
   count?: number;
+  cursor?: string;
   authToken?: string;
   ct0?: string;
   chromeProfile?: string;
   firefoxProfile?: string;
+}
+
+export interface FetchResult {
+  bookmarks: Bookmark[];
+  nextCursor: string | null;
+  hasMore: boolean;
 }

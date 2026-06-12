@@ -7,6 +7,7 @@ import {
 import type { Bookmark } from '../types';
 import TopicGroup from './TopicGroup';
 import SearchOverlay from './SearchOverlay';
+import ImportProgress from './ImportProgress';
 import { NotificationBell, NotificationPanel } from './notifications';
 import type { NotificationItem } from './notifications';
 
@@ -73,6 +74,15 @@ const NavPanel: React.FC<NavPanelProps> = ({
   const [userName, setUserName] = useState('');
   const [showCreateTopic, setShowCreateTopic] = useState(false);
   const [newTopicName, setNewTopicName] = useState('');
+
+  const refreshTopicTree = useCallback(async () => {
+    try {
+      const tree = await (window as any).api?.getTopicTree?.();
+      if (tree) setTopicTree(tree);
+    } catch {
+      // ignore
+    }
+  }, []);
 
   useEffect(() => {
     try {
@@ -217,6 +227,16 @@ const NavPanel: React.FC<NavPanelProps> = ({
     }
   }, []);
 
+  const handleMoveBookmark = useCallback(async (bookmarkId: string, targetTopicId: string | null) => {
+    try {
+      await (window as any).api?.moveBookmarkToTopic?.(bookmarkId, targetTopicId);
+      const tree = await (window as any).api?.getTopicTree?.();
+      if (tree) setTopicTree(tree);
+    } catch (err) {
+      console.error('Failed to move bookmark:', err);
+    }
+  }, []);
+
   const renderTopicNodes = (nodes: TopicTreeNode[], depth = 0) =>
     nodes.map((node) => {
       const bookmarksInTopic = bookmarkTopicMap.get(node.name) ?? [];
@@ -237,6 +257,7 @@ const NavPanel: React.FC<NavPanelProps> = ({
           totalCount={node.bookmark_count}
           onRename={handleRenameTopic}
           onDelete={handleDeleteTopic}
+          onMoveBookmark={handleMoveBookmark}
         >
           {hasChildren && expanded && renderTopicNodes(node.children, depth + 1)}
         </TopicGroup>
@@ -264,6 +285,7 @@ const NavPanel: React.FC<NavPanelProps> = ({
       </button>
       {!mockMode && (
         <>
+          <ImportProgress onRefresh={refreshTopicTree} />
           <button
             className="nav-panel-tab"
             onClick={onFetchClick}
@@ -348,6 +370,7 @@ const NavPanel: React.FC<NavPanelProps> = ({
                   onSelectBookmark={onSelectBookmark}
                   selectedBookmarkId={selectedBookmarkId}
                   depth={0}
+                  onMoveBookmark={handleMoveBookmark}
                 />
               ))
             ) : (

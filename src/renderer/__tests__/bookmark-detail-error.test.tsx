@@ -52,7 +52,20 @@ beforeEach(() => {
     generateGlossary: vi.fn(),
     enhanceNote: vi.fn(),
     searchArticles: vi.fn(),
-  };
+    exportBookmark: vi.fn(),
+    importMarkdown: vi.fn(),
+    getTopicTree: vi.fn(),
+    createTopic: vi.fn(),
+    renameTopic: vi.fn(),
+    reparentTopic: vi.fn(),
+    deleteTopic: vi.fn(),
+    moveBookmarkToTopic: vi.fn(),
+    getAllHashtags: vi.fn(),
+    getBookmarkHashtags: vi.fn().mockResolvedValue([]),
+    attachHashtagToBookmark: vi.fn(),
+    detachHashtagFromBookmark: vi.fn(),
+    setBookmarkHashtags: vi.fn(),
+  } as any;
 });
 
 afterEach(() => {
@@ -65,7 +78,7 @@ const createMockBookmark = (overrides: Record<string, unknown> = {}) => ({
   url: 'https://example.com/article',
   content_type: 'outer_link' as const,
   title: 'Test Article',
-  title_ar: null,
+  title_ar: null as string | null,
   title_en: 'Test Article',
   author_name: 'Test Author',
   author_handle: '@testauthor',
