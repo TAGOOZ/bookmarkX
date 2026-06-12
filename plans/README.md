@@ -34,6 +34,15 @@ honor its STOP conditions, and update your row when done.
 | 024 | Fix incomplete FTS5 query sanitization | P1 | S | — | DONE |
 | 025 | Wrap setBookmarkHashtags in transaction | P1 | S | — | DONE |
 | 026 | Add selected_text column to chat_messages | P2 | S | — | DONE |
+| 027 | Fix tab close to remove single tab instead of merging entire column | P1 | S | — | TODO |
+| 028 | Fix openBookmarks to track all open tabs globally across columns | P1 | M | 027 | TODO |
+| 029 | Guard reopen closed tab against duplicates | P2 | S | — | TODO |
+| 030 | Fix context menu to stay within viewport bounds | P3 | S | — | TODO |
+| 031 | Add auto-scroll active tab into view | P3 | S | — | TODO |
+| 032 | Add keyboard navigation to tabs | P2 | M | — | TODO |
+| 033 | Fix stale closed tabs by storing only IDs | P3 | S | — | REJECTED — complexity outweighs benefit for edge case |
+| 034 | Fix RTL context menu positioning | P3 | S | 030 | TODO |
+| 035 | Add comprehensive test coverage for tabs | P2 | M | 027,028,029,030,031,032 | TODO |
 
 Status values: TODO | IN PROGRESS | DONE | BLOCKED (with one-line reason) | REJECTED (with one-line rationale)
 
@@ -45,6 +54,9 @@ Status values: TODO | IN PROGRESS | DONE | BLOCKED (with one-line reason) | REJE
 - 018 depends on 009 because typed window.api access should land before hook extraction refactor
 - 020 works without 019 (falls back to metadata-only when article content is absent)
 - 021 is independent of other new plans
+- 028 depends on 027 because openBookmarks fix needs the new handleTabCloseTab action from 027
+- 034 depends on 030 because RTL positioning builds on the viewport clamping logic
+- 035 depends on 027,028,029,030,031,032 because all tab fixes must land before the test plan validates them
 
 ## Recommended execution order
 
@@ -54,10 +66,16 @@ Status values: TODO | IN PROGRESS | DONE | BLOCKED (with one-line reason) | REJE
 **Phase 2 — Security + perf (P1)**:
 023 → 021 → 020 → 006 → 008 → 010 → 011 → 009 → 007 → 013 → 012
 
-**Phase 3 — DX + cleanup (P3)**:
+**Phase 3 — Tabs bug fixes (P1-P2)**:
+027 → 028 → 029 → 030 → 034 → 031 → 032
+
+**Phase 4 — Tabs test coverage (P2, after all fixes land)**:
+035
+
+**Phase 5 — DX + cleanup (P3)**:
 014 → 015 → 016 → 017 → 018
 
-**Phase 4 — Feature plumbing (P2)**:
+**Phase 6 — Feature plumbing (P2)**:
 026
 
 ## Findings considered and rejected
@@ -136,3 +154,4 @@ Status values: TODO | IN PROGRESS | DONE | BLOCKED (with one-line reason) | REJE
 - **bookmarkToBlocks round-trip (DIRECTION-12)**: Low risk, deferred.
 - **No Ollama fallback (DIRECTION-13)**: Phase 4 roadmap item.
 - **Print stylesheet missing (DIRECTION-14)**: Feature gap, deferred.
+- **Stale closed tabs in localStorage (TABS-07)**: Complexity outweighs benefit — storing only IDs requires resolving on load, backward compat handling, and the staleness is an edge case. Revisit if users report stale data.
