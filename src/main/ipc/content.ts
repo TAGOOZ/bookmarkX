@@ -103,6 +103,12 @@ export function registerContentIpc(ipcMain: IpcMain, db: Client) {
   });
 
   ipcMain.handle('add-glossary-term', async (_event, term: string, definition: string) => {
+    if (typeof term !== 'string' || term.length === 0 || term.length > 500) {
+      throw new Error('Glossary term must be between 1 and 500 characters');
+    }
+    if (typeof definition !== 'string' || definition.length > 5000) {
+      throw new Error('Glossary definition must not exceed 5000 characters');
+    }
     const { addTerm } = await import('../../db/glossary');
     return addTerm(db, term, definition);
   });
@@ -162,6 +168,12 @@ export function registerContentIpc(ipcMain: IpcMain, db: Client) {
   });
 
   ipcMain.handle('create-custom-section', async (_event, bookmarkId: string, title: string, content?: string) => {
+    if (typeof title !== 'string' || title.length === 0 || title.length > 500) {
+      throw new Error('Custom section title must be between 1 and 500 characters');
+    }
+    if (typeof content === 'string' && content.length > 50000) {
+      throw new Error('Custom section content must not exceed 50000 characters');
+    }
     const { createCustomSection } = await import('../../db/custom-sections');
     return createCustomSection(db, bookmarkId, title, content || '');
   });
@@ -179,6 +191,12 @@ export function registerContentIpc(ipcMain: IpcMain, db: Client) {
   });
 
   ipcMain.handle('reorder-custom-sections', async (_event, orderedIds: string[]) => {
+    if (!Array.isArray(orderedIds) || orderedIds.length === 0) {
+      throw new Error('orderedIds must be a non-empty array');
+    }
+    if (orderedIds.length > 1000) {
+      throw new Error('orderedIds must not exceed 1000 items');
+    }
     const { reorderCustomSections } = await import('../../db/custom-sections');
     await reorderCustomSections(db, orderedIds);
     return { success: true };
