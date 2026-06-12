@@ -2,6 +2,15 @@ import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { useIntl } from 'react-intl';
 import type { Bookmark } from '../types';
 
+function escapeHtml(str: string): string {
+  return str
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
 interface ArticleSearchResult {
   bookmark_id: string;
   snippet: string;
@@ -199,7 +208,7 @@ const SearchOverlay: React.FC<SearchOverlayProps> = ({
                   </div>
                   <div
                     className="search-overlay-item-snippet"
-                    dangerouslySetInnerHTML={{ __html: snippet }}
+                    dangerouslySetInnerHTML={{ __html: escapeHtml(snippet) }}
                   />
                   <div className="search-overlay-item-domain">
                     {getDomain(bookmark.url)}

@@ -42,7 +42,13 @@ export async function generateGlossary(
 
   const prompt = buildGlossaryPrompt(content, options.title);
   const text = await callGemini(prompt, { apiKey, model });
-  const result = JSON.parse(text) as { terms?: GlossaryTermResult[] };
+
+  let result: { terms?: GlossaryTermResult[] };
+  try {
+    result = JSON.parse(text) as { terms?: GlossaryTermResult[] };
+  } catch {
+    throw new Error(`Failed to parse glossary response as JSON: ${text.substring(0, 200)}`);
+  }
 
   if (!result.terms || !Array.isArray(result.terms)) {
     throw new Error('Invalid glossary result');

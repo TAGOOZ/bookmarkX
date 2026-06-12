@@ -164,6 +164,7 @@ export const useBookmarkStore = create<BookmarkStore>((set, get) => ({
 
   handleMergeColumn: (columnId) => {
     set((state) => {
+      if (state.splitState.columns.length === 0) return state;
       if (state.splitState.columns.length === 1) {
         const newSplit: SplitState = {
           columns: [{ ...state.splitState.columns[0], bookmarkId: null }],

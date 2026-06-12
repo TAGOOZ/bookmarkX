@@ -15,12 +15,12 @@ export async function fetchAndStore(
   const bookmarks = await fetchBookmarks(options);
 
   const { rows: beforeRows } = await db.execute({ sql: 'SELECT COUNT(*) as count FROM bookmarks' });
-  const countBefore = (beforeRows[0] as any).count;
+  const countBefore = (beforeRows?.[0] as any)?.count ?? 0;
 
   await storeBookmarks(db, bookmarks);
 
   const { rows: afterRows } = await db.execute({ sql: 'SELECT COUNT(*) as count FROM bookmarks' });
-  const countAfter = (afterRows[0] as any).count;
+  const countAfter = (afterRows?.[0] as any)?.count ?? 0;
 
   return {
     stored: countAfter - countBefore,

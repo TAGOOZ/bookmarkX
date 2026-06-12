@@ -28,25 +28,25 @@ export function detectChromeProfiles(chromeDir: string): string[] {
     });
 }
 
+/**
+ * Decrypts Chrome v10/v11 encrypted cookie values on Linux.
+ *
+ * Returns null because full decryption requires native keyring access
+ * via libraries like `node-keytar` or `@aspect-build/keytar` to retrieve
+ * the password from GNOME Keyring / KWallet. The decryption algorithm is:
+ *   1. Retrieve password via secret-tool (Chrome v10 schema)
+ *   2. Derive AES key via PBKDF2(password, salt='saltysalt', iterations=1, hash='sha1')
+ *   3. Decrypt with AES-256-CBC (IV = 16 spaces) and strip PKCS7 padding
+ *
+ * Until a native keyring binding is added to the project, this returns null
+ * so callers gracefully fall back to manual token entry or "Login with Twitter".
+ */
 function _decryptV10(_encryptedValue: Buffer): string | null {
-  // v10 cookies are encrypted with a key from the Linux keyring
-  // Try to get the key via secret-tool
-  try {
-    const key = execFileSync('secret-tool', [
-      'lookup',
-      'application', 'chrome',
-      'xdg:schema', 'chrome_libsecret_os_crypt_password_v2',
-    ], { timeout: 3000, encoding: 'utf-8' }).trim();
-
-    if (!key) return null;
-
-    // The encrypted value is: v10[12-byte IV][ciphertext]
-    // We need to decrypt using AES-128-CBC with PKCS7 padding
-    // This is complex - fall back to letting bird handle it
-    return null;
-  } catch {
-    return null;
-  }
+  console.warn(
+    'Chrome cookie decryption not supported on this platform yet. ' +
+    'Use "Login with Twitter" or enter tokens manually in Settings.',
+  );
+  return null;
 }
 
 export async function extractTwitterCookies(

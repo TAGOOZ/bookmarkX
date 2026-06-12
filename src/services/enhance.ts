@@ -30,7 +30,13 @@ export async function enhanceNote(
 
   const prompt = buildEnhancePrompt(selectedText, context);
   const text = await callGemini(prompt, { apiKey, model });
-  const result = JSON.parse(text) as EnhanceResult;
+
+  let result: EnhanceResult;
+  try {
+    result = JSON.parse(text) as EnhanceResult;
+  } catch {
+    throw new Error(`Failed to parse enhance response as JSON: ${text.substring(0, 200)}`);
+  }
 
   if (!result.enhanced_text) {
     throw new Error('Invalid enhance result');

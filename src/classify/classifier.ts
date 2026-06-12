@@ -61,7 +61,12 @@ export async function classifyBookmark(
     url,
   ]);
 
-  const response = JSON.parse(stdout);
+  let response: any;
+  try {
+    response = JSON.parse(stdout);
+  } catch {
+    throw new Error(`Failed to parse classifier API response as JSON: ${stdout.substring(0, 200)}`);
+  }
 
   if (response.error) {
     throw new Error(response.error.message || 'Gemini API error');
@@ -73,7 +78,13 @@ export async function classifyBookmark(
   }
 
   const cleaned = text.replace(/```json\n?|\n?```/g, '').trim();
-  const result = JSON.parse(cleaned) as ClassificationResult;
+
+  let result: ClassificationResult;
+  try {
+    result = JSON.parse(cleaned) as ClassificationResult;
+  } catch {
+    throw new Error(`Failed to parse classification result as JSON: ${cleaned.substring(0, 200)}`);
+  }
 
   if (!result.priority || !result.topic || !result.reading_time_min) {
     throw new Error('Invalid classification result');

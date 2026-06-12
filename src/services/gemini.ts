@@ -27,7 +27,7 @@ export async function callGemini(
     contents: [{ parts: [{ text: prompt }] }],
   });
 
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/${options.model}:generateContent?key=${options.apiKey}`;
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/${options.model}:generateContent`;
 
   let lastError: Error | undefined;
 
@@ -35,7 +35,10 @@ export async function callGemini(
     try {
       const response = await fetch(url, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'x-goog-api-key': options.apiKey,
+          'Content-Type': 'application/json',
+        },
         body: payload,
       });
 

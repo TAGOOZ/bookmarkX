@@ -43,15 +43,27 @@ export async function createNotification(db: Client, input: CreateNotificationIn
 
 export async function getNotifications(db: Client): Promise<Notification[]> {
   const { rows } = await db.execute('SELECT * FROM notifications ORDER BY created_at DESC');
-  return rows.map((row: any) => ({
-    id: row.id,
-    type: row.type,
-    title: row.title,
-    message: row.message,
-    read: row.read,
-    data: row.data ? JSON.parse(row.data) : null,
-    created_at: row.created_at,
-  }));
+  return rows
+    .map((row: any) => {
+      let data: unknown = null;
+      if (row.data) {
+        try {
+          data = JSON.parse(row.data);
+        } catch {
+          data = null;
+        }
+      }
+      return {
+        id: row.id,
+        type: row.type,
+        title: row.title,
+        message: row.message,
+        read: row.read,
+        data,
+        created_at: row.created_at,
+      };
+    })
+    .filter(Boolean);
 }
 
 export async function markAsRead(db: Client, id: string): Promise<void> {
@@ -74,5 +86,6 @@ export async function deleteNotification(db: Client, id: string): Promise<void> 
 
 export async function getUnreadCount(db: Client): Promise<number> {
   const { rows } = await db.execute('SELECT COUNT(*) as count FROM notifications WHERE read = 0');
+  if (!rows || rows.length === 0) return 0;
   return (rows[0] as any).count;
 }

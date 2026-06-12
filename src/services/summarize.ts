@@ -36,7 +36,13 @@ export async function summarizeBookmark(
 
   const prompt = buildSummarizePrompt(bookmark.title, bookmark.tweet_text, bookmark.url);
   const text = await callGemini(prompt, { apiKey, model });
-  const result = JSON.parse(text) as SummarizeResult;
+
+  let result: SummarizeResult;
+  try {
+    result = JSON.parse(text) as SummarizeResult;
+  } catch {
+    throw new Error(`Failed to parse summarize response as JSON: ${text.substring(0, 200)}`);
+  }
 
   if (!result.content_en || !result.content_ar) {
     throw new Error('Invalid summary result');

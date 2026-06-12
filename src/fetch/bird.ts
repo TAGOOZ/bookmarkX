@@ -65,7 +65,12 @@ export async function fetchBookmarks(
 
   const stdout = await runBird(args, Object.keys(env).length > 0 ? env : undefined);
 
-  const raw = JSON.parse(stdout);
+  let raw: unknown;
+  try {
+    raw = JSON.parse(stdout);
+  } catch {
+    throw new Error(`Failed to parse bird output as JSON: ${stdout.substring(0, 200)}`);
+  }
   if (!Array.isArray(raw)) {
     throw new Error(`Unexpected bird output: ${typeof raw}`);
   }

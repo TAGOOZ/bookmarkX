@@ -47,5 +47,31 @@ export async function parseWithGemini(
 
   const readingTime = Math.max(1, Math.round(wordCount / 200));
 
-  return { blocks, wordCount, readingTime, ogTitle: '', ogDescription: '', ogImage: '', ogSiteName: '' };
+  let ogTitle = '';
+  let ogDescription = '';
+  let ogImage = '';
+  let ogSiteName = '';
+
+  for (const block of blocks) {
+    const b = block as any;
+    if (!ogTitle && b.type === 'heading') {
+      const c = b.content;
+      if (typeof c === 'string') {
+        ogTitle = c;
+      } else if (Array.isArray(c) && c.length > 0 && typeof c[0].text === 'string') {
+        ogTitle = c[0].text;
+      }
+    }
+    if (!ogDescription && b.type === 'paragraph') {
+      const c = b.content;
+      if (typeof c === 'string' && c.length > 20) {
+        ogDescription = c;
+      } else if (Array.isArray(c) && c.length > 0 && typeof c[0].text === 'string' && c[0].text.length > 20) {
+        ogDescription = c[0].text;
+      }
+    }
+    if (ogTitle && ogDescription) break;
+  }
+
+  return { blocks, wordCount, readingTime, ogTitle, ogDescription, ogImage, ogSiteName };
 }

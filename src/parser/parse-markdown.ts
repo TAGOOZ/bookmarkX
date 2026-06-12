@@ -218,6 +218,14 @@ export function parseMDToBlocks(markdown: string): PartialBlock[] {
   return blocks;
 }
 
+function escapeCellContent(str: string): string {
+  return str
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+
 function renderTableHtml(rows: string[][]): string {
   if (rows.length === 0) return '';
 
@@ -225,7 +233,7 @@ function renderTableHtml(rows: string[][]): string {
   if (rows.length > 0) {
     html += '<thead><tr>';
     for (const cell of rows[0]) {
-      html += `<th>${cell}</th>`;
+      html += `<th>${escapeCellContent(cell)}</th>`;
     }
     html += '</tr></thead>';
   }
@@ -234,7 +242,7 @@ function renderTableHtml(rows: string[][]): string {
     for (let r = 1; r < rows.length; r++) {
       html += '<tr>';
       for (const cell of rows[r]) {
-        html += `<td>${cell}</td>`;
+        html += `<td>${escapeCellContent(cell)}</td>`;
       }
       html += '</tr>';
     }

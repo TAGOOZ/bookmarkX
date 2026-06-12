@@ -8,6 +8,12 @@ import styles from './ArticleReaderBlock.module.css';
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
+function sanitizeTableHtml(html: string): string {
+  return html.replace(/<([^>]+)>/g, (match, tag) => {
+    return '<' + tag.replace(/&/g, '&amp;').replace(/"/g, '&quot;') + '>';
+  }).replace(/&(?!amp;|lt;|gt;|quot;|#39;)/g, '&amp;');
+}
+
 interface InlineItem {
   type: string;
   text: string;
@@ -85,7 +91,8 @@ function renderBlock(block: any, index: number): React.ReactNode {
   }
 
   if (block.type === 'tableHtml') {
-    const html = block.props?.html || '';
+    const rawHtml = block.props?.html || '';
+    const html = sanitizeTableHtml(rawHtml);
     return (
       <div
         key={index}
@@ -130,6 +137,7 @@ function renderBlock(block: any, index: number): React.ReactNode {
 
   // paragraph or fallback
   if (Array.isArray(content)) {
+    if (!content || content.length === 0) return null;
     const isCode = content.length === 1 && content[0].styles?.code;
     if (isCode) {
       return <pre key={index} className={styles.codeBlock}><code>{content[0].text}</code></pre>;
