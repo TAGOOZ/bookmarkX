@@ -30,10 +30,10 @@ honor its STOP conditions, and update your row when done.
 | 020 | Include article content in summarize prompt | P1 | S | — | DONE |
 | 021 | Fix N+1 queries in classifyAndNotify | P1 | M | — | DONE |
 | 022 | Fix video misclassification as outer_link | P1 | S | — | DONE |
-| 023 | Replace weak HTML sanitizer with DOMPurify | P1 | M | — | IN PROGRESS |
-| 024 | Fix incomplete FTS5 query sanitization | P1 | S | — | TODO |
-| 025 | Wrap setBookmarkHashtags in transaction | P1 | S | — | TODO |
-| 026 | Add selected_text column to chat_messages | P2 | S | — | TODO |
+| 023 | Replace weak HTML sanitizer with DOMPurify | P1 | M | — | DONE |
+| 024 | Fix incomplete FTS5 query sanitization | P1 | S | — | DONE |
+| 025 | Wrap setBookmarkHashtags in transaction | P1 | S | — | DONE |
+| 026 | Add selected_text column to chat_messages | P2 | S | — | DONE |
 
 Status values: TODO | IN PROGRESS | DONE | BLOCKED (with one-line reason) | REJECTED (with one-line rationale)
 
