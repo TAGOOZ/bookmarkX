@@ -1,4 +1,5 @@
 import { contextBridge, ipcRenderer } from 'electron';
+import type { UserConfig } from './shared/types';
 
 contextBridge.exposeInMainWorld('api', {
   getBookmarks: () => ipcRenderer.invoke('get-bookmarks'),
@@ -6,19 +7,7 @@ contextBridge.exposeInMainWorld('api', {
   getBookmarkWithClassification: (bookmarkId: string) =>
     ipcRenderer.invoke('get-bookmark-with-classification', bookmarkId),
   getSettings: () => ipcRenderer.invoke('get-settings'),
-  saveSettings: (settings: {
-    name: string;
-    twitterHandle: string;
-    geminiApiKey: string;
-    birdAuthToken: string;
-    birdCt0: string;
-    birdChromeProfile: string;
-    theme: 'dark' | 'light';
-    language: 'ar' | 'en';
-    notifications: boolean;
-    fetchFrequency: string;
-    aiModel: string;
-  }) => ipcRenderer.invoke('save-settings', settings),
+  saveSettings: (settings: UserConfig) => ipcRenderer.invoke('save-settings', settings),
   detectChromeProfile: () => ipcRenderer.invoke('detect-chrome-profile'),
   twitterLogin: () => ipcRenderer.invoke('twitter-login'),
   fetchBookmarks: () => ipcRenderer.invoke('fetch-bookmarks'),

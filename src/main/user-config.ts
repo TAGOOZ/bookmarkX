@@ -1,19 +1,8 @@
 import fs from 'node:fs';
 import path from 'node:path';
+import type { UserConfig } from '../shared/types';
 
-export interface UserConfig {
-  name: string;
-  twitterHandle: string;
-  geminiApiKey: string;
-  birdAuthToken: string;
-  birdCt0: string;
-  birdChromeProfile: string;
-  theme: 'dark' | 'light';
-  language: 'ar' | 'en';
-  notifications: boolean;
-  fetchFrequency: string;
-  aiModel: string;
-}
+export type { UserConfig };
 
 export const DEFAULT_CONFIG: UserConfig = {
   name: '',
@@ -39,23 +28,35 @@ export function configExists(userDataDir: string): boolean {
   return fs.existsSync(getConfigPath(userDataDir));
 }
 
-export function readConfig(userDataDir: string): UserConfig {
+let configCache: UserConfig | null = null;
+
+export async function readConfig(userDataDir: string): Promise<UserConfig> {
+  if (configCache) return configCache;
+
   const configPath = getConfigPath(userDataDir);
   if (!fs.existsSync(configPath)) {
-    return { ...DEFAULT_CONFIG };
+    configCache = { ...DEFAULT_CONFIG };
+    return configCache;
   }
 
   try {
-    const raw = fs.readFileSync(configPath, 'utf-8');
+    const raw = await fs.promises.readFile(configPath, 'utf-8');
     const parsed = JSON.parse(raw);
-    return { ...DEFAULT_CONFIG, ...parsed };
+    configCache = { ...DEFAULT_CONFIG, ...parsed };
+    return configCache;
   } catch (err) {
     console.warn('Failed to read user config, using defaults:', err);
-    return { ...DEFAULT_CONFIG };
+    configCache = { ...DEFAULT_CONFIG };
+    return configCache;
   }
 }
 
+export function resetConfigCache(): void {
+  configCache = null;
+}
+
 export async function writeConfig(userDataDir: string, config: UserConfig): Promise<void> {
+  configCache = null;
   const configPath = getConfigPath(userDataDir);
   const dir = path.dirname(configPath);
   if (!fs.existsSync(dir)) {

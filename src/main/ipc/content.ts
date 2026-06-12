@@ -15,9 +15,9 @@ function checkCooldown(channel: string): boolean {
   return true;
 }
 
-function getConfigEnv(): { apiKey?: string } {
+async function getConfigEnv(): Promise<{ apiKey?: string }> {
   const userDataDir = app.getPath('userData');
-  const config = readConfig(userDataDir);
+  const config = await readConfig(userDataDir);
   return { apiKey: config.geminiApiKey || undefined };
 }
 
@@ -25,18 +25,17 @@ export function registerContentIpc(ipcMain: IpcMain, db: Client) {
   ipcMain.handle('summarize-bookmark', async (_event, bookmarkId: string) => {
     if (!checkCooldown('summarize-bookmark')) throw new Error('Rate limited — please wait');
     const { summarizeBookmark } = await import('../../services/summarize');
-    const { getStoredBookmarks } = await import('../../db/bookmarks');
-    const bookmarks = await getStoredBookmarks(db);
-    const bookmark = bookmarks.find((b) => b.id === bookmarkId);
+    const { getBookmarkById } = await import('../../db/bookmarks');
+    const bookmark = await getBookmarkById(db, bookmarkId);
     if (!bookmark) throw new Error('Bookmark not found');
-    const env = getConfigEnv();
+    const env = await getConfigEnv();
     return summarizeBookmark(db, bookmarkId, bookmark, { apiKey: env.apiKey });
   });
 
   ipcMain.handle('extract-article', async (_event, bookmarkId: string, url: string) => {
     try {
       const { extractArticle } = await import('../../services/extract');
-      const env = getConfigEnv();
+      const env = await getConfigEnv();
       return await extractArticle(db, bookmarkId, url, { apiKey: env.apiKey });
     } catch (err) {
       console.error('extract-article failed:', err);
@@ -55,7 +54,7 @@ export function registerContentIpc(ipcMain: IpcMain, db: Client) {
       throw new Error('Chat message exceeds 10000 character limit');
     }
     const { sendMessage } = await import('../../services/chat');
-    const env = getConfigEnv();
+    const env = await getConfigEnv();
     return sendMessage(db, sessionId, message, articleContext, { apiKey: env.apiKey });
   });
 
@@ -124,7 +123,7 @@ export function registerContentIpc(ipcMain: IpcMain, db: Client) {
       throw new Error('Text to enhance exceeds 5000 character limit');
     }
     const { enhanceNote } = await import('../../services/enhance');
-    const env = getConfigEnv();
+    const env = await getConfigEnv();
     return enhanceNote(selectedText, context, { apiKey: env.apiKey });
   });
 
@@ -135,7 +134,7 @@ export function registerContentIpc(ipcMain: IpcMain, db: Client) {
     }
     const { generateGlossary } = await import('../../services/glossary');
     const { addTerm, linkTermToBookmark } = await import('../../db/glossary');
-    const env = getConfigEnv();
+    const env = await getConfigEnv();
     const terms = await generateGlossary(content, { apiKey: env.apiKey, title });
     for (const t of terms) {
       const termId = await addTerm(db, t.term, t.definition);

@@ -5,7 +5,7 @@ import { detectAndExtract } from '../../main/chrome-profile-detect';
 import { readConfig } from '../../main/user-config';
 import type { UserConfig } from '../../main/user-config';
 
-function getConfig(): UserConfig {
+async function getConfig(): Promise<UserConfig> {
   const userDataDir = app.getPath('userData');
   return readConfig(userDataDir);
 }
@@ -14,7 +14,7 @@ const MAX_POLL_ATTEMPTS = 120;
 
 export function registerTwitterIpc(ipcMain: IpcMain) {
   ipcMain.handle('detect-chrome-profile', async () => {
-    const config = getConfig();
+    const config = await getConfig();
     const chromeDir = config.birdChromeProfile
       ? path.dirname(config.birdChromeProfile)
       : path.join(os.homedir(), '.config', 'google-chrome');

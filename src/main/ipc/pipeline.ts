@@ -14,9 +14,9 @@ function checkCooldown(channel: string, cooldownMs: number): boolean {
   return true;
 }
 
-function getConfigEnv(): { authToken?: string; ct0?: string; chromeProfile?: string; apiKey?: string } {
+async function getConfigEnv(): Promise<{ authToken?: string; ct0?: string; chromeProfile?: string; apiKey?: string }> {
   const userDataDir = app.getPath('userData');
-  const config = readConfig(userDataDir);
+  const config = await readConfig(userDataDir);
   return {
     authToken: config.birdAuthToken || undefined,
     ct0: config.birdCt0 || undefined,
@@ -29,7 +29,7 @@ export function registerPipelineIpc(ipcMain: IpcMain, db: Client) {
   ipcMain.handle('fetch-bookmarks', async () => {
     if (!checkCooldown('fetch-bookmarks', COOLDOWN_FETCH_MS)) throw new Error('Rate limited — please wait');
     const { fetchAndStore } = await import('../../pipeline/fetch-and-store');
-    const env = getConfigEnv();
+    const env = await getConfigEnv();
     return fetchAndStore(db, {
       authToken: env.authToken,
       ct0: env.ct0,
@@ -40,7 +40,7 @@ export function registerPipelineIpc(ipcMain: IpcMain, db: Client) {
   ipcMain.handle('classify-and-notify', async () => {
     if (!checkCooldown('classify-and-notify', COOLDOWN_CLASSIFY_MS)) throw new Error('Rate limited — please wait');
     const { classifyAndNotify } = await import('../../pipeline/classify-and-notify');
-    const env = getConfigEnv();
+    const env = await getConfigEnv();
     return classifyAndNotify(db, {
       apiKey: env.apiKey,
     });
@@ -48,7 +48,7 @@ export function registerPipelineIpc(ipcMain: IpcMain, db: Client) {
 
   ipcMain.handle('start-batch-import', async () => {
     const { startBatchImport } = await import('../../pipeline/batch-import');
-    const env = getConfigEnv();
+    const env = await getConfigEnv();
     const jobId = await startBatchImport(db, {
       authToken: env.authToken,
       ct0: env.ct0,

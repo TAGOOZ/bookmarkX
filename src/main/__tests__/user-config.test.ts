@@ -2,11 +2,12 @@ import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import fs from 'node:fs';
 import path from 'node:path';
 import os from 'node:os';
-import { readConfig, writeConfig, configExists, getConfigPath, DEFAULT_CONFIG } from '../user-config';
+import { readConfig, writeConfig, configExists, getConfigPath, DEFAULT_CONFIG, resetConfigCache } from '../user-config';
 
 let tmpDir: string;
 
 beforeEach(() => {
+  resetConfigCache();
   tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'bookmarkx-test-'));
 });
 
@@ -38,12 +39,12 @@ describe('user-config', () => {
   });
 
   describe('readConfig', () => {
-    it('returns default config when file does not exist', () => {
-      const config = readConfig(tmpDir);
+    it('returns default config when file does not exist', async () => {
+      const config = await readConfig(tmpDir);
       expect(config).toEqual(DEFAULT_CONFIG);
     });
 
-    it('reads config from existing file', () => {
+    it('reads config from existing file', async () => {
       const custom = {
         name: 'Mustafa',
         twitterHandle: '@mustafa',
@@ -59,15 +60,15 @@ describe('user-config', () => {
       };
       fs.writeFileSync(path.join(tmpDir, 'user.json'), JSON.stringify(custom), 'utf-8');
 
-      const config = readConfig(tmpDir);
+      const config = await readConfig(tmpDir);
       expect(config).toEqual(custom);
     });
 
-    it('fills missing fields with defaults on partial config', () => {
+    it('fills missing fields with defaults on partial config', async () => {
       const partial = { name: 'Mustafa', geminiApiKey: 'key' };
       fs.writeFileSync(path.join(tmpDir, 'user.json'), JSON.stringify(partial), 'utf-8');
 
-      const config = readConfig(tmpDir);
+      const config = await readConfig(tmpDir);
       expect(config.name).toBe('Mustafa');
       expect(config.geminiApiKey).toBe('key');
       expect(config.theme).toBe(DEFAULT_CONFIG.theme);
@@ -75,10 +76,10 @@ describe('user-config', () => {
       expect(config.notifications).toBe(DEFAULT_CONFIG.notifications);
     });
 
-    it('returns default config for invalid JSON', () => {
+    it('returns default config for invalid JSON', async () => {
       fs.writeFileSync(path.join(tmpDir, 'user.json'), 'not-json', 'utf-8');
 
-      const config = readConfig(tmpDir);
+      const config = await readConfig(tmpDir);
       expect(config).toEqual(DEFAULT_CONFIG);
     });
   });
@@ -96,7 +97,7 @@ describe('user-config', () => {
       await writeConfig(tmpDir, { ...DEFAULT_CONFIG, name: 'First' });
       await writeConfig(tmpDir, { ...DEFAULT_CONFIG, name: 'Second' });
 
-      const config = readConfig(tmpDir);
+      const config = await readConfig(tmpDir);
       expect(config.name).toBe('Second');
     });
 
