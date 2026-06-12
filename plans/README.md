@@ -16,16 +16,16 @@ honor its STOP conditions, and update your row when done.
 | 006 | Batch hashtag queries in getClassifiedBookmarks | P2 | S | — | DONE |
 | 007 | Replace classifier curl with callGemini | P2 | M | 003 | DONE |
 | 008 | Fix summarizeBookmark loading all rows | P2 | S | — | DONE |
-| 009 | Replace (window as any).api with typed access | P2 | M | — | TODO |
-| 010 | Deduplicate UserConfig type into shared module | P2 | S | — | TODO |
-| 011 | Cache readConfig and make async | P2 | S | 010 | TODO |
-| 012 | Add batch import tests | P2 | L | 001 | TODO |
-| 013 | Add service tests (summarize, extract, enhance, chat) | P2 | M | — | TODO |
-| 014 | Remove dead dep and enable import/no-unresolved | P3 | S | — | TODO |
-| 015 | Address npm audit vulnerabilities | P3 | S | — | TODO |
-| 016 | Deduplicate NavPanel localStorage state with uiStore | P3 | S | — | TODO |
-| 017 | Add typecheck and check scripts to package.json | P3 | S | — | TODO |
-| 018 | Extract BookmarkDetail into custom hooks (direction) | P3 | L | 009 | TODO |
+| 009 | Replace (window as any).api with typed access | P2 | M | — | DONE |
+| 010 | Deduplicate UserConfig type into shared module | P2 | S | — | DONE |
+| 011 | Cache readConfig and make async | P2 | S | 010 | DONE |
+| 012 | Add batch import tests | P2 | L | 001 | DONE |
+| 013 | Add service tests (summarize, extract, enhance, chat) | P2 | M | — | DONE |
+| 014 | Remove dead dep and enable import/no-unresolved | P3 | S | — | DONE |
+| 015 | Address npm audit vulnerabilities | P3 | S | — | DONE |
+| 016 | Deduplicate NavPanel localStorage state with uiStore | P3 | S | — | DONE |
+| 017 | Add typecheck and check scripts to package.json | P3 | S | — | DONE |
+| 018 | Extract BookmarkDetail into custom hooks (direction) | P3 | L | 009 | DONE |
 
 Status values: TODO | IN PROGRESS | DONE | BLOCKED (with one-line reason) | REJECTED (with one-line rationale)
 
