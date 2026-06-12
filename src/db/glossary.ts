@@ -79,3 +79,52 @@ export async function getTermsForBookmark(
     created_at: row.created_at,
   }));
 }
+
+export async function getAllTerms(
+  db: Client,
+): Promise<GlossaryTerm[]> {
+  const { rows } = await db.execute(
+    'SELECT * FROM glossary_terms ORDER BY term ASC',
+  );
+  return (rows as any[]).map((row) => ({
+    id: row.id,
+    term: row.term,
+    definition: row.definition,
+    created_at: row.created_at,
+  }));
+}
+
+export async function deleteTerm(
+  db: Client,
+  termId: string,
+): Promise<void> {
+  await db.execute({
+    sql: 'DELETE FROM bookmark_glossary WHERE term_id = ?',
+    args: [termId],
+  });
+  await db.execute({
+    sql: 'DELETE FROM glossary_terms WHERE id = ?',
+    args: [termId],
+  });
+}
+
+export async function exportGlossaryMarkdown(
+  db: Client,
+  bookmarkId?: string,
+): Promise<string> {
+  const terms = bookmarkId
+    ? await getTermsForBookmark(db, bookmarkId)
+    : await getAllTerms(db);
+  const lines = terms.map((t) => `**${t.term}**: ${t.definition}`);
+  return `# Glossary\n\n${lines.join('\n\n')}`;
+}
+
+export async function exportGlossaryJson(
+  db: Client,
+  bookmarkId?: string,
+): Promise<string> {
+  const terms = bookmarkId
+    ? await getTermsForBookmark(db, bookmarkId)
+    : await getAllTerms(db);
+  return JSON.stringify(terms, null, 2);
+}

@@ -83,15 +83,26 @@ declare global {
       // Phase 2: Highlights
       saveHighlight: (bookmarkId: string, data: { selected_text: string; note: string | null; color: string | null }) => Promise<{ success: boolean }>;
       getHighlights: (bookmarkId: string) => Promise<Array<{ id: string; bookmark_id: string; selected_text: string; note: string | null; color: string | null; created_at: string }>>;
+      deleteHighlight: (highlightId: string) => Promise<{ success: boolean }>;
       // Phase 2: Notes
       saveNote: (bookmarkId: string, data: { title: string | null; content: string | null }) => Promise<{ success: boolean }>;
       getNotes: (bookmarkId: string) => Promise<Array<{ id: string; bookmark_id: string; title: string | null; content: string | null; created_at: string; updated_at: string }>>;
+      deleteNote: (noteId: string) => Promise<{ success: boolean }>;
       // Phase 2: Glossary
       addGlossaryTerm: (term: string, definition: string) => Promise<string>;
       searchGlossary: (query: string) => Promise<Array<{ id: string; term: string; definition: string; created_at: string }>>;
       generateGlossary: (bookmarkId: string, content: string, title?: string) => Promise<Array<{ term: string; definition: string }>>;
+      getAllGlossaryTerms: () => Promise<Array<{ id: string; term: string; definition: string; created_at: string }>>;
+      deleteGlossaryTerm: (termId: string) => Promise<{ success: boolean }>;
+      exportGlossary: (format: 'md' | 'json', bookmarkId?: string) => Promise<string>;
       // Phase 2: Enhance
       enhanceNote: (selectedText: string, context?: string) => Promise<{ enhanced_text?: string } | null>;
+      // Phase 2: Custom Sections
+      getCustomSections: (bookmarkId: string) => Promise<Array<{ id: string; bookmark_id: string; title: string; content: string; sort_order: number; created_at: string; updated_at: string }>>;
+      createCustomSection: (bookmarkId: string, title: string, content?: string) => Promise<string>;
+      updateCustomSection: (sectionId: string, data: { title?: string; content?: string }) => Promise<{ success: boolean }>;
+      deleteCustomSection: (sectionId: string) => Promise<{ success: boolean }>;
+      reorderCustomSections: (orderedIds: string[]) => Promise<{ success: boolean }>;
       // Phase 6: Export & Import
       exportBookmark: (format: 'md' | 'json', content: string, defaultName: string) => Promise<{ success: boolean; path?: string; cancelled?: boolean }>;
       importMarkdown: () => Promise<{ content?: string; fileName?: string; cancelled?: boolean }>;

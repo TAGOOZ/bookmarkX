@@ -16,12 +16,26 @@
   height: 100%;
 }
 
+.mainContent {
+  flex: 1;
+  display: flex;
+  overflow: hidden;
+  min-height: 0;
+}
+
 .editorScroll {
   flex: 1;
   overflow-y: auto;
   padding-inline: 40px;
   padding-top: 24px;
   min-height: 0;
+}
+
+.customSectionsContainer {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-m);
+  padding: var(--space-m) 0;
 }
 
 .editor {
@@ -261,6 +275,12 @@
 .toolbarBtn:hover {
   background: var(--background-modifier-hover);
   color: var(--text-normal);
+}
+
+.toolbarBtnActive {
+  background: var(--accent-color);
+  color: var(--text-on-accent);
+  border-color: var(--accent-color);
 }
 
 .exportGroup {

@@ -1,0 +1,113 @@
+.section {
+  background: var(--background-secondary);
+  border: 1px solid var(--background-modifier-border);
+  border-radius: var(--radius-m);
+  overflow: hidden;
+  transition: border-color 0.15s;
+}
+
+.section:hover {
+  border-color: var(--accent-color);
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-s) var(--space-m);
+  border-bottom: 1px solid var(--background-modifier-border);
+}
+
+.title {
+  font-size: var(--font-ui-small);
+  font-weight: 600;
+  color: var(--text-normal);
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.titleInput {
+  flex: 1;
+  background: var(--background-primary);
+  border: 1px solid var(--background-modifier-border);
+  border-radius: var(--radius-s);
+  padding: 2px 6px;
+  color: var(--text-normal);
+  font-size: var(--font-ui-small);
+  font-weight: 600;
+  outline: none;
+}
+
+.titleInput:focus {
+  border-color: var(--accent-color);
+}
+
+.actions {
+  display: flex;
+  gap: 2px;
+  margin-inline-start: var(--space-s);
+}
+
+.actionBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border: none;
+  background: transparent;
+  color: var(--text-muted);
+  border-radius: var(--radius-s);
+  cursor: pointer;
+  font-size: 12px;
+  transition: background 0.15s, color 0.15s;
+}
+
+.actionBtn:hover {
+  background: var(--background-modifier-hover);
+  color: var(--text-normal);
+}
+
+.deleteBtn:hover {
+  background: var(--color-error);
+  color: var(--text-on-accent);
+}
+
+.content {
+  padding: var(--space-m);
+}
+
+.contentInput {
+  width: 100%;
+  min-height: 80px;
+  background: var(--background-primary);
+  border: 1px solid var(--background-modifier-border);
+  border-radius: var(--radius-s);
+  padding: var(--space-s);
+  color: var(--text-normal);
+  font-size: var(--font-text);
+  line-height: 1.5;
+  resize: vertical;
+  outline: none;
+  font-family: inherit;
+}
+
+.contentInput:focus {
+  border-color: var(--accent-color);
+}
+
+.contentDisplay {
+  font-size: var(--font-text);
+  line-height: 1.5;
+  color: var(--text-normal);
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.placeholder {
+  color: var(--text-faint);
+  font-style: italic;
+}

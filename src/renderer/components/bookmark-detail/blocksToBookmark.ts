@@ -2,10 +2,11 @@ import { Block } from '@blocknote/core';
 import { BookmarkDetailData, GlossaryTerm, Highlight, ChatMessage } from './types';
 
 function getBlockText(block: Block): string {
-  if (!block.content) return '';
-  if (typeof block.content === 'string') return block.content;
-  if (Array.isArray(block.content)) {
-    return block.content
+  const b = block as Record<string, any>;
+  if (!b.content) return '';
+  if (typeof b.content === 'string') return b.content;
+  if (Array.isArray(b.content)) {
+    return b.content
       .map((item: { type: string; text?: string }) => item.text || '')
       .join('');
   }
@@ -261,5 +262,20 @@ function processSection(
     const { messages, sessionId } = getChatMessages(blocks, start);
     if (messages.length > 0) result.chatMessages = messages;
     if (sessionId) result.chatSessionId = sessionId;
+  } else {
+    const KNOWN_SECTIONS = ['summary', 'glossary', 'article', 'highlights', 'notes', 'chat'];
+    if (!KNOWN_SECTIONS.includes(sectionName)) {
+      const { text } = getSection(blocks, start);
+      if (!result.customSections) result.customSections = [];
+      result.customSections.push({
+        id: `custom-${start}`,
+        bookmark_id: '',
+        title: name,
+        content: text,
+        sort_order: result.customSections.length,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      });
+    }
   }
 }

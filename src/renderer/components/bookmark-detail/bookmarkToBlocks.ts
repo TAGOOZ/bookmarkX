@@ -178,6 +178,24 @@ export function bookmarkToBlocks(bookmark: BookmarkDetailData): PartialBlock[] {
     }
   }
 
+  if (bookmark.customSections && bookmark.customSections.length > 0) {
+    for (const section of bookmark.customSections.sort((a, b) => a.sort_order - b.sort_order)) {
+      blocks.push(heading(section.title, 2));
+      if (section.content) {
+        try {
+          const parsed = JSON.parse(section.content);
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            blocks.push(...parsed);
+          } else {
+            blocks.push(paragraph(section.content));
+          }
+        } catch {
+          blocks.push(paragraph(section.content));
+        }
+      }
+    }
+  }
+
   if (bookmark.hashtags && bookmark.hashtags.length > 0) {
     blocks.push(heading('Hashtags', 2));
     const hashtagText = bookmark.hashtags.map((h) => `#${h.name}`).join('  ');

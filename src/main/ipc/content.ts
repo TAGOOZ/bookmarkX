@@ -85,6 +85,12 @@ export function registerContentIpc(ipcMain: IpcMain, db: Client) {
     return getHighlights(db, bookmarkId);
   });
 
+  ipcMain.handle('delete-highlight', async (_event, highlightId: string) => {
+    const { deleteHighlight } = await import('../../db/highlights');
+    await deleteHighlight(db, highlightId);
+    return { success: true };
+  });
+
   ipcMain.handle('save-note', async (_event, bookmarkId: string, data: { title: string | null; content: string | null }) => {
     const { storeNote } = await import('../../db/notes');
     await storeNote(db, bookmarkId, data);
@@ -94,6 +100,12 @@ export function registerContentIpc(ipcMain: IpcMain, db: Client) {
   ipcMain.handle('get-notes', async (_event, bookmarkId: string) => {
     const { getNotes } = await import('../../db/notes');
     return getNotes(db, bookmarkId);
+  });
+
+  ipcMain.handle('delete-note', async (_event, noteId: string) => {
+    const { deleteNote } = await import('../../db/notes');
+    await deleteNote(db, noteId);
+    return { success: true };
   });
 
   ipcMain.handle('add-glossary-term', async (_event, term: string, definition: string) => {
@@ -130,6 +142,55 @@ export function registerContentIpc(ipcMain: IpcMain, db: Client) {
       await linkTermToBookmark(db, bookmarkId, termId);
     }
     return terms;
+  });
+
+  ipcMain.handle('get-all-glossary-terms', async () => {
+    const { getAllTerms } = await import('../../db/glossary');
+    return getAllTerms(db);
+  });
+
+  ipcMain.handle('delete-glossary-term', async (_event, termId: string) => {
+    const { deleteTerm } = await import('../../db/glossary');
+    await deleteTerm(db, termId);
+    return { success: true };
+  });
+
+  ipcMain.handle('export-glossary', async (_event, format: 'md' | 'json', bookmarkId?: string) => {
+    if (format === 'md') {
+      const { exportGlossaryMarkdown } = await import('../../db/glossary');
+      return await exportGlossaryMarkdown(db, bookmarkId);
+    } else {
+      const { exportGlossaryJson } = await import('../../db/glossary');
+      return await exportGlossaryJson(db, bookmarkId);
+    }
+  });
+
+  ipcMain.handle('get-custom-sections', async (_event, bookmarkId: string) => {
+    const { getCustomSections } = await import('../../db/custom-sections');
+    return getCustomSections(db, bookmarkId);
+  });
+
+  ipcMain.handle('create-custom-section', async (_event, bookmarkId: string, title: string, content?: string) => {
+    const { createCustomSection } = await import('../../db/custom-sections');
+    return createCustomSection(db, bookmarkId, title, content || '');
+  });
+
+  ipcMain.handle('update-custom-section', async (_event, sectionId: string, data: { title?: string; content?: string }) => {
+    const { updateCustomSection } = await import('../../db/custom-sections');
+    await updateCustomSection(db, sectionId, data);
+    return { success: true };
+  });
+
+  ipcMain.handle('delete-custom-section', async (_event, sectionId: string) => {
+    const { deleteCustomSection } = await import('../../db/custom-sections');
+    await deleteCustomSection(db, sectionId);
+    return { success: true };
+  });
+
+  ipcMain.handle('reorder-custom-sections', async (_event, orderedIds: string[]) => {
+    const { reorderCustomSections } = await import('../../db/custom-sections');
+    await reorderCustomSections(db, orderedIds);
+    return { success: true };
   });
 
   ipcMain.handle('export-bookmark', async (_event, format: 'md' | 'json', content: string, defaultName: string) => {

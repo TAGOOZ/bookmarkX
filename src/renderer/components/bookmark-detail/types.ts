@@ -23,6 +23,16 @@ export interface Hashtag {
   name: string;
 }
 
+export interface CustomSection {
+  id: string;
+  bookmark_id: string;
+  title: string;
+  content: string;
+  sort_order: number;
+  created_at: string;
+  updated_at: string;
+}
+
 export interface BookmarkDetailData extends Bookmark {
   summary?: string;
   summaryAr?: string;
@@ -41,4 +51,5 @@ export interface BookmarkDetailData extends Bookmark {
   ogImage?: string;
   ogSiteName?: string;
   hashtags?: Hashtag[];
+  customSections?: CustomSection[];
 }

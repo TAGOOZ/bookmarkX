@@ -138,5 +138,17 @@
   "notificationError": "حدث خطأ",
   "firstRunBanner": "أكمل إعدادك لبدء جلب الإشارات المرجعية",
   "firstRunBannerAction": "فتح الإعدادات",
-  "dismissSetupBanner": "إخفاء"
+  "dismissSetupBanner": "إخفاء",
+  "openGlossaryPanel": "فتح لوحة المصطلحات",
+  "searchGlossary": "بحث في المصطلحات...",
+  "noGlossaryTerms": "لا توجد مصطلحات",
+  "addCustomSection": "إضافة قسم مخصص",
+  "newSection": "قسم جديد",
+  "sectionTitle": "عنوان القسم",
+  "sectionContent": "محتوى القسم",
+  "emptySection": "قسم فارغ",
+  "editSection": "تعديل القسم",
+  "moveSectionUp": "نقل القسم لأعلى",
+  "moveSectionDown": "نقل القسم لأسفل",
+  "deleteSection": "حذف القسم"
 }

@@ -44,11 +44,15 @@ contextBridge.exposeInMainWorld('api', {
     ipcRenderer.invoke('save-highlight', bookmarkId, data),
   getHighlights: (bookmarkId: string) =>
     ipcRenderer.invoke('get-highlights', bookmarkId),
+  deleteHighlight: (highlightId: string) =>
+    ipcRenderer.invoke('delete-highlight', highlightId),
   // Phase 2: Notes
   saveNote: (bookmarkId: string, data: { title: string | null; content: string | null }) =>
     ipcRenderer.invoke('save-note', bookmarkId, data),
   getNotes: (bookmarkId: string) =>
     ipcRenderer.invoke('get-notes', bookmarkId),
+  deleteNote: (noteId: string) =>
+    ipcRenderer.invoke('delete-note', noteId),
   // Phase 2: Glossary
   addGlossaryTerm: (term: string, definition: string) =>
     ipcRenderer.invoke('add-glossary-term', term, definition),
@@ -60,6 +64,23 @@ contextBridge.exposeInMainWorld('api', {
   // Phase 2: Glossary generation
   generateGlossary: (bookmarkId: string, content: string, title?: string) =>
     ipcRenderer.invoke('generate-glossary', bookmarkId, content, title),
+  getAllGlossaryTerms: () =>
+    ipcRenderer.invoke('get-all-glossary-terms'),
+  deleteGlossaryTerm: (termId: string) =>
+    ipcRenderer.invoke('delete-glossary-term', termId),
+  exportGlossary: (format: 'md' | 'json', bookmarkId?: string) =>
+    ipcRenderer.invoke('export-glossary', format, bookmarkId),
+  // Phase 2: Custom Sections
+  getCustomSections: (bookmarkId: string) =>
+    ipcRenderer.invoke('get-custom-sections', bookmarkId),
+  createCustomSection: (bookmarkId: string, title: string, content?: string) =>
+    ipcRenderer.invoke('create-custom-section', bookmarkId, title, content),
+  updateCustomSection: (sectionId: string, data: { title?: string; content?: string }) =>
+    ipcRenderer.invoke('update-custom-section', sectionId, data),
+  deleteCustomSection: (sectionId: string) =>
+    ipcRenderer.invoke('delete-custom-section', sectionId),
+  reorderCustomSections: (orderedIds: string[]) =>
+    ipcRenderer.invoke('reorder-custom-sections', orderedIds),
   // Phase 4: Full-text search
   searchArticles: (query: string, limit?: number) =>
     ipcRenderer.invoke('search-articles', query, limit),
@@ -95,4 +116,9 @@ contextBridge.exposeInMainWorld('api', {
   markNotificationRead: (id: string) => ipcRenderer.invoke('mark-notification-read', id),
   markAllNotificationsRead: () => ipcRenderer.invoke('mark-all-notifications-read'),
   deleteNotification: (id: string) => ipcRenderer.invoke('delete-notification', id),
+  // Batch Import
+  startBatchImport: () => ipcRenderer.invoke('start-batch-import'),
+  pauseBatchImport: () => ipcRenderer.invoke('pause-batch-import'),
+  getImportStatus: (jobId: string) => ipcRenderer.invoke('get-import-status', jobId),
+  getActiveImport: () => ipcRenderer.invoke('get-active-import'),
 });

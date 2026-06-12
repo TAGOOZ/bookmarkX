@@ -5,11 +5,13 @@ import { BlockNoteView } from '@blocknote/mantine';
 import { Block, PartialBlock, BlockNoteSchema, defaultBlockSpecs, defaultInlineContentSpecs } from '@blocknote/core';
 import '@blocknote/mantine/style.css';
 import styles from './BookmarkDetail.module.css';
-import { BookmarkDetailData } from './types';
+import { BookmarkDetailData, CustomSection } from './types';
 import { bookmarkToBlocks } from './bookmarkToBlocks';
 import { blocksToBookmark } from './blocksToBookmark';
 import ContentsBar from './ContentsBar';
 import EnhanceToolbar from './EnhanceToolbar';
+import GlossaryPanel from './GlossaryPanel';
+import CustomSectionComponent from './CustomSection';
 import { detectDir } from './rtl-detect';
 import { blocksToMarkdown } from '../../../parser/blocks-to-markdown';
 import { markdownToBlocks } from '../../../parser/markdown-to-blocks';
@@ -132,6 +134,8 @@ const BookmarkEditor: React.FC<BookmarkEditorProps> = ({
   const [newHashtag, setNewHashtag] = useState('');
   const sessionRequestId = useRef(0);
   const hashtagTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [showGlossaryPanel, setShowGlossaryPanel] = useState(false);
+  const [customSections, setCustomSections] = useState<CustomSection[]>([]);
 
   const getSections = useCallback(() => {
     const base = SECTION_IDS.map((id) => ({
@@ -359,6 +363,74 @@ const BookmarkEditor: React.FC<BookmarkEditorProps> = ({
     };
   }, []);
 
+  useEffect(() => {
+    if (!bookmark.id) return;
+    (window as any).api?.getCustomSections?.(bookmark.id)
+      .then((sections: CustomSection[]) => {
+        if (sections) setCustomSections(sections);
+      })
+      .catch((err: unknown) => {
+        console.warn('Failed to load custom sections:', err);
+      });
+  }, [bookmark.id]);
+
+  const handleCreateCustomSection = useCallback(async () => {
+    if (!bookmark.id) return;
+    try {
+      const id = await (window as any).api?.createCustomSection?.(
+        bookmark.id,
+        intl.formatMessage({ id: 'newSection' }),
+      );
+      if (id) {
+        const updated = await (window as any).api?.getCustomSections?.(bookmark.id);
+        if (updated) setCustomSections(updated);
+      }
+    } catch (err) {
+      console.error('Failed to create custom section:', err);
+    }
+  }, [bookmark.id, intl]);
+
+  const handleUpdateCustomSection = useCallback(async (sectionId: string, data: { title?: string; content?: string }) => {
+    if (!bookmark.id) return;
+    try {
+      await (window as any).api?.updateCustomSection?.(sectionId, data);
+      const updated = await (window as any).api?.getCustomSections?.(bookmark.id);
+      if (updated) setCustomSections(updated);
+    } catch (err) {
+      console.error('Failed to update custom section:', err);
+    }
+  }, [bookmark.id]);
+
+  const handleDeleteCustomSection = useCallback(async (sectionId: string) => {
+    if (!bookmark.id) return;
+    try {
+      await (window as any).api?.deleteCustomSection?.(sectionId);
+      const updated = await (window as any).api?.getCustomSections?.(bookmark.id);
+      if (updated) setCustomSections(updated);
+    } catch (err) {
+      console.error('Failed to delete custom section:', err);
+    }
+  }, [bookmark.id]);
+
+  const handleMoveCustomSection = useCallback(async (sectionId: string, direction: 'up' | 'down') => {
+    if (!bookmark.id) return;
+    const sorted = [...customSections].sort((a, b) => a.sort_order - b.sort_order);
+    const idx = sorted.findIndex((s) => s.id === sectionId);
+    if (idx < 0) return;
+    const swapIdx = direction === 'up' ? idx - 1 : idx + 1;
+    if (swapIdx < 0 || swapIdx >= sorted.length) return;
+    const tmpOrder = sorted[idx].sort_order;
+    sorted[idx] = { ...sorted[idx], sort_order: sorted[swapIdx].sort_order };
+    sorted[swapIdx] = { ...sorted[swapIdx], sort_order: tmpOrder };
+    try {
+      await (window as any).api?.reorderCustomSections?.(sorted.map((s) => s.id));
+      const updated = await (window as any).api?.getCustomSections?.(bookmark.id);
+      if (updated) setCustomSections(updated);
+    } catch (err) {
+      console.error('Failed to reorder custom sections:', err);
+    }
+  }, [bookmark.id, customSections]);
+
   const handleSelectionChange = useCallback(() => {
     const selection = window.getSelection();
     if (!selection || selection.isCollapsed || !selection.rangeCount) {
@@ -461,6 +533,22 @@ const BookmarkEditor: React.FC<BookmarkEditorProps> = ({
     const ref = `[[ref:${bookmark.title || 'section'}|${text}]]`;
     navigator.clipboard.writeText(ref).catch(() => { /* clipboard unavailable */ });
   }, [bookmark.title]);
+
+  const _handleDeleteHighlight = useCallback(async (highlightId: string) => {
+    try {
+      await (window as any).api?.deleteHighlight?.(highlightId);
+    } catch (err) {
+      console.error('Failed to delete highlight:', err);
+    }
+  }, []);
+
+  const _handleDeleteNote = useCallback(async (noteId: string) => {
+    try {
+      await (window as any).api?.deleteNote?.(noteId);
+    } catch (err) {
+      console.error('Failed to delete note:', err);
+    }
+  }, []);
 
   const handleSummarize = useCallback(async () => {
     if (!bookmark.id || isSummarizing) return;
@@ -632,6 +720,22 @@ const BookmarkEditor: React.FC<BookmarkEditorProps> = ({
             {isGeneratingGlossary ? '...' : 'G'}
           </button>
         </div>
+        <button
+          className={`${styles.toolbarBtn} ${showGlossaryPanel ? styles.toolbarBtnActive : ''}`}
+          onClick={() => setShowGlossaryPanel(!showGlossaryPanel)}
+          aria-label={intl.formatMessage({ id: 'openGlossaryPanel' })}
+          title={intl.formatMessage({ id: 'openGlossaryPanel' })}
+        >
+          📖
+        </button>
+        <button
+          className={styles.toolbarBtn}
+          onClick={handleCreateCustomSection}
+          aria-label={intl.formatMessage({ id: 'addCustomSection' })}
+          title={intl.formatMessage({ id: 'addCustomSection' })}
+        >
+          +§
+        </button>
       </div>
       {notification && (
         <div className={styles.notification}>{notification}</div>
@@ -710,13 +814,41 @@ const BookmarkEditor: React.FC<BookmarkEditorProps> = ({
           </button>
         </div>
       )}
-      <div ref={scrollRef} className={styles.editorScroll}>
-        <BlockNoteView
-          editor={editor}
-          onChange={handleChange}
-          className={styles.editor}
-          theme="light"
-        />
+      <div className={styles.mainContent}>
+        <div ref={scrollRef} className={styles.editorScroll}>
+          <BlockNoteView
+            editor={editor}
+            onChange={handleChange}
+            className={styles.editor}
+            theme="light"
+          />
+          {customSections.length > 0 && (
+            <div className={styles.customSectionsContainer}>
+              {customSections.sort((a, b) => a.sort_order - b.sort_order).map((section) => (
+                <CustomSectionComponent
+                  key={section.id}
+                  section={section}
+                  onUpdate={handleUpdateCustomSection}
+                  onDelete={handleDeleteCustomSection}
+                  onMoveUp={(id) => handleMoveCustomSection(id, 'up')}
+                  onMoveDown={(id) => handleMoveCustomSection(id, 'down')}
+                />
+              ))}
+            </div>
+          )}
+        </div>
+        {showGlossaryPanel && (
+          <GlossaryPanel
+            bookmarkId={bookmark.id}
+            terms={bookmark.glossaryTerms?.map((t, i) => ({
+              id: `${i}`,
+              term: t.term,
+              definition: t.definition,
+              created_at: new Date().toISOString(),
+            }))}
+            onClose={() => setShowGlossaryPanel(false)}
+          />
+        )}
       </div>
     </div>
   );

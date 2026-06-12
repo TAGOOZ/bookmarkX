@@ -131,6 +131,16 @@ const SCHEMA_SQL = `
     PRIMARY KEY (bookmark_id, term_id)
   );
 
+  CREATE TABLE IF NOT EXISTS custom_sections (
+    id TEXT PRIMARY KEY,
+    bookmark_id TEXT REFERENCES bookmarks(id) ON DELETE CASCADE,
+    title TEXT NOT NULL,
+    content TEXT DEFAULT '',
+    sort_order INTEGER DEFAULT 0,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  );
+
   CREATE TABLE IF NOT EXISTS notifications (
     id TEXT PRIMARY KEY,
     type TEXT CHECK(type IN ('status', 'error', 'agent_proposal')) NOT NULL,

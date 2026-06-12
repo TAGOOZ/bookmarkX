@@ -1,0 +1,57 @@
+.container {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-m);
+}
+
+.section {
+  background: var(--section-bg, var(--background-secondary));
+  border: 1px solid var(--background-modifier-border);
+  border-radius: var(--radius-m);
+  overflow: hidden;
+  cursor: default;
+  transition: border-color 0.15s;
+}
+
+.section:hover {
+  border-color: var(--accent-color);
+}
+
+.sectionHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-s) var(--space-m);
+  border-bottom: 1px solid var(--background-modifier-border);
+}
+
+.sectionTitle {
+  font-size: var(--font-ui-small);
+  font-weight: 600;
+  color: var(--text-normal);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.sectionBadge {
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: var(--radius-s);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.agentBadge {
+  background: var(--accent-color);
+  color: var(--text-on-accent);
+}
+
+.userBadge {
+  background: var(--priority-low);
+  color: var(--text-on-accent);
+}
+
+.sectionContent {
+  padding: var(--space-m);
+}
