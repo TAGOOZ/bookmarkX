@@ -26,6 +26,14 @@ honor its STOP conditions, and update your row when done.
 | 016 | Deduplicate NavPanel localStorage state with uiStore | P3 | S | — | DONE |
 | 017 | Add typecheck and check scripts to package.json | P3 | S | — | DONE |
 | 018 | Extract BookmarkDetail into custom hooks (direction) | P3 | L | 009 | DONE |
+| 019 | Install defuddle dependency to enable primary parser | P1 | S | — | DONE |
+| 020 | Include article content in summarize prompt | P1 | S | — | DONE |
+| 021 | Fix N+1 queries in classifyAndNotify | P1 | M | — | DONE |
+| 022 | Fix video misclassification as outer_link | P1 | S | — | DONE |
+| 023 | Replace weak HTML sanitizer with DOMPurify | P1 | M | — | IN PROGRESS |
+| 024 | Fix incomplete FTS5 query sanitization | P1 | S | — | TODO |
+| 025 | Wrap setBookmarkHashtags in transaction | P1 | S | — | TODO |
+| 026 | Add selected_text column to chat_messages | P2 | S | — | TODO |
 
 Status values: TODO | IN PROGRESS | DONE | BLOCKED (with one-line reason) | REJECTED (with one-line rationale)
 
@@ -35,17 +43,22 @@ Status values: TODO | IN PROGRESS | DONE | BLOCKED (with one-line reason) | REJE
 - 011 depends on 010 because readConfig return type changes to async after shared types are established
 - 012 depends on 001 because the batch import bugs must be fixed before writing tests
 - 018 depends on 009 because typed window.api access should land before hook extraction refactor
+- 020 works without 019 (falls back to metadata-only when article content is absent)
+- 021 is independent of other new plans
 
 ## Recommended execution order
 
 **Phase 1 — Critical bugs (P1, land ASAP)**:
-001 → 002 → 003 → 004 → 005
+019 → 022 → 024 → 025 → 001 → 002 → 003 → 004 → 005
 
-**Phase 2 — Performance + tech debt (P2)**:
-006 → 008 → 010 → 011 → 009 → 007 → 013 → 012
+**Phase 2 — Security + perf (P1)**:
+023 → 021 → 020 → 006 → 008 → 010 → 011 → 009 → 007 → 013 → 012
 
 **Phase 3 — DX + cleanup (P3)**:
 014 → 015 → 016 → 017 → 018
+
+**Phase 4 — Feature plumbing (P2)**:
+026
 
 ## Findings considered and rejected
 
@@ -62,3 +75,64 @@ Status values: TODO | IN PROGRESS | DONE | BLOCKED (with one-line reason) | REJE
 - **dotenv.config() in classifier/bird (DOCS-03)**: After plan 007 removes it from classifier, only bird.ts remains. Low priority cleanup.
 - **shamefully-hoist (DX-02)**: Changing this may break many things. Documented tradeoff, not a quick fix.
 - **tsconfig strict mode (DX-04)**: Enabling strict would surface many type errors. Better done incrementally. Deferred.
+- **N+1 in setBookmarkHashtags (PERF-02)**: Addressed by plan 025 (transaction wrapping includes batching).
+- **N+1 in generate-glossary (PERF-03)**: Lower priority — glossary generation is a manual action, not a hot path.
+- **N+1 in reorderCustomSections (PERF-04)**: Lower priority — reordering is infrequent.
+- **SELECT * over-fetching (PERF-05)**: Broader refactor, deferred to a future round.
+- **Unbounded getStoredBookmarks (PERF-06)**: Broader refactor, deferred.
+- **Duplicate bookmark construction in batch-import (PERF-07)**: Code quality, not runtime perf. Deferred.
+- **getClassification 3 queries (PERF-08)**: Addressed indirectly by plan 021 (classifyAndNotify no longer calls getClassification per-bookmark).
+- **getConfigEnv duplicated (DEBT-01)**: Low priority cleanup, deferred.
+- **checkCooldown duplicated (DEBT-02)**: Low priority cleanup, deferred.
+- **Bookmark type duplicated (DEBT-03)**: Larger refactor, deferred.
+- **(window as any).api bypass (DEBT-04)**: Addressed by plan 009 (DONE).
+- **API key resolution with process.env fallback (DEBT-05)**: Low priority cleanup, deferred.
+- **rows as any[] boilerplate (DEBT-06)**: Broader refactor, deferred.
+- **try/catch migration pattern (DEBT-07)**: Works but inelegant. Deferred.
+- **inline style tag in BookmarkDetail (DEBT-09)**: Low priority, deferred.
+- **classifyAndNotify silent empty result (DEBT-10)**: UX improvement, deferred.
+- **NavPanel god component (DEBT-11)**: Larger refactor, deferred.
+- **Settings.tsx monolith (DEBT-12)**: Larger refactor, deferred.
+- **SearchOverlay no memoization (PERF-09)**: Minor, deferred.
+- **Notification state stale (PERF-10)**: Needs IPC event infrastructure, deferred.
+- **User config file permissions (CRED-01)**: Low risk in single-user desktop app. Deferred.
+- **Auth tokens in env vars (CRED-02)**: bird CLI limitation. Documented tradeoff.
+- **dangerouslySetInnerHTML on search snippets (XSS-02)**: Addressed by plan 023.
+- **dotenv loaded from CWD (EXEC-01)**: Low priority, deferred.
+- **npm audit vulnerabilities (DEP-01)**: Addressed by plan 015 (DONE).
+- **Config validation (CONFIG-01)**: Low risk in single-user app. Deferred.
+- **No CSP (CONFIG-02)**: Defense-in-depth, deferred.
+- **Login window contextIsolation (CONFIG-03)**: Electron 42 defaults are safe. Hardening, deferred.
+- **Zero tests for 5 db modules (TESTCOV-01)**: Important but larger effort. Deferred.
+- **Zero tests for IPC handlers (TESTCOV-02)**: Important but requires Electron mocking. Deferred.
+- **Zero tests for Zustand stores (TESTCOV-03)**: Important but lower priority. Deferred.
+- **Service tests mock entire db (TESTCOV-04)**: Test quality, deferred.
+- **No IPC contract tests (TESTCOV-05)**: Important but lower priority. Deferred.
+- **Batch-import test dead code (TESTCOV-06)**: Code quality, deferred.
+- **No NavPanel/ImportProgress/SearchOverlay tests (TESTCOV-07)**: Important but larger effort. Deferred.
+- **No vitest config (TESTCOV-08)**: Works without it. Deferred.
+- **Duplicate window.api mock (TESTCOV-09)**: DX friction, deferred.
+- **57 silent catch blocks (TESTCOV-10)**: Broader cleanup, deferred.
+- **No pre-commit hooks (DX-01)**: DX improvement, deferred.
+- **No formatter (DX-02)**: DX improvement, deferred.
+- **97 lint warnings (DX-03)**: Larger effort, deferred.
+- **Stale README structure (DX-04)**: Docs-only, deferred.
+- **No .env.example in README (DX-05)**: Docs-only, deferred.
+- **pnpm check not documented (DX-06)**: Docs-only, deferred.
+- **Schema migration via try/catch (TECHDEBT-01)**: Works but inelegant. Deferred.
+- **Module-level isRunning flag (TECHDEBT-02)**: Test ordering concern. Deferred.
+- **configCache mutable state (TECHDEBT-03)**: Minor, deferred.
+- **Semantic search (DIRECTION-01)**: Phase 3 roadmap item, not a bug fix.
+- **Agent orchestration (DIRECTION-02)**: Phase 4 roadmap item.
+- **Glossary export without import (DIRECTION-03)**: Feature gap, deferred.
+- **Bookmark export without full backup (DIRECTION-04)**: Feature gap, deferred.
+- **Batch classify not implemented (DIRECTION-05)**: Important but larger effort. Deferred.
+- **Summarize uses only metadata (DIRECTION-06)**: Addressed by plan 020.
+- **Chat selected_text column missing (DIRECTION-07)**: Addressed by plan 026.
+- **Content hash weak (DIRECTION-08)**: Already rejected in prior round.
+- **Notification stale (DIRECTION-09)**: Needs IPC events. Deferred.
+- **defuddle missing from deps (DIRECTION-10)**: Addressed by plan 019.
+- **Glossary prefix search (DIRECTION-11)**: Feature improvement, deferred.
+- **bookmarkToBlocks round-trip (DIRECTION-12)**: Low risk, deferred.
+- **No Ollama fallback (DIRECTION-13)**: Phase 4 roadmap item.
+- **Print stylesheet missing (DIRECTION-14)**: Feature gap, deferred.
