@@ -10,7 +10,7 @@
   flex-shrink: 0;
   border-bottom: 1px solid var(--background-modifier-border);
   background-color: var(--background-primary);
-  min-height: 36px;
+  min-height: 40px;
 }
 
 .tabBar.rtl {
@@ -25,17 +25,17 @@
   display: flex;
   align-items: center;
   gap: var(--space-xs);
-  padding: var(--space-xs) var(--space-m);
+  padding: var(--space-s) var(--space-m);
   cursor: pointer;
   border-radius: var(--radius-s) var(--radius-s) 0 0;
   white-space: nowrap;
-  font-size: var(--font-ui-sm);
+  font-size: var(--font-ui);
   color: var(--text-muted);
   transition: background-color var(--transition-fast), color var(--transition-fast);
   border: 1px solid transparent;
   border-bottom: none;
   max-width: 280px;
-  min-width: 0;
+  min-width: 80px;
   flex-shrink: 0;
 }
 
@@ -60,14 +60,14 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 18px;
-  height: 18px;
+  width: 20px;
+  height: 20px;
   border: none;
   background: none;
   color: var(--text-faint);
   cursor: pointer;
   border-radius: var(--radius-xs);
-  font-size: 14px;
+  font-size: 15px;
   line-height: 1;
   padding: 0;
   flex-shrink: 0;
@@ -82,14 +82,14 @@
   display: none;
   align-items: center;
   justify-content: center;
-  width: 18px;
-  height: 18px;
+  width: 20px;
+  height: 20px;
   border: none;
   background: none;
   color: var(--text-faint);
   cursor: pointer;
   border-radius: var(--radius-xs);
-  font-size: 12px;
+  font-size: 13px;
   line-height: 1;
   padding: 0;
   flex-shrink: 0;
