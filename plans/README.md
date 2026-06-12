@@ -59,7 +59,7 @@ honor its STOP conditions, and update your row when done.
 | 049 | Add input validation to glossary and custom-section IPC handlers | P2 | S | — | DONE |
 | 050 | Remove dead code and unused types | P3 | S | — | TODO |
 | 051 | Standardize IPC error handling pattern | P2 | M | 048 | TODO |
-| 052 | Extract duplicate Bookmark row-to-object mapping | P2 | S | — | TODO |
+| 052 | Extract duplicate Bookmark row-to-object mapping | P2 | S | — | DONE |
 | 053 | Split content.ts god handler into domain modules | P2 | M | 051 | TODO |
 | 054 | Extract split-view state into dedicated Zustand store | P2 | M | — | TODO |
 | 055 | Add IPC handler unit tests | P2 | M | 053 | TODO |

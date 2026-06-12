@@ -1,6 +1,6 @@
 import type { Client } from '@libsql/client';
 import { fetchBookmarksPaginated } from '../fetch/bird';
-import { storeBookmarks } from '../db/bookmarks';
+import { storeBookmarks, getBookmarkById } from '../db/bookmarks';
 import { createImportJob, getImportJob, updateImportJob, getActiveImportJob } from '../db/import-jobs';
 import { createNotification } from '../db/notifications';
 import { classifyBookmark } from '../classify/classifier';
@@ -138,49 +138,15 @@ export async function startBatchImport(
             if (existing) continue;
 
             try {
-              const { rows: bookmarkRows } = await db.execute({
-                sql: 'SELECT * FROM bookmarks WHERE id = ?',
-                args: [row.id],
-              });
-              const bookmark = bookmarkRows[0] as any;
+              const bookmark = await getBookmarkById(db, row.id);
               if (!bookmark) continue;
 
-              const result = await classifyBookmark(
-                {
-                  id: bookmark.id,
-                  tweet_id: bookmark.tweet_id,
-                  url: bookmark.url,
-                  content_type: bookmark.content_type,
-                  title: bookmark.title,
-                  title_ar: bookmark.title_ar,
-                  title_en: bookmark.title_en,
-                  author_name: bookmark.author_name,
-                  author_handle: bookmark.author_handle,
-                  tweet_text: bookmark.tweet_text,
-                  fetched_at: bookmark.fetched_at,
-                },
-                options
-              );
+              const result = await classifyBookmark(bookmark, options);
               await storeClassification(db, row.id, result);
               totalClassified++;
 
               if (result.priority === 'high') {
-                sendHighPriorityNotification(
-                  {
-                    id: bookmark.id,
-                    tweet_id: bookmark.tweet_id,
-                    url: bookmark.url,
-                    content_type: bookmark.content_type,
-                    title: bookmark.title,
-                    title_ar: bookmark.title_ar,
-                    title_en: bookmark.title_en,
-                    author_name: bookmark.author_name,
-                    author_handle: bookmark.author_handle,
-                    tweet_text: bookmark.tweet_text,
-                    fetched_at: bookmark.fetched_at,
-                  },
-                  result
-                );
+                sendHighPriorityNotification(bookmark, result);
                 await createNotification(db, {
                   type: 'status',
                   title: 'High Priority Bookmark',
