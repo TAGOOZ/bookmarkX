@@ -1,18 +1,6 @@
-import { execFile } from 'child_process';
-import dotenv from 'dotenv';
+import { callGemini } from '../services/gemini';
 import type { Bookmark } from '../fetch/types';
 import type { ClassificationResult, ClassifierOptions } from './types';
-
-dotenv.config();
-
-function runCurl(args: string[]): Promise<string> {
-  return new Promise((resolve, reject) => {
-    execFile('curl', args, (error, stdout, _stderr) => {
-      if (error) return reject(error);
-      resolve(stdout);
-    });
-  });
-}
 
 function buildPrompt(bookmark: Bookmark): string {
   const parts = [];
@@ -47,44 +35,13 @@ export async function classifyBookmark(
 
   const prompt = buildPrompt(bookmark);
 
-  const payload = JSON.stringify({
-    contents: [{ parts: [{ text: prompt }] }],
-  });
-
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`;
-
-  const stdout = await runCurl([
-    '-s',
-    '-X', 'POST',
-    '-H', 'Content-Type: application/json',
-    '-H', `x-goog-api-key: ${apiKey}`,
-    '-d', payload,
-    url,
-  ]);
-
-  let response: any;
-  try {
-    response = JSON.parse(stdout);
-  } catch {
-    throw new Error(`Failed to parse classifier API response as JSON: ${stdout.substring(0, 200)}`);
-  }
-
-  if (response.error) {
-    throw new Error(response.error.message || 'Gemini API error');
-  }
-
-  const text = response.candidates?.[0]?.content?.parts?.[0]?.text;
-  if (!text) {
-    throw new Error('Invalid Gemini API response');
-  }
-
-  const cleaned = text.replace(/```json\n?|\n?```/g, '').trim();
+  const text = await callGemini(prompt, { apiKey, model });
 
   let result: ClassificationResult;
   try {
-    result = JSON.parse(cleaned) as ClassificationResult;
+    result = JSON.parse(text) as ClassificationResult;
   } catch {
-    throw new Error(`Failed to parse classification result as JSON: ${cleaned.substring(0, 200)}`);
+    throw new Error(`Failed to parse classification result as JSON: ${text.substring(0, 200)}`);
   }
 
   if (!result.priority || !result.topic || !result.reading_time_min) {

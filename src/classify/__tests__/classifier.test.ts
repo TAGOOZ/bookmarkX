@@ -3,45 +3,24 @@ import { classifyBookmark } from '../classifier';
 import type { ClassificationResult } from '../types';
 import type { Bookmark } from '../../fetch/types';
 
-vi.mock('child_process', () => ({
-  execFile: vi.fn(),
+vi.mock('../../services/gemini', () => ({
+  callGemini: vi.fn(),
 }));
 
-import { execFile } from 'child_process';
+import { callGemini } from '../../services/gemini';
 
-const mockExecFile = vi.mocked(execFile);
+const mockCallGemini = vi.mocked(callGemini);
 
 function mockGeminiResponse(response: ClassificationResult) {
-  mockExecFile.mockImplementation(
-    ((_cmd: any, _args: any, _opts: any, cb: any) => {
-      if (typeof _opts === 'function') {
-        cb = _opts;
-      }
-      cb(null, JSON.stringify({ candidates: [{ content: { parts: [{ text: JSON.stringify(response) }] } }] }), '');
-    }) as any
-  );
+  mockCallGemini.mockResolvedValue(JSON.stringify(response));
 }
 
 function mockGeminiRawResponse(raw: string) {
-  mockExecFile.mockImplementation(
-    ((_cmd: any, _args: any, _opts: any, cb: any) => {
-      if (typeof _opts === 'function') {
-        cb = _opts;
-      }
-      cb(null, raw, '');
-    }) as any
-  );
+  mockCallGemini.mockResolvedValue(raw);
 }
 
 function mockGeminiError(message: string) {
-  mockExecFile.mockImplementation(
-    ((_cmd: any, _args: any, _opts: any, cb: any) => {
-      if (typeof _opts === 'function') {
-        cb = _opts;
-      }
-      cb(new Error(message), '', '');
-    }) as any
-  );
+  mockCallGemini.mockRejectedValue(new Error(message));
 }
 
 describe('classifyBookmark', () => {
@@ -77,7 +56,7 @@ describe('classifyBookmark', () => {
     expect(result).toEqual(mockResult);
   });
 
-  it('calls curl with correct arguments', async () => {
+  it('calls callGemini with prompt and options', async () => {
     mockGeminiResponse({
       priority: 'medium',
       topic: 'Tech',
@@ -87,16 +66,9 @@ describe('classifyBookmark', () => {
 
     await classifyBookmark(mockBookmark, { apiKey: 'test-key' });
 
-    expect(mockExecFile).toHaveBeenCalledWith(
-      'curl',
-      expect.arrayContaining([
-        '-s',
-        '-X',
-        'POST',
-        '-H',
-        'Content-Type: application/json',
-      ]),
-      expect.any(Function)
+    expect(mockCallGemini).toHaveBeenCalledWith(
+      expect.stringContaining('Classify this bookmark'),
+      { apiKey: 'test-key', model: 'gemini-2.0-flash' }
     );
   });
 
@@ -113,10 +85,9 @@ describe('classifyBookmark', () => {
 
     await classifyBookmark(mockBookmark, { apiKey: 'key' });
 
-    expect(mockExecFile).toHaveBeenCalledWith(
-      'curl',
-      expect.arrayContaining([expect.stringContaining('gemini-2.0-flash')]),
-      expect.any(Function)
+    expect(mockCallGemini).toHaveBeenCalledWith(
+      expect.any(String),
+      expect.objectContaining({ model: 'gemini-2.0-flash' })
     );
   });
 
@@ -125,10 +96,9 @@ describe('classifyBookmark', () => {
 
     await classifyBookmark(mockBookmark, { apiKey: 'key', model: 'gemini-pro' });
 
-    expect(mockExecFile).toHaveBeenCalledWith(
-      'curl',
-      expect.arrayContaining([expect.stringContaining('gemini-pro')]),
-      expect.any(Function)
+    expect(mockCallGemini).toHaveBeenCalledWith(
+      expect.any(String),
+      expect.objectContaining({ model: 'gemini-pro' })
     );
   });
 
@@ -196,7 +166,7 @@ describe('classifyBookmark', () => {
     expect(result.reading_time_min).toBe(7);
   });
 
-  it('throws on curl errors', async () => {
+  it('throws on callGemini errors', async () => {
     mockGeminiError('API request failed');
 
     await expect(classifyBookmark(mockBookmark, { apiKey: 'test-key' })).rejects.toThrow('API request failed');
@@ -205,79 +175,67 @@ describe('classifyBookmark', () => {
   it('throws on non-JSON response from API', async () => {
     mockGeminiRawResponse('not json at all');
 
-    await expect(classifyBookmark(mockBookmark, { apiKey: 'key' })).rejects.toThrow('Failed to parse classifier API response as JSON');
+    await expect(classifyBookmark(mockBookmark, { apiKey: 'key' })).rejects.toThrow('Failed to parse classification result as JSON');
   });
 
   it('throws on API error in response body', async () => {
-    mockGeminiRawResponse(JSON.stringify({ error: { message: 'Rate limited' } }));
+    mockGeminiError('Rate limited');
 
     await expect(classifyBookmark(mockBookmark, { apiKey: 'key' })).rejects.toThrow('Rate limited');
   });
 
   it('throws on missing candidates in response', async () => {
-    mockGeminiRawResponse(JSON.stringify({ candidates: [] }));
+    mockGeminiError('Gemini API error: invalid response — no text in candidates');
 
-    await expect(classifyBookmark(mockBookmark, { apiKey: 'key' })).rejects.toThrow('Invalid Gemini API response');
+    await expect(classifyBookmark(mockBookmark, { apiKey: 'key' })).rejects.toThrow('Gemini API error');
   });
 
   it('throws on empty text in candidates', async () => {
-    mockGeminiRawResponse(JSON.stringify({ candidates: [{ content: { parts: [{ text: '' }] } }] }));
+    mockGeminiError('Gemini API error: invalid response — no text in candidates');
 
-    await expect(classifyBookmark(mockBookmark, { apiKey: 'key' })).rejects.toThrow('Invalid Gemini API response');
+    await expect(classifyBookmark(mockBookmark, { apiKey: 'key' })).rejects.toThrow('Gemini API error');
   });
 
   it('throws on invalid classification JSON from API', async () => {
-    mockGeminiRawResponse(JSON.stringify({ candidates: [{ content: { parts: [{ text: 'not valid json' }] } }] }));
+    mockGeminiRawResponse('not valid json');
 
     await expect(classifyBookmark(mockBookmark, { apiKey: 'key' })).rejects.toThrow('Failed to parse classification result as JSON');
   });
 
   it('throws when classification result missing priority', async () => {
-    mockGeminiRawResponse(JSON.stringify({
-      candidates: [{ content: { parts: [{ text: JSON.stringify({ topic: 'AI', reading_time_min: 5 }) }] } }]
-    }));
+    mockGeminiRawResponse(JSON.stringify({ topic: 'AI', reading_time_min: 5 }));
 
     await expect(classifyBookmark(mockBookmark, { apiKey: 'key' })).rejects.toThrow('Invalid classification result');
   });
 
   it('throws when classification result missing topic', async () => {
-    mockGeminiRawResponse(JSON.stringify({
-      candidates: [{ content: { parts: [{ text: JSON.stringify({ priority: 'high', reading_time_min: 5 }) }] } }]
-    }));
+    mockGeminiRawResponse(JSON.stringify({ priority: 'high', reading_time_min: 5 }));
 
     await expect(classifyBookmark(mockBookmark, { apiKey: 'key' })).rejects.toThrow('Invalid classification result');
   });
 
   it('throws when classification result missing reading_time_min', async () => {
-    mockGeminiRawResponse(JSON.stringify({
-      candidates: [{ content: { parts: [{ text: JSON.stringify({ priority: 'high', topic: 'AI' }) }] } }]
-    }));
+    mockGeminiRawResponse(JSON.stringify({ priority: 'high', topic: 'AI' }));
 
     await expect(classifyBookmark(mockBookmark, { apiKey: 'key' })).rejects.toThrow('Invalid classification result');
   });
 
   it('defaults hashtags to empty array when not an array', async () => {
-    mockGeminiRawResponse(JSON.stringify({
-      candidates: [{ content: { parts: [{ text: JSON.stringify({ priority: 'medium', topic: 'Tech', reading_time_min: 3, hashtags: 'not-an-array' }) }] } }]
-    }));
+    mockGeminiRawResponse(JSON.stringify({ priority: 'medium', topic: 'Tech', reading_time_min: 3, hashtags: 'not-an-array' }));
 
     const result = await classifyBookmark(mockBookmark, { apiKey: 'key' });
     expect(result.hashtags).toEqual([]);
   });
 
   it('defaults hashtags to empty array when missing', async () => {
-    mockGeminiRawResponse(JSON.stringify({
-      candidates: [{ content: { parts: [{ text: JSON.stringify({ priority: 'medium', topic: 'Tech', reading_time_min: 3 }) }] } }]
-    }));
+    mockGeminiRawResponse(JSON.stringify({ priority: 'medium', topic: 'Tech', reading_time_min: 3 }));
 
     const result = await classifyBookmark(mockBookmark, { apiKey: 'key' });
     expect(result.hashtags).toEqual([]);
   });
 
   it('strips markdown fences from response text', async () => {
-    mockGeminiRawResponse(JSON.stringify({
-      candidates: [{ content: { parts: [{ text: '```json\n{"priority":"high","topic":"AI","hashtags":["ai"],"reading_time_min":5}\n```' }] } }]
-    }));
+    mockCallGemini.mockResolvedValue('{"priority":"high","topic":"AI","hashtags":["ai"],"reading_time_min":5}');
 
     const result = await classifyBookmark(mockBookmark, { apiKey: 'key' });
     expect(result.priority).toBe('high');
@@ -289,10 +247,7 @@ describe('classifyBookmark', () => {
 
     await classifyBookmark(mockBookmark, { apiKey: 'key' });
 
-    const curlCall = mockExecFile.mock.calls[0];
-    const args = curlCall[1] as string[];
-    const dataIdx = args.indexOf('-d');
-    expect(dataIdx).toBeGreaterThan(-1);
-    expect(args[dataIdx + 1]).toContain('outer_link');
+    const prompt = mockCallGemini.mock.calls[0][0];
+    expect(prompt).toContain('outer_link');
   });
 });

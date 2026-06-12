@@ -13,9 +13,9 @@ honor its STOP conditions, and update your row when done.
 | 003 | Move Gemini API key to HTTP header in classifier | P1 | S | — | DONE |
 | 004 | Wrap storeClassification in transaction | P1 | M | — | DONE |
 | 005 | Add missing foreign key indexes | P1 | S | — | DONE |
-| 006 | Batch hashtag queries in getClassifiedBookmarks | P2 | S | — | TODO |
-| 007 | Replace classifier curl with callGemini | P2 | M | 003 | TODO |
-| 008 | Fix summarizeBookmark loading all rows | P2 | S | — | TODO |
+| 006 | Batch hashtag queries in getClassifiedBookmarks | P2 | S | — | DONE |
+| 007 | Replace classifier curl with callGemini | P2 | M | 003 | DONE |
+| 008 | Fix summarizeBookmark loading all rows | P2 | S | — | DONE |
 | 009 | Replace (window as any).api with typed access | P2 | M | — | TODO |
 | 010 | Deduplicate UserConfig type into shared module | P2 | S | — | TODO |
 | 011 | Cache readConfig and make async | P2 | S | 010 | TODO |
