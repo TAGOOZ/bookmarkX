@@ -2,13 +2,19 @@ import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { useIntl } from 'react-intl';
 import type { Bookmark } from '../types';
 
-function escapeHtml(str: string): string {
-  return str
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#39;');
+function escapeHtmlExceptMark(str: string): string {
+  const parts = str.split(/(<\/?mark>)/g);
+  return parts
+    .map((part) => {
+      if (part === '<mark>' || part === '</mark>') return part;
+      return part
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+    })
+    .join('');
 }
 
 interface ArticleSearchResult {
@@ -209,7 +215,7 @@ const SearchOverlay: React.FC<SearchOverlayProps> = ({
                   </div>
                   <div
                     className="search-overlay-item-snippet"
-                    dangerouslySetInnerHTML={{ __html: escapeHtml(snippet) }}
+                    dangerouslySetInnerHTML={{ __html: escapeHtmlExceptMark(snippet) }}
                   />
                   <div className="search-overlay-item-domain">
                     {getDomain(bookmark.url)}

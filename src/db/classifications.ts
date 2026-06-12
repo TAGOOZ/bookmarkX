@@ -10,20 +10,26 @@ export async function storeClassification(
 ): Promise<void> {
   const classificationId = crypto.randomUUID();
 
-  await db.execute({
-    sql: 'INSERT INTO classifications (id, bookmark_id, priority, reading_time_min) VALUES (?, ?, ?, ?)',
-    args: [classificationId, bookmarkId, result.priority, result.reading_time_min],
-  });
+  try {
+    await db.execute({
+      sql: 'INSERT INTO classifications (id, bookmark_id, priority, reading_time_min) VALUES (?, ?, ?, ?)',
+      args: [classificationId, bookmarkId, result.priority, result.reading_time_min],
+    });
 
-  // Store single topic (ADR-0019: bookmark belongs to exactly one topic)
-  if (result.topic) {
-    const topic = await getOrCreateTopic(db, result.topic, null, 'ai');
-    await moveBookmarkToTopic(db, bookmarkId, topic.id);
-  }
+    if (result.topic) {
+      const topic = await getOrCreateTopic(db, result.topic, null, 'ai');
+      await moveBookmarkToTopic(db, bookmarkId, topic.id);
+    }
 
-  // Store hashtags
-  if (result.hashtags && result.hashtags.length > 0) {
-    await setBookmarkHashtags(db, bookmarkId, result.hashtags);
+    if (result.hashtags && result.hashtags.length > 0) {
+      await setBookmarkHashtags(db, bookmarkId, result.hashtags);
+    }
+  } catch (err) {
+    await db.execute({
+      sql: 'DELETE FROM classifications WHERE id = ?',
+      args: [classificationId],
+    });
+    throw err;
   }
 }
 
@@ -80,15 +86,32 @@ export async function getClassifiedBookmarks(
 
   const results = rows as any[];
 
-  // Get hashtags for each bookmark
-  for (const row of results) {
-    const { rows: hashtagRows } = await db.execute({
-      sql: `SELECT h.name FROM hashtags h
+  // Batch fetch all hashtags in one query
+  const bookmarkIds = results.map((r) => r.bookmark_id);
+  if (bookmarkIds.length > 0) {
+    const placeholders = bookmarkIds.map(() => '?').join(',');
+    const { rows: allHashtagRows } = await db.execute({
+      sql: `SELECT bh.bookmark_id, h.name FROM hashtags h
             JOIN bookmark_hashtags bh ON h.id = bh.hashtag_id
-            WHERE bh.bookmark_id = ?`,
-      args: [row.bookmark_id],
+            WHERE bh.bookmark_id IN (${placeholders})
+            ORDER BY h.name`,
+      args: bookmarkIds,
     });
-    row.hashtags = hashtagRows.map((h: any) => h.name);
+
+    const hashtagMap = new Map<string, string[]>();
+    for (const row of allHashtagRows as any[]) {
+      const existing = hashtagMap.get(row.bookmark_id) || [];
+      existing.push(row.name);
+      hashtagMap.set(row.bookmark_id, existing);
+    }
+
+    for (const row of results) {
+      row.hashtags = hashtagMap.get(row.bookmark_id) || [];
+    }
+  } else {
+    for (const row of results) {
+      row.hashtags = [];
+    }
   }
 
   return results;

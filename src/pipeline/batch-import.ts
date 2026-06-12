@@ -64,7 +64,6 @@ export async function startBatchImport(
   let aborted = false;
 
   activeAbort = () => { aborted = true; };
-  activeAbort = null;
 
   const report = (progress: ImportProgress) => {
     onProgress?.(progress);
@@ -119,12 +118,13 @@ export async function startBatchImport(
       }
 
       if (!aborted) {
-        const { rows } = await db.execute(
-          `SELECT b.id FROM bookmarks b
+        const { rows } = await db.execute({
+          sql: `SELECT b.id FROM bookmarks b
            LEFT JOIN classifications c ON b.id = c.bookmark_id
            WHERE c.id IS NULL
-           LIMIT ?`
-        );
+           LIMIT ?`,
+          args: [CLASSIFY_BATCH_SIZE],
+        });
         const unclassified = rows as any[];
 
         for (let i = 0; i < unclassified.length; i += CLASSIFY_BATCH_SIZE) {
