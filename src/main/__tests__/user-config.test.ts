@@ -84,25 +84,25 @@ describe('user-config', () => {
   });
 
   describe('writeConfig', () => {
-    it('creates config file with provided data', () => {
+    it('creates config file with provided data', async () => {
       const config = { ...DEFAULT_CONFIG, name: 'Test' };
-      writeConfig(tmpDir, config);
+      await writeConfig(tmpDir, config);
 
       const raw = fs.readFileSync(path.join(tmpDir, 'user.json'), 'utf-8');
       expect(JSON.parse(raw)).toEqual(config);
     });
 
-    it('overwrites existing config file', () => {
-      writeConfig(tmpDir, { ...DEFAULT_CONFIG, name: 'First' });
-      writeConfig(tmpDir, { ...DEFAULT_CONFIG, name: 'Second' });
+    it('overwrites existing config file', async () => {
+      await writeConfig(tmpDir, { ...DEFAULT_CONFIG, name: 'First' });
+      await writeConfig(tmpDir, { ...DEFAULT_CONFIG, name: 'Second' });
 
       const config = readConfig(tmpDir);
       expect(config.name).toBe('Second');
     });
 
-    it('creates directory if it does not exist', () => {
+    it('creates directory if it does not exist', async () => {
       const nestedDir = path.join(tmpDir, 'nested', 'dir');
-      writeConfig(nestedDir, DEFAULT_CONFIG);
+      await writeConfig(nestedDir, DEFAULT_CONFIG);
 
       expect(fs.existsSync(path.join(nestedDir, 'user.json'))).toBe(true);
     });

@@ -89,7 +89,8 @@ app.whenReady().then(async () => {
   await initializeSchema(db);
 
   // Register all IPC handlers (was: 390 lines of inline handlers)
-  registerAllIpc(require('electron').ipcMain, db);
+  const { ipcMain } = await import('electron');
+  registerAllIpc(ipcMain, db);
 
   // Start cron scheduler: fetch every 6 hours, then classify
   const cronJob = startCronScheduler(db, '0 */6 * * *');

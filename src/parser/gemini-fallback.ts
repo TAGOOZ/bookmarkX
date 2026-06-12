@@ -49,8 +49,8 @@ export async function parseWithGemini(
 
   let ogTitle = '';
   let ogDescription = '';
-  let ogImage = '';
-  let ogSiteName = '';
+  const ogImage = '';
+  const ogSiteName = '';
 
   for (const block of blocks) {
     const b = block as any;
