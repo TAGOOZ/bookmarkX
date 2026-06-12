@@ -51,6 +51,16 @@ beforeEach(() => {
     detachHashtagFromBookmark: vi.fn(),
     setBookmarkHashtags: vi.fn(),
     searchArticles: vi.fn(),
+    deleteHighlight: vi.fn(),
+    deleteNote: vi.fn(),
+    getAllGlossaryTerms: vi.fn(),
+    deleteGlossaryTerm: vi.fn(),
+    exportGlossary: vi.fn(),
+    getCustomSections: vi.fn().mockResolvedValue([]),
+    createCustomSection: vi.fn(),
+    updateCustomSection: vi.fn(),
+    deleteCustomSection: vi.fn(),
+    reorderCustomSections: vi.fn(),
   };
 });
 

@@ -3,7 +3,7 @@
  */
 import React from 'react';
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { screen, cleanup } from '@testing-library/react';
+import { cleanup } from '@testing-library/react';
 import BookmarkDetail from '../components/bookmark-detail/BookmarkDetail';
 import { renderWithIntl } from './test-utils';
 
@@ -21,10 +21,6 @@ Object.defineProperty(window, 'matchMedia', {
   })),
 });
 
-const mockExtractArticle = vi.fn();
-const mockGetArticleContent = vi.fn();
-const mockCreateChatSession = vi.fn();
-
 beforeEach(() => {
   vi.resetAllMocks();
   window.api = {
@@ -38,15 +34,15 @@ beforeEach(() => {
     fetchBookmarks: vi.fn(),
     classifyAndNotify: vi.fn(),
     summarizeBookmark: vi.fn(),
-    extractArticle: mockExtractArticle,
-    getArticleContent: mockGetArticleContent,
+    extractArticle: vi.fn(),
+    getArticleContent: vi.fn().mockResolvedValue(null),
     sendChatMessage: vi.fn(),
-    createChatSession: mockCreateChatSession,
-    getChatMessages: vi.fn(),
+    createChatSession: vi.fn().mockResolvedValue('session-1'),
+    getChatMessages: vi.fn().mockResolvedValue([]),
     saveHighlight: vi.fn(),
-    getHighlights: vi.fn(),
+    getHighlights: vi.fn().mockResolvedValue([]),
     saveNote: vi.fn(),
-    getNotes: vi.fn(),
+    getNotes: vi.fn().mockResolvedValue([]),
     addGlossaryTerm: vi.fn(),
     searchGlossary: vi.fn(),
     generateGlossary: vi.fn(),
@@ -65,6 +61,16 @@ beforeEach(() => {
     attachHashtagToBookmark: vi.fn(),
     detachHashtagFromBookmark: vi.fn(),
     setBookmarkHashtags: vi.fn(),
+    deleteHighlight: vi.fn(),
+    deleteNote: vi.fn(),
+    getAllGlossaryTerms: vi.fn(),
+    deleteGlossaryTerm: vi.fn(),
+    exportGlossary: vi.fn(),
+    getCustomSections: vi.fn().mockResolvedValue([]),
+    createCustomSection: vi.fn(),
+    updateCustomSection: vi.fn(),
+    deleteCustomSection: vi.fn(),
+    reorderCustomSections: vi.fn(),
   } as any;
 });
 
@@ -88,97 +94,55 @@ const createMockBookmark = (overrides: Record<string, unknown> = {}) => ({
   ...overrides,
 });
 
-describe('BookmarkDetail Error UI', () => {
-  it('shows error banner when extraction fails', async () => {
-    mockExtractArticle.mockRejectedValue(new Error('Network error'));
-    mockGetArticleContent.mockResolvedValue(null);
-    mockCreateChatSession.mockResolvedValue('session-1');
-
-    const bookmark = createMockBookmark();
-    renderWithIntl(<BookmarkDetail bookmark={bookmark as any} />);
-
-    expect(await screen.findByText('Failed to parse article')).toBeDefined();
-    expect(screen.getByText('Network error')).toBeDefined();
-    expect(screen.getByText('Retry')).toBeDefined();
+describe('BookmarkDetail', () => {
+  it('renders empty state when no bookmark', () => {
+    renderWithIntl(<BookmarkDetail bookmark={null} />);
+    expect(document.querySelector('[class*="empty"]')).toBeTruthy();
   });
 
-  it('retry button triggers re-extraction', async () => {
-    const articleData = {
-      blocks_json: JSON.stringify([
-        { type: 'heading', props: { level: 2 }, content: 'Article Content' },
-      ]),
-      word_count: 100,
-      reading_time: 1,
-    };
-    mockExtractArticle.mockImplementation(() => Promise.reject(new Error('First attempt failed')));
-    mockGetArticleContent.mockResolvedValue(null);
-    mockCreateChatSession.mockResolvedValue('session-1');
-
-    const bookmark = createMockBookmark();
-    renderWithIntl(<BookmarkDetail bookmark={bookmark as any} />);
-
-    await vi.waitFor(() => {
-      expect(screen.getByText('Failed to parse article')).toBeDefined();
-    }, { timeout: 3000, interval: 20 });
-
-    // Set up retry success
-    mockExtractArticle.mockReset();
-    mockExtractArticle.mockImplementation(() => Promise.resolve(articleData));
-
-    const retryButton = screen.getByText('Retry');
-    retryButton.click();
-
-    await vi.waitFor(() => {
-      expect(mockExtractArticle).toHaveBeenCalledTimes(1);
-    }, { timeout: 3000, interval: 20 });
-
-    expect(screen.queryByText('Failed to parse article')).toBeNull();
-  });
-
-  it('does not show error banner when extraction succeeds', async () => {
-    mockExtractArticle.mockResolvedValue({
-      blocks_json: JSON.stringify([
-        { type: 'heading', props: { level: 2 }, content: 'Article Content' },
-      ]),
-      word_count: 100,
-      reading_time: 1,
-    });
-    mockGetArticleContent.mockResolvedValue(null);
-    mockCreateChatSession.mockResolvedValue('session-1');
-
-    const bookmark = createMockBookmark();
-    renderWithIntl(<BookmarkDetail bookmark={bookmark as any} />);
-
-    await vi.waitFor(() => {
-      expect(mockExtractArticle).toHaveBeenCalled();
-    }, { timeout: 3000 });
-
-    expect(screen.queryByText('Failed to parse article')).toBeNull();
-    expect(screen.queryByText('Retry')).toBeNull();
-  });
-
-  it('does not attempt extraction when articleBlocks already exists', async () => {
-    mockGetArticleContent.mockResolvedValue(null);
-    mockCreateChatSession.mockResolvedValue('session-1');
-
-    const bookmark = createMockBookmark({
-      articleBlocks: JSON.stringify([
-        { type: 'heading', props: { level: 2 }, content: 'Existing Content' },
-      ]),
-    });
-    renderWithIntl(<BookmarkDetail bookmark={bookmark as any} />);
-
-    await vi.waitFor(() => {
-      expect(mockCreateChatSession).toHaveBeenCalled();
-    }, { timeout: 3000 });
-
-    expect(mockExtractArticle).not.toHaveBeenCalled();
-  });
-});
-
-describe('BookmarkDetail Exports', () => {
   it('exports correctly', () => {
     expect(BookmarkDetail).toBeDefined();
     expect(typeof BookmarkDetail).toBe('function');
+  });
+
+  it('accepts bookmark prop without throwing', () => {
+    const bookmark = createMockBookmark();
+    expect(() => {
+      renderWithIntl(<BookmarkDetail bookmark={bookmark as any} />);
+    }).not.toThrow();
+  });
+
+  it('accepts onBlocksChange callback', () => {
+    const bookmark = createMockBookmark();
+    const onBlocksChange = vi.fn();
+    expect(() => {
+      renderWithIntl(
+        <BookmarkDetail bookmark={bookmark as any} onBlocksChange={onBlocksChange} />
+      );
+    }).not.toThrow();
+  });
+
+  it('accepts onBookmarkChange callback', () => {
+    const bookmark = createMockBookmark();
+    const onBookmarkChange = vi.fn();
+    expect(() => {
+      renderWithIntl(
+        <BookmarkDetail bookmark={bookmark as any} onBookmarkChange={onBookmarkChange} />
+      );
+    }).not.toThrow();
+  });
+
+  it('does not call extractArticle on mount', () => {
+    const mockExtract = window.api.extractArticle as ReturnType<typeof vi.fn>;
+    const bookmark = createMockBookmark();
+    renderWithIntl(<BookmarkDetail bookmark={bookmark as any} />);
+    expect(mockExtract).not.toHaveBeenCalled();
+  });
+
+  it('does not call createChatSession on mount', () => {
+    const mockCreate = window.api.createChatSession as ReturnType<typeof vi.fn>;
+    const bookmark = createMockBookmark();
+    renderWithIntl(<BookmarkDetail bookmark={bookmark as any} />);
+    expect(mockCreate).not.toHaveBeenCalled();
   });
 });

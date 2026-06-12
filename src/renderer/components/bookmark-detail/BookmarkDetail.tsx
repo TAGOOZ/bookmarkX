@@ -137,7 +137,7 @@ const BookmarkEditor: React.FC<BookmarkEditorProps> = ({
 
   const { isParsing, parseError, runExtraction } = useArticleExtraction({
     bookmark,
-    editor,
+    editor: editor as any,
     onBookmarkChange,
   });
 
@@ -156,7 +156,7 @@ const BookmarkEditor: React.FC<BookmarkEditorProps> = ({
   });
 
   const { handleExpandCollapseAll, handleExport, handleImportMarkdown } = useEditorActions({
-    editor,
+    editor: editor as any,
     bookmarkTitle: bookmark.title,
     intl,
     setNotification,
@@ -341,7 +341,7 @@ const BookmarkEditor: React.FC<BookmarkEditorProps> = ({
           />
           {customSections.length > 0 && (
             <div className={styles.customSectionsContainer}>
-              {customSections.sort((a, b) => a.sort_order - b.sort_order).map((section) => (
+              {[...customSections].sort((a, b) => a.sort_order - b.sort_order).map((section) => (
                 <CustomSectionComponent
                   key={section.id}
                   section={section}

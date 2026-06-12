@@ -42,6 +42,31 @@ export async function getStoredBookmarks(db: Client): Promise<Bookmark[]> {
   }));
 }
 
+export async function getBookmarkById(
+  db: Client,
+  id: string
+): Promise<Bookmark | null> {
+  const { rows } = await db.execute({
+    sql: 'SELECT * FROM bookmarks WHERE id = ?',
+    args: [id],
+  });
+  const row = rows[0];
+  if (!row) return null;
+  return {
+    id: row.id as string,
+    tweet_id: row.tweet_id as string,
+    url: row.url as string,
+    content_type: row.content_type as Bookmark['content_type'],
+    title: row.title as string | null,
+    title_ar: row.title_ar as string | null,
+    title_en: row.title_en as string | null,
+    author_name: row.author_name as string | null,
+    author_handle: row.author_handle as string | null,
+    tweet_text: row.tweet_text as string | null,
+    fetched_at: row.fetched_at as string,
+  };
+}
+
 export async function getUnfetchedBookmarks(db: Client): Promise<Bookmark[]> {
   const { rows } = await db.execute(`
     SELECT b.* FROM bookmarks b
