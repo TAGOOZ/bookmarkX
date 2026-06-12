@@ -28,7 +28,7 @@ beforeAll(() => {
 const baseBookmark = {
   id: '1',
   title: 'Test Article',
-  titleAr: null,
+  titleAr: null as string | null,
   titleEn: 'Test Article',
   url: 'https://example.com',
   topic: 'technology',
@@ -39,68 +39,109 @@ const baseBookmark = {
 };
 
 describe('BookmarkDetail', () => {
-  it('shows empty state when no bookmark', () => {
-    renderWithIntl(<BookmarkDetail bookmark={null} />);
-    expect(screen.getByText('Select a bookmark')).toBeDefined();
+  describe('empty state', () => {
+    it('shows empty state when no bookmark', () => {
+      renderWithIntl(<BookmarkDetail bookmark={null} />);
+      expect(screen.getByText('Select a bookmark')).toBeDefined();
+    });
   });
 
-  it('renders the BlockNote editor with bookmark title in blocks', () => {
-    const { container } = renderWithIntl(<BookmarkDetail bookmark={baseBookmark} />);
-    expect(container.querySelector('.bn-editor')).toBeDefined();
+  describe('editor rendering', () => {
+    it('renders BlockNote editor for a bookmark', () => {
+      const { container } = renderWithIntl(<BookmarkDetail bookmark={baseBookmark} />);
+      expect(container.querySelector('.bn-editor')).not.toBeNull();
+    });
+
+    it('renders editor only once (no duplicate editors)', () => {
+      const { container } = renderWithIntl(<BookmarkDetail bookmark={baseBookmark} />);
+      const editors = container.querySelectorAll('.bn-editor');
+      expect(editors).toHaveLength(1);
+    });
   });
 
-  it('renders the BlockNote editor', () => {
-    const { container } = renderWithIntl(<BookmarkDetail bookmark={baseBookmark} />);
-    expect(container.querySelector('.bn-editor')).toBeDefined();
+  describe('content scenarios', () => {
+    it('renders editor with summary', () => {
+      const { container } = renderWithIntl(
+        <BookmarkDetail
+          bookmark={{ ...baseBookmark, summary: 'AI summary text' }}
+        />,
+      );
+      expect(container.querySelector('.bn-editor')).not.toBeNull();
+    });
+
+    it('renders editor with pre-stored blocks', () => {
+      const blocks = [
+        { type: 'heading', props: { level: 2 }, content: 'Custom Heading' },
+        { type: 'paragraph', content: 'Custom content' },
+      ];
+      const { container } = renderWithIntl(
+        <BookmarkDetail
+          bookmark={{ ...baseBookmark, blocks: JSON.stringify(blocks) }}
+        />,
+      );
+      expect(container.querySelector('.bn-editor')).not.toBeNull();
+    });
+
+    it('renders editor with null content', () => {
+      const { container } = renderWithIntl(
+        <BookmarkDetail
+          bookmark={{ ...baseBookmark, content: null }}
+        />,
+      );
+      expect(container.querySelector('.bn-editor')).not.toBeNull();
+    });
+
+    it('renders editor with empty content', () => {
+      const { container } = renderWithIntl(
+        <BookmarkDetail
+          bookmark={{ ...baseBookmark, content: '' }}
+        />,
+      );
+      expect(container.querySelector('.bn-editor')).not.toBeNull();
+    });
+
+    it('renders editor with very long title', () => {
+      const longTitle = 'A'.repeat(500);
+      const { container } = renderWithIntl(
+        <BookmarkDetail
+          bookmark={{ ...baseBookmark, title: longTitle }}
+        />,
+      );
+      expect(container.querySelector('.bn-editor')).not.toBeNull();
+    });
   });
 
-  it('converts bookmark data to blocks and renders', () => {
-    const { container } = renderWithIntl(
-      <BookmarkDetail
-        bookmark={{ ...baseBookmark, summary: 'AI summary text' }}
-      />,
-    );
-    expect(container.querySelector('.bn-editor')).toBeDefined();
-  });
+  describe('RTL detection', () => {
+    it('sets dir="rtl" for Arabic bookmark', () => {
+      const { container } = renderWithIntl(
+        <BookmarkDetail
+          bookmark={{ ...baseBookmark, title: 'مقال عن الذكاء الاصطناعي' }}
+        />,
+      );
+      expect(container.querySelector('[dir="rtl"]')).not.toBeNull();
+    });
 
-  it('renders with pre-stored blocks', () => {
-    const blocks = [
-      { type: 'heading', props: { level: 2 }, content: 'Custom Heading' },
-      { type: 'paragraph', content: 'Custom content' },
-    ];
-    const { container } = renderWithIntl(
-      <BookmarkDetail
-        bookmark={{ ...baseBookmark, blocks: JSON.stringify(blocks) }}
-      />,
-    );
-    expect(container.querySelector('.bn-editor')).toBeDefined();
-  });
+    it('sets dir="ltr" for English bookmark', () => {
+      const { container } = renderWithIntl(
+        <BookmarkDetail bookmark={baseBookmark} />
+      );
+      expect(container.querySelector('[dir="ltr"]')).not.toBeNull();
+    });
 
-  it('sets dir="rtl" on editor for Arabic bookmark', () => {
-    const { container } = renderWithIntl(
-      <BookmarkDetail
-        bookmark={{ ...baseBookmark, title: 'مقال عن الذكاء الاصطناعي' }}
-      />,
-    );
-    const editor = container.querySelector('[dir="rtl"]');
-    expect(editor).not.toBeNull();
-  });
+    it('sets dir="rtl" when summary is Arabic', () => {
+      const { container } = renderWithIntl(
+        <BookmarkDetail
+          bookmark={{ ...baseBookmark, summary: 'ملخص بالعربي' }}
+        />,
+      );
+      expect(container.querySelector('[dir="rtl"]')).not.toBeNull();
+    });
 
-  it('sets dir="ltr" on editor for English bookmark', () => {
-    const { container } = renderWithIntl(
-      <BookmarkDetail bookmark={baseBookmark} />
-    );
-    const editor = container.querySelector('[dir="ltr"]');
-    expect(editor).not.toBeNull();
-  });
-
-  it('sets dir="rtl" when summary is Arabic', () => {
-    const { container } = renderWithIntl(
-      <BookmarkDetail
-        bookmark={{ ...baseBookmark, summary: 'ملخص بالعربي' }}
-      />,
-    );
-    const editor = container.querySelector('[dir="rtl"]');
-    expect(editor).not.toBeNull();
+    it('does not set dir="rtl" for English content', () => {
+      const { container } = renderWithIntl(
+        <BookmarkDetail bookmark={baseBookmark} />
+      );
+      expect(container.querySelector('[dir="rtl"]')).toBeNull();
+    });
   });
 });

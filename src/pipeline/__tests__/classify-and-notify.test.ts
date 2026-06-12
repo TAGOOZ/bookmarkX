@@ -67,8 +67,8 @@ describe('classifyAndNotify pipeline', () => {
 
   it('classifies bookmarks and sends notification for high priority', async () => {
     mockClassifyBookmark
-      .mockResolvedValueOnce({ priority: 'high', topics: ['AI'], reading_time_min: 5 })
-      .mockResolvedValueOnce({ priority: 'low', topics: ['General'], reading_time_min: 2 });
+      .mockResolvedValueOnce({ priority: 'high', topic: 'AI', hashtags: ['ai'], reading_time_min: 5 })
+      .mockResolvedValueOnce({ priority: 'low', topic: 'General', hashtags: [], reading_time_min: 2 });
 
     const result = await classifyAndNotify(db);
 
@@ -78,12 +78,12 @@ describe('classifyAndNotify pipeline', () => {
     expect(mockSendNotification).toHaveBeenCalledTimes(1);
     expect(mockSendNotification).toHaveBeenCalledWith(
       mockBookmarks[0],
-      { priority: 'high', topics: ['AI'], reading_time_min: 5 }
+      { priority: 'high', topic: 'AI', hashtags: ['ai'], reading_time_min: 5 }
     );
   });
 
   it('skips already classified bookmarks', async () => {
-    mockClassifyBookmark.mockResolvedValue({ priority: 'medium', topics: ['Tech'], reading_time_min: 3 });
+    mockClassifyBookmark.mockResolvedValue({ priority: 'medium', topic: 'Tech', hashtags: [], reading_time_min: 3 });
 
     await classifyAndNotify(db);
     vi.clearAllMocks();
@@ -97,7 +97,7 @@ describe('classifyAndNotify pipeline', () => {
   it('handles classification errors gracefully', async () => {
     mockClassifyBookmark
       .mockRejectedValueOnce(new Error('API error'))
-      .mockResolvedValueOnce({ priority: 'high', topics: ['AI'], reading_time_min: 5 });
+      .mockResolvedValueOnce({ priority: 'high', topic: 'AI', hashtags: [], reading_time_min: 5 });
 
     const result = await classifyAndNotify(db);
 
@@ -107,11 +107,95 @@ describe('classifyAndNotify pipeline', () => {
   });
 
   it('does not send notification for non-high priority', async () => {
-    mockClassifyBookmark.mockResolvedValue({ priority: 'medium', topics: ['Tech'], reading_time_min: 3 });
+    mockClassifyBookmark.mockResolvedValue({ priority: 'medium', topic: 'Tech', hashtags: [], reading_time_min: 3 });
 
     const result = await classifyAndNotify(db);
 
     expect(result.notified).toBe(0);
     expect(mockSendNotification).not.toHaveBeenCalled();
+  });
+
+  it('skips concurrent calls via isRunning guard', async () => {
+    let callCount = 0;
+    mockClassifyBookmark.mockImplementation(() => {
+      callCount++;
+      if (callCount === 1) {
+        return new Promise((resolve) => {
+          setTimeout(() => resolve({ priority: 'low', topic: 'T', hashtags: [], reading_time_min: 1 }), 50);
+        });
+      }
+      return Promise.resolve({ priority: 'low', topic: 'T', hashtags: [], reading_time_min: 1 });
+    });
+
+    const firstCall = classifyAndNotify(db);
+    const secondCall = classifyAndNotify(db);
+
+    const [first, second] = await Promise.all([firstCall, secondCall]);
+
+    expect(first.classified).toBe(2);
+    expect(second.classified).toBe(0);
+    expect(second.notified).toBe(0);
+    expect(second.errors).toBe(0);
+  });
+
+  it('returns error count when all bookmarks fail classification', async () => {
+    mockClassifyBookmark.mockRejectedValue(new Error('API down'));
+
+    const result = await classifyAndNotify(db);
+
+    expect(result.classified).toBe(0);
+    expect(result.errors).toBeGreaterThanOrEqual(1);
+    expect(result.notified).toBe(0);
+  });
+
+  it('stores classification in database with correct fields', async () => {
+    mockClassifyBookmark.mockResolvedValue({
+      priority: 'high',
+      topic: 'Machine Learning',
+      hashtags: ['ml', 'neural-net'],
+      reading_time_min: 8,
+    });
+
+    const result = await classifyAndNotify(db);
+
+    expect(result.classified).toBe(2);
+
+    const { rows } = await db.execute('SELECT * FROM classifications');
+    expect(rows.length).toBeGreaterThanOrEqual(1);
+    expect((rows[0] as any).priority).toBe('high');
+    expect((rows[0] as any).reading_time_min).toBe(8);
+  });
+
+  it('creates topic record in database', async () => {
+    mockClassifyBookmark.mockResolvedValue({
+      priority: 'medium',
+      topic: 'Web Dev',
+      hashtags: [],
+      reading_time_min: 4,
+    });
+
+    const result = await classifyAndNotify(db);
+
+    expect(result.classified).toBe(2);
+    const { rows } = await db.execute({ sql: 'SELECT name FROM topics' });
+    expect(rows.length).toBeGreaterThanOrEqual(1);
+    expect(rows.map((r: any) => r.name)).toContain('Web Dev');
+  });
+
+  it('sends notification with bookmark and classification data', async () => {
+    mockClassifyBookmark.mockResolvedValue({
+      priority: 'high',
+      topic: 'Security',
+      hashtags: ['cybersecurity'],
+      reading_time_min: 6,
+    });
+
+    await classifyAndNotify(db);
+
+    expect(mockSendNotification).toHaveBeenCalled();
+    expect(mockSendNotification).toHaveBeenCalledWith(
+      expect.objectContaining({ id: 'cn-1' }),
+      expect.objectContaining({ priority: 'high' })
+    );
   });
 });
