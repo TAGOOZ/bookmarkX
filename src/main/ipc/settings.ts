@@ -7,7 +7,7 @@ export function registerSettingsIpc(ipcMain: IpcMain) {
     return readConfig(userDataDir);
   });
 
-  ipcMain.handle('save-settings', (_event, settings: UserConfig) => {
+  ipcMain.handle('save-settings', async (_event, settings: UserConfig) => {
     if (!settings || typeof settings !== 'object') {
       throw new Error('Invalid settings: expected an object');
     }
@@ -18,6 +18,6 @@ export function registerSettingsIpc(ipcMain: IpcMain) {
       throw new Error('Invalid settings: language must be "ar" or "en"');
     }
     const userDataDir = app.getPath('userData');
-    writeConfig(userDataDir, settings);
+    await writeConfig(userDataDir, settings);
   });
 }

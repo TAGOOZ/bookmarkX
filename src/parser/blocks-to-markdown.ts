@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import type { PartialBlock } from '@blocknote/core';
 
 type InlineItem = { type: string; text?: string; styles?: Record<string, any>; props?: Record<string, any> };
@@ -99,7 +98,7 @@ export function blocksToMarkdown(blocks: PartialBlock[]): string {
   const groups: BlockGroup[] = [];
 
   for (const raw of blocks) {
-    const block = raw as any;
+    const block = raw as any; // eslint-disable-line @typescript-eslint/no-explicit-any
     const type = block.type;
 
     if (type === 'heading') {

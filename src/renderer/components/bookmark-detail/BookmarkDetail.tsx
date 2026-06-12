@@ -130,6 +130,8 @@ const BookmarkEditor: React.FC<BookmarkEditorProps> = ({
   const notesSaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [hashtags, setHashtags] = useState<Array<{ id: string; name: string }>>([]);
   const [newHashtag, setNewHashtag] = useState('');
+  const sessionRequestId = useRef(0);
+  const hashtagTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const getSections = useCallback(() => {
     const base = SECTION_IDS.map((id) => ({
@@ -164,24 +166,25 @@ const BookmarkEditor: React.FC<BookmarkEditorProps> = ({
   }, []);
 
   useEffect(() => {
-    let cancelled = false;
+    const requestId = ++sessionRequestId.current;
     const createSession = async () => {
       if (bookmark.chatSessionId) {
-        setChatSessionId(bookmark.chatSessionId);
+        if (requestId === sessionRequestId.current) {
+          setChatSessionId(bookmark.chatSessionId);
+        }
       } else if (bookmark.id && !chatSessionId) {
         try {
           const sessionId = await (window as any).api?.createChatSession?.(bookmark.id);
-          if (!cancelled && sessionId) {
+          if (requestId === sessionRequestId.current && sessionId) {
             setChatSessionId(sessionId);
             onBookmarkChange?.({ chatSessionId: sessionId });
           }
         } catch (e) {
-          console.error('Failed to create chat session:', e);
+          // createChatSession failed silently
         }
       }
     };
     createSession();
-    return () => { cancelled = true; };
   }, [bookmark.id, bookmark.chatSessionId]);
 
   useEffect(() => {
@@ -317,18 +320,23 @@ const BookmarkEditor: React.FC<BookmarkEditorProps> = ({
 
   const handleAddHashtag = useCallback(async () => {
     if (!bookmark.id || !newHashtag.trim()) return;
-    try {
-      await (window as any).api?.setBookmarkHashtags?.(
-        bookmark.id,
-        [...hashtags.map((h) => h.name), newHashtag.trim()],
-      );
-      const updated = await (window as any).api?.getBookmarkHashtags?.(bookmark.id);
-      if (updated) setHashtags(updated);
-      setNewHashtag('');
-      onBookmarkChange?.({ hashtags: updated });
-    } catch (err) {
-      console.error('Failed to add hashtag:', err);
+    if (hashtagTimerRef.current) {
+      clearTimeout(hashtagTimerRef.current);
     }
+    hashtagTimerRef.current = setTimeout(async () => {
+      try {
+        await (window as any).api?.setBookmarkHashtags?.(
+          bookmark.id,
+          [...hashtags.map((h) => h.name), newHashtag.trim()],
+        );
+        const updated = await (window as any).api?.getBookmarkHashtags?.(bookmark.id);
+        if (updated) setHashtags(updated);
+        setNewHashtag('');
+        onBookmarkChange?.({ hashtags: updated });
+      } catch {
+        // addHashtag failed silently
+      }
+    }, 300);
   }, [bookmark.id, newHashtag, hashtags, onBookmarkChange]);
 
   const handleRemoveHashtag = useCallback(async (hashtagId: string) => {
@@ -342,6 +350,14 @@ const BookmarkEditor: React.FC<BookmarkEditorProps> = ({
       console.error('Failed to remove hashtag:', err);
     }
   }, [bookmark.id, onBookmarkChange]);
+
+  useEffect(() => {
+    return () => {
+      if (hashtagTimerRef.current) {
+        clearTimeout(hashtagTimerRef.current);
+      }
+    };
+  }, []);
 
   const handleSelectionChange = useCallback(() => {
     const selection = window.getSelection();

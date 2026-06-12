@@ -6,8 +6,6 @@ import hljs from 'highlight.js';
 import 'highlight.js/styles/github.css';
 import styles from './ArticleReaderBlock.module.css';
 
-/* eslint-disable @typescript-eslint/no-explicit-any */
-
 function sanitizeTableHtml(html: string): string {
   return html.replace(/<([^>]+)>/g, (match, tag) => {
     return '<' + tag.replace(/&/g, '&amp;').replace(/"/g, '&quot;') + '>';
@@ -17,7 +15,7 @@ function sanitizeTableHtml(html: string): string {
 interface InlineItem {
   type: string;
   text: string;
-  styles?: Record<string, any>;
+  styles?: Record<string, any>; // eslint-disable-line @typescript-eslint/no-explicit-any
 }
 
 function renderInline(items: InlineItem[]): React.ReactNode {
@@ -59,7 +57,7 @@ function ImageBlock({ url, alt }: { url: string; alt: string }) {
   );
 }
 
-function renderBlock(block: any, index: number): React.ReactNode {
+function renderBlock(block: any, index: number): React.ReactNode { // eslint-disable-line @typescript-eslint/no-explicit-any
   const content = block.content;
 
   if (block.type === 'heading') {
@@ -207,7 +205,7 @@ export const createArticleReaderBlock = createReactBlockSpec(
         codes.forEach((el) => hljs.highlightElement(el as HTMLElement));
       }, [expanded, blocksJson]);
 
-      let blocks: any[] = [];
+      let blocks: any[] = []; // eslint-disable-line @typescript-eslint/no-explicit-any
       try {
         blocks = JSON.parse(blocksJson);
       } catch (err) {

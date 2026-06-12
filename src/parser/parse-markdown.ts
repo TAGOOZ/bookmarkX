@@ -120,7 +120,7 @@ export function parseMDToBlocks(markdown: string): PartialBlock[] {
       blocks.push({
         type: isOrdered ? 'numberedListItem' : 'bulletListItem',
         content: text.trim(),
-      } as any);
+      } as any); // eslint-disable-line @typescript-eslint/no-explicit-any
       i++;
       continue;
     }
@@ -130,7 +130,7 @@ export function parseMDToBlocks(markdown: string): PartialBlock[] {
       blocks.push({
         type: 'paragraph',
         content: [{ type: 'text', text: quoteText, styles: { italic: true } }],
-      } as any);
+      } as any); // eslint-disable-line @typescript-eslint/no-explicit-any
       i++;
       continue;
     }
@@ -141,7 +141,7 @@ export function parseMDToBlocks(markdown: string): PartialBlock[] {
         type: 'image',
         props: { url: imgMatch[2], alt: imgMatch[1] || '' },
         content: undefined,
-      } as any);
+      } as any); // eslint-disable-line @typescript-eslint/no-explicit-any
       i++;
       continue;
     }
@@ -162,7 +162,7 @@ export function parseMDToBlocks(markdown: string): PartialBlock[] {
         type: 'tableHtml',
         props: { html: tableHtml },
         content: undefined,
-      } as any);
+      } as any); // eslint-disable-line @typescript-eslint/no-explicit-any
       continue;
     }
 
@@ -172,7 +172,7 @@ export function parseMDToBlocks(markdown: string): PartialBlock[] {
         type: 'video',
         props: { url: videoMatch[2] },
         content: undefined,
-      } as any);
+      } as any); // eslint-disable-line @typescript-eslint/no-explicit-any
       i++;
       continue;
     }
@@ -183,7 +183,7 @@ export function parseMDToBlocks(markdown: string): PartialBlock[] {
         type: 'audio',
         props: { url: audioMatch[2] },
         content: undefined,
-      } as any);
+      } as any); // eslint-disable-line @typescript-eslint/no-explicit-any
       i++;
       continue;
     }
@@ -194,7 +194,7 @@ export function parseMDToBlocks(markdown: string): PartialBlock[] {
         type: 'embed',
         props: { url: embedMatch[2] },
         content: undefined,
-      } as any);
+      } as any); // eslint-disable-line @typescript-eslint/no-explicit-any
       i++;
       continue;
     }
@@ -209,7 +209,7 @@ export function parseMDToBlocks(markdown: string): PartialBlock[] {
       blocks.push({
         type: 'paragraph',
         content: inlineItems,
-      } as any);
+      } as any); // eslint-disable-line @typescript-eslint/no-explicit-any
     }
     i++;
   }
