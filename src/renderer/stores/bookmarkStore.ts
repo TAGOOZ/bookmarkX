@@ -184,6 +184,15 @@ export const useBookmarkStore = create<BookmarkStore>((set, get) => ({
         ? state.openBookmarks.filter((b) => b.id !== col.bookmarkId)
         : state.openBookmarks;
       const remaining = state.splitState.columns.filter((c) => c.id !== columnId);
+      const allEmpty = remaining.every((c) => c.bookmarkId === null);
+      if (allEmpty) {
+        const newSplit: SplitState = {
+          columns: [{ ...remaining[0], bookmarkId: null }],
+          activeColumnId: remaining[0].id,
+        };
+        saveSplitState(newSplit);
+        return { splitState: newSplit, openBookmarks: newOpen };
+      }
       const newActive =
         state.splitState.activeColumnId === columnId
           ? remaining[remaining.length - 1].id
