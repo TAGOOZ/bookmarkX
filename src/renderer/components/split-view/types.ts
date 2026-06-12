@@ -18,8 +18,11 @@ export interface SplitLayoutProps {
   onSplitColumn: (columnId: string, bookmarkId: string) => void;
   onMergeColumn: (columnId: string) => void;
   onTabCloseTab?: (columnId: string, bookmarkId: string) => void;
+  onTabCloseBatch?: (columnId: string, bookmarkIds: string[]) => void;
+  onReopenClosedTab?: (bookmark: Bookmark) => void;
   onColumnActive: (columnId: string) => void;
   onColumnResize: (columnId: string, width: number) => void;
+  onColumnResizeBatch?: (updates: Array<{ columnId: string; width: number }>) => void;
   onBookmarkChange: (bookmarkId: string, updated: Partial<BookmarkDetailData>) => void;
   dir: 'ltr' | 'rtl';
 }

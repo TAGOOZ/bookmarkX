@@ -48,8 +48,10 @@ function AppContent() {
   const handleSplitColumn = useBookmarkStore((s) => s.handleSplitColumn);
   const handleMergeColumn = useBookmarkStore((s) => s.handleMergeColumn);
   const handleTabCloseTab = useBookmarkStore((s) => s.handleTabCloseTab);
+  const handleTabCloseBatch = useBookmarkStore((s) => s.handleTabCloseBatch);
   const handleColumnActive = useBookmarkStore((s) => s.handleColumnActive);
   const handleColumnResize = useBookmarkStore((s) => s.handleColumnResize);
+  const handleColumnResizeBatch = useBookmarkStore((s) => s.handleColumnResizeBatch);
   const setMockMode = useBookmarkStore((s) => s.setMockMode);
   const incrementRefreshKey = useBookmarkStore((s) => s.incrementRefreshKey);
   const fetchBookmarks = useBookmarkStore((s) => s.fetchBookmarks);
@@ -98,8 +100,11 @@ function AppContent() {
             onSplitColumn={handleSplitColumn}
             onMergeColumn={handleMergeColumn}
             onTabCloseTab={handleTabCloseTab}
+            onTabCloseBatch={handleTabCloseBatch}
+            onReopenClosedTab={handleBookmarkSelect}
             onColumnActive={handleColumnActive}
             onColumnResize={handleColumnResize}
+            onColumnResizeBatch={handleColumnResizeBatch}
             onBookmarkChange={handleBookmarkChange}
             dir={dir}
           />

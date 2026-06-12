@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import BookmarkDetail from '../bookmark-detail/BookmarkDetail';
 import BookmarkTabs from '../bookmark-detail/BookmarkTabs';
 import SplitDivider from './SplitDivider';
@@ -15,12 +15,27 @@ const SplitLayout: React.FC<SplitLayoutProps> = ({
   onSplitColumn,
   onMergeColumn,
   onTabCloseTab,
+  onTabCloseBatch,
+  onReopenClosedTab,
   onColumnActive,
   onColumnResize,
+  onColumnResizeBatch,
   onBookmarkChange,
   dir,
 }) => {
   const [activeDropZone, setActiveDropZone] = useState<'left' | 'right' | null>(null);
+  const [isDragging, setIsDragging] = useState(false);
+
+  useEffect(() => {
+    const handleDragStart = () => setIsDragging(true);
+    const handleDragEnd = () => setIsDragging(false);
+    document.addEventListener('dragstart', handleDragStart);
+    document.addEventListener('dragend', handleDragEnd);
+    return () => {
+      document.removeEventListener('dragstart', handleDragStart);
+      document.removeEventListener('dragend', handleDragEnd);
+    };
+  }, []);
 
   const handleBookmarkSelect = useCallback((_columnId: string, bookmarkId: string) => {
     onColumnActive(_columnId);
@@ -59,11 +74,15 @@ const SplitLayout: React.FC<SplitLayoutProps> = ({
     e.preventDefault();
     setActiveDropZone(null);
     const bookmarkId = e.dataTransfer.getData('text/tab-bookmark-id');
+    const sourceColumnId = e.dataTransfer.getData('text/tab-column-id');
     if (!bookmarkId || isMaxColumns) return;
 
     const targetColumn = edge === 'right'
       ? splitState.columns[splitState.columns.length - 1]
       : splitState.columns[0];
+
+    if (targetColumn && targetColumn.id === sourceColumnId) return;
+
     if (targetColumn) {
       onSplitColumn(targetColumn.id, bookmarkId);
     }
@@ -80,7 +99,7 @@ const SplitLayout: React.FC<SplitLayoutProps> = ({
       }}
     >
       <div
-        className={`${styles.dropZone} ${activeDropZone === 'left' ? styles.dropZoneActive : ''}`}
+        className={`${styles.dropZone} ${!isDragging ? styles.dropZoneCollapsed : ''} ${activeDropZone === 'left' ? styles.dropZoneActive : ''}`}
         data-drop-zone="left"
         aria-disabled={isMaxColumns}
         onDragOver={(e) => handleDragOver(e, 'left')}
@@ -111,8 +130,15 @@ const SplitLayout: React.FC<SplitLayoutProps> = ({
                   const newPrevWidth = Math.max(minFlex, prevCol.width + delta / 100);
                   const newCurrentWidth = Math.max(minFlex, currentCol.width - delta / 100);
                   if (prevCol.id && currentCol.id) {
-                    onColumnResize(prevCol.id, newPrevWidth);
-                    onColumnResize(currentCol.id, newCurrentWidth);
+                    if (onColumnResizeBatch) {
+                      onColumnResizeBatch([
+                        { columnId: prevCol.id, width: newPrevWidth },
+                        { columnId: currentCol.id, width: newCurrentWidth },
+                      ]);
+                    } else {
+                      onColumnResize(prevCol.id, newPrevWidth);
+                      onColumnResize(currentCol.id, newCurrentWidth);
+                    }
                   }
                 }}
               />
@@ -128,6 +154,8 @@ const SplitLayout: React.FC<SplitLayoutProps> = ({
                   activeBookmarkId={column.bookmarkId}
                   onTabSelect={(id) => handleBookmarkSelect(column.id, id)}
                   onTabClose={(id) => handleTabClose(column.id, id)}
+                  onTabCloseBatch={onTabCloseBatch ? (ids) => onTabCloseBatch(column.id, ids) : undefined}
+                  onReopenClosedTab={onReopenClosedTab}
                   onSplitColumn={(id) => onSplitColumn(column.id, id)}
                   columnId={column.id}
                   dir={dir}
@@ -147,7 +175,7 @@ const SplitLayout: React.FC<SplitLayoutProps> = ({
         );
       })}
       <div
-        className={`${styles.dropZone} ${activeDropZone === 'right' ? styles.dropZoneActive : ''}`}
+        className={`${styles.dropZone} ${!isDragging ? styles.dropZoneCollapsed : ''} ${activeDropZone === 'right' ? styles.dropZoneActive : ''}`}
         data-drop-zone="right"
         aria-disabled={isMaxColumns}
         onDragOver={(e) => handleDragOver(e, 'right')}

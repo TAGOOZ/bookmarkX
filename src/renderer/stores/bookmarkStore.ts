@@ -25,7 +25,12 @@ function loadSplitState(): SplitState | null {
     const raw = localStorage.getItem(SPLIT_STATE_KEY);
     if (!raw) return null;
     const parsed = JSON.parse(raw);
-    if (parsed?.columns?.length > 0 && parsed?.activeColumnId) return parsed;
+    if (parsed?.columns?.length > 0 && parsed?.activeColumnId) {
+      if (parsed.columns.length > MAX_COLUMNS) {
+        parsed.columns = parsed.columns.slice(0, MAX_COLUMNS);
+      }
+      return parsed;
+    }
   } catch {
     // localStorage may be unavailable
   }
@@ -59,7 +64,9 @@ interface BookmarkStore {
   handleMergeColumn: (columnId: string) => void;
   handleColumnActive: (columnId: string) => void;
   handleColumnResize: (columnId: string, width: number) => void;
+  handleColumnResizeBatch: (updates: Array<{ columnId: string; width: number }>) => void;
   handleTabCloseTab: (columnId: string, bookmarkId: string) => void;
+  handleTabCloseBatch: (columnId: string, bookmarkIds: string[]) => void;
 
   getActiveBookmark: () => Bookmark | null;
   fetchBookmarks: () => Promise<void>;
@@ -108,9 +115,7 @@ export const useBookmarkStore = create<BookmarkStore>((set, get) => ({
     }),
 
   handleBookmarkSelect: (bookmark) => {
-    const { openBookmarks, splitState } = get();
-    const exists = openBookmarks.find((b) => b.id === bookmark.id);
-    const newOpen = exists ? openBookmarks : [...openBookmarks, bookmark];
+    const { splitState } = get();
 
     let newSplit: SplitState;
     const activeCol = splitState.columns.find((c) => c.id === splitState.activeColumnId);
@@ -145,6 +150,20 @@ export const useBookmarkStore = create<BookmarkStore>((set, get) => ({
       };
     }
 
+    // Safety: truncate columns if somehow > MAX_COLUMNS
+    if (newSplit.columns.length > MAX_COLUMNS) {
+      newSplit = { ...newSplit, columns: newSplit.columns.slice(0, MAX_COLUMNS) };
+    }
+
+    // Derive openBookmarks from columns to prevent stale entries
+    // Include the current bookmark temporarily so computeOpenBookmarks can find it
+    const newOpen = (() => {
+      const currentOpen = get().openBookmarks;
+      const bookmarkInOpen = currentOpen.find((b) => b.id === bookmark.id);
+      const withBookmark = bookmarkInOpen ? currentOpen : [...currentOpen, bookmark];
+      return computeOpenBookmarks(newSplit.columns, withBookmark);
+    })();
+
     saveSplitState(newSplit);
     set({ openBookmarks: newOpen, splitState: newSplit });
   },
@@ -176,8 +195,16 @@ export const useBookmarkStore = create<BookmarkStore>((set, get) => ({
       const idx = newCols.findIndex((c) => c.id === columnId);
       newCols.splice(idx + 1, 0, newCol);
       const newSplit = { columns: newCols, activeColumnId: newCol.id };
+      // Ensure the bookmark is in openBookmarks
+      const bookmark = state.openBookmarks.find((b) => b.id === bookmarkId);
+      const newOpen = bookmark
+        ? state.openBookmarks
+        : (() => {
+            const full = state.bookmarks.find((b) => b.id === bookmarkId);
+            return full ? [...state.openBookmarks, full] : state.openBookmarks;
+          })();
       saveSplitState(newSplit);
-      return { splitState: newSplit };
+      return { splitState: newSplit, openBookmarks: newOpen };
     });
   },
 
@@ -250,6 +277,33 @@ export const useBookmarkStore = create<BookmarkStore>((set, get) => ({
     });
   },
 
+  handleTabCloseBatch: (columnId, bookmarkIds) => {
+    set((state) => {
+      const idsToRemove = new Set(bookmarkIds);
+
+      const col = state.splitState.columns.find((c) => c.id === columnId);
+      const shouldClearColumn = col?.bookmarkId && idsToRemove.has(col.bookmarkId);
+
+      const newColumns = shouldClearColumn
+        ? state.splitState.columns.map((c) =>
+            c.id === columnId ? { ...c, bookmarkId: null } : c,
+          )
+        : state.splitState.columns;
+
+      const newOpen = computeOpenBookmarks(newColumns, state.openBookmarks);
+
+      let newActiveId = state.splitState.activeColumnId;
+      if (shouldClearColumn) {
+        const firstWithBookmark = newColumns.find((c) => c.bookmarkId);
+        newActiveId = firstWithBookmark?.id ?? newColumns[0].id;
+      }
+
+      const newSplit: SplitState = { columns: newColumns, activeColumnId: newActiveId };
+      saveSplitState(newSplit);
+      return { splitState: newSplit, openBookmarks: newOpen };
+    });
+  },
+
   handleColumnActive: (columnId) => {
     set((state) => {
       if (state.splitState.activeColumnId === columnId) return state;
@@ -266,6 +320,20 @@ export const useBookmarkStore = create<BookmarkStore>((set, get) => ({
         columns: state.splitState.columns.map((c) =>
           c.id === columnId ? { ...c, width } : c,
         ),
+      };
+      saveSplitState(newSplit);
+      return { splitState: newSplit };
+    });
+  },
+
+  handleColumnResizeBatch: (updates) => {
+    set((state) => {
+      const newSplit: SplitState = {
+        ...state.splitState,
+        columns: state.splitState.columns.map((c) => {
+          const update = updates.find((u) => u.columnId === c.id);
+          return update ? { ...c, width: update.width } : c;
+        }),
       };
       saveSplitState(newSplit);
       return { splitState: newSplit };

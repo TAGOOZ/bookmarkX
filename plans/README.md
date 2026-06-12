@@ -43,6 +43,15 @@ honor its STOP conditions, and update your row when done.
 | 033 | Fix stale closed tabs by storing only IDs | P3 | S | — | REJECTED — complexity outweighs benefit for edge case |
 | 034 | Fix RTL context menu positioning | P3 | S | 030 | DONE |
 | 035 | Add comprehensive test coverage for tabs | P2 | M | 027,028,029,030,031,032 | DONE |
+| 036 | Fix focus management after tab close | P1 | S | — | TODO |
+| 037 | Wire onTabCloseBatch from SplitLayout to BookmarkTabs | P1 | S | — | TODO |
+| 038 | Wire onReopenClosedTab from SplitLayout to BookmarkTabs | P2 | S | — | TODO |
+| 039 | Add keyboard navigation to context menu | P2 | M | — | TODO |
+| 040 | Prevent dropping tab onto its own column during drag | P2 | S | — | TODO |
+| 041 | Add aria-orientation and improve tab ARIA attributes | P3 | S | — | TODO |
+| 042 | Fix openBookmarks drift and validate column limit on load | P1 | M | — | TODO |
+| 043 | Collapse drop zones when not dragging | P1 | S | — | TODO |
+| 044 | Batch column resize into single state update | P2 | S | — | TODO |
 
 Status values: TODO | IN PROGRESS | DONE | BLOCKED (with one-line reason) | REJECTED (with one-line rationale)
 
@@ -57,6 +66,15 @@ Status values: TODO | IN PROGRESS | DONE | BLOCKED (with one-line reason) | REJE
 - 028 depends on 027 because openBookmarks fix needs the new handleTabCloseTab action from 027
 - 034 depends on 030 because RTL positioning builds on the viewport clamping logic
 - 035 depends on 027,028,029,030,031,032 because all tab fixes must land before the test plan validates them
+- 036 is independent (focus management)
+- 037 is independent (batch close wiring)
+- 038 is independent (reopen wiring)
+- 039 is independent (context menu keyboard nav)
+- 040 is independent (self-drop guard)
+- 041 is independent (ARIA attributes)
+- 042 is independent (openBookmarks drift fix)
+- 043 is independent (drop zone collapse)
+- 044 is independent (resize batching)
 
 ## Recommended execution order
 
@@ -67,15 +85,18 @@ Status values: TODO | IN PROGRESS | DONE | BLOCKED (with one-line reason) | REJE
 023 → 021 → 020 → 006 → 008 → 010 → 011 → 009 → 007 → 013 → 012
 
 **Phase 3 — Tabs bug fixes (P1-P2)**:
-027 → 028 → 029 → 030 → 034 → 031 → 032
+027 → 028 → 029 → 030 → 034 → 031 → 032 → 036 → 037 → 038 → 040 → 042 → 043 → 044
 
-**Phase 4 — Tabs test coverage (P2, after all fixes land)**:
+**Phase 4 — Tabs a11y (P2)**:
+039 → 041
+
+**Phase 5 — Tabs test coverage (P2, after all fixes land)**:
 035
 
-**Phase 5 — DX + cleanup (P3)**:
+**Phase 6 — DX + cleanup (P3)**:
 014 → 015 → 016 → 017 → 018
 
-**Phase 6 — Feature plumbing (P2)**:
+**Phase 7 — Feature plumbing (P2)**:
 026
 
 ## Findings considered and rejected

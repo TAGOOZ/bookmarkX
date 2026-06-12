@@ -3,7 +3,7 @@
  */
 import React from 'react';
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import { screen, cleanup, fireEvent } from '@testing-library/react';
+import { screen, cleanup, fireEvent, act } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import BookmarkTabs from '../BookmarkTabs';
 import { renderWithIntl } from '../../../__tests__/test-utils';
@@ -295,6 +295,74 @@ describe('BookmarkTabs', () => {
       await user.click(screen.getByText('Close Others'));
       expect(onTabCloseBatch).toHaveBeenCalledWith(['1', '3']);
     });
+
+    it('focuses first menu item when menu opens', async () => {
+      renderWithIntl(
+        <BookmarkTabs openBookmarks={bookmarks} activeBookmarkId="1" onTabSelect={vi.fn()} onTabClose={vi.fn()} />
+      );
+      fireEvent.contextMenu(screen.getByText('Second Bookmark'));
+      await act(async () => {
+        await new Promise((r) => requestAnimationFrame(r));
+      });
+      const menuItems = screen.getAllByRole('menuitem');
+      expect(document.activeElement).toBe(menuItems[0]);
+    });
+
+    it('ArrowDown moves focus to next menu item', async () => {
+      const user = userEvent.setup();
+      renderWithIntl(
+        <BookmarkTabs openBookmarks={bookmarks} activeBookmarkId="1" onTabSelect={vi.fn()} onTabClose={vi.fn()} />
+      );
+      fireEvent.contextMenu(screen.getByText('Second Bookmark'));
+      await act(async () => {
+        await new Promise((r) => requestAnimationFrame(r));
+      });
+      await user.keyboard('{ArrowDown}');
+      const menuItems = screen.getAllByRole('menuitem');
+      expect(document.activeElement).toBe(menuItems[1]);
+    });
+
+    it('ArrowUp wraps from first to last menu item', async () => {
+      const user = userEvent.setup();
+      renderWithIntl(
+        <BookmarkTabs openBookmarks={bookmarks} activeBookmarkId="1" onTabSelect={vi.fn()} onTabClose={vi.fn()} />
+      );
+      fireEvent.contextMenu(screen.getByText('Second Bookmark'));
+      await act(async () => {
+        await new Promise((r) => requestAnimationFrame(r));
+      });
+      await user.keyboard('{ArrowUp}');
+      const menuItems = screen.getAllByRole('menuitem');
+      expect(document.activeElement).toBe(menuItems[menuItems.length - 1]);
+    });
+
+    it('Escape closes the context menu via keyboard', async () => {
+      const user = userEvent.setup();
+      renderWithIntl(
+        <BookmarkTabs openBookmarks={bookmarks} activeBookmarkId="1" onTabSelect={vi.fn()} onTabClose={vi.fn()} />
+      );
+      fireEvent.contextMenu(screen.getByText('Second Bookmark'));
+      await act(async () => {
+        await new Promise((r) => requestAnimationFrame(r));
+      });
+      expect(screen.getByRole('menu')).toBeTruthy();
+      await user.keyboard('{Escape}');
+      expect(screen.queryByRole('menu')).toBeNull();
+    });
+
+    it('Enter activates the focused menu item', async () => {
+      const onTabClose = vi.fn();
+      const user = userEvent.setup();
+      renderWithIntl(
+        <BookmarkTabs openBookmarks={bookmarks} activeBookmarkId="1" onTabSelect={vi.fn()} onTabClose={onTabClose} />
+      );
+      fireEvent.contextMenu(screen.getByText('Second Bookmark'));
+      await act(async () => {
+        await new Promise((r) => requestAnimationFrame(r));
+      });
+      await user.keyboard('{Enter}');
+      expect(onTabClose).toHaveBeenCalledWith('2');
+    });
   });
 
   describe('keyboard navigation', () => {
@@ -343,6 +411,67 @@ describe('BookmarkTabs', () => {
     });
   });
 
+  describe('focus management', () => {
+    it('moves focus to next tab after closing current tab', async () => {
+      const onTabClose = vi.fn();
+      const user = userEvent.setup();
+      const { rerender } = renderWithIntl(
+        <BookmarkTabs openBookmarks={bookmarks} activeBookmarkId="1" onTabSelect={vi.fn()} onTabClose={onTabClose} />
+      );
+      const closeButtons = screen.getAllByRole('button', { name: /Close/ });
+      await user.click(closeButtons[0]);
+      // Simulate the parent removing the bookmark from openBookmarks
+      const remaining = bookmarks.filter((b) => b.id !== '1');
+      rerender(
+        <BookmarkTabs openBookmarks={remaining} activeBookmarkId="2" onTabSelect={vi.fn()} onTabClose={onTabClose} />
+      );
+      await act(async () => {
+        await new Promise((r) => requestAnimationFrame(r));
+      });
+      const tabs = screen.getAllByRole('tab');
+      expect(document.activeElement).toBe(tabs[0]);
+    });
+
+    it('moves focus to previous tab when closing last tab', async () => {
+      const onTabClose = vi.fn();
+      const user = userEvent.setup();
+      const twoBookmarks = bookmarks.slice(0, 2);
+      const { rerender } = renderWithIntl(
+        <BookmarkTabs openBookmarks={twoBookmarks} activeBookmarkId="2" onTabSelect={vi.fn()} onTabClose={onTabClose} />
+      );
+      const closeButtons = screen.getAllByRole('button', { name: /Close/ });
+      await user.click(closeButtons[1]);
+      const remaining = twoBookmarks.filter((b) => b.id !== '2');
+      rerender(
+        <BookmarkTabs openBookmarks={remaining} activeBookmarkId="1" onTabSelect={vi.fn()} onTabClose={onTabClose} />
+      );
+      await act(async () => {
+        await new Promise((r) => requestAnimationFrame(r));
+      });
+      const tabs = screen.getAllByRole('tab');
+      expect(document.activeElement).toBe(tabs[0]);
+    });
+
+    it('focuses tab bar when last tab is closed', async () => {
+      const onTabClose = vi.fn();
+      const user = userEvent.setup();
+      const singleBookmark = bookmarks.slice(0, 1);
+      const { rerender } = renderWithIntl(
+        <BookmarkTabs openBookmarks={singleBookmark} activeBookmarkId="1" onTabSelect={vi.fn()} onTabClose={onTabClose} />
+      );
+      const closeButtons = screen.getAllByRole('button', { name: /Close/ });
+      await user.click(closeButtons[0]);
+      rerender(
+        <BookmarkTabs openBookmarks={[]} activeBookmarkId={null} onTabSelect={vi.fn()} onTabClose={onTabClose} />
+      );
+      await act(async () => {
+        await new Promise((r) => requestAnimationFrame(r));
+      });
+      const tabBar = screen.getByRole('tablist');
+      expect(document.activeElement).toBe(tabBar);
+    });
+  });
+
   describe('auto-scroll', () => {
     it('each tab has data-bookmark-id attribute', () => {
       renderWithIntl(
@@ -352,6 +481,48 @@ describe('BookmarkTabs', () => {
       expect(tabs[0].getAttribute('data-bookmark-id')).toBe('1');
       expect(tabs[1].getAttribute('data-bookmark-id')).toBe('2');
       expect(tabs[2].getAttribute('data-bookmark-id')).toBe('3');
+    });
+  });
+
+  describe('ARIA attributes', () => {
+    it('tablist has aria-orientation="horizontal"', () => {
+      renderWithIntl(
+        <BookmarkTabs openBookmarks={bookmarks} activeBookmarkId="1" onTabSelect={vi.fn()} onTabClose={vi.fn()} />
+      );
+      const tablist = screen.getByRole('tablist');
+      expect(tablist.getAttribute('aria-orientation')).toBe('horizontal');
+    });
+
+    it('tablist has i18n aria-label', () => {
+      renderWithIntl(
+        <BookmarkTabs openBookmarks={bookmarks} activeBookmarkId="1" onTabSelect={vi.fn()} onTabClose={vi.fn()} />
+      );
+      const tablist = screen.getByRole('tablist');
+      expect(tablist.getAttribute('aria-label')).toBe('Open bookmarks');
+    });
+
+    it('close button has i18n aria-label with bookmark title', () => {
+      renderWithIntl(
+        <BookmarkTabs openBookmarks={bookmarks} activeBookmarkId="1" onTabSelect={vi.fn()} onTabClose={vi.fn()} />
+      );
+      const closeButtons = screen.getAllByRole('button', { name: /Close .* Bookmark/ });
+      expect(closeButtons.length).toBe(3);
+      expect(closeButtons[0].getAttribute('aria-label')).toBe('Close First Bookmark');
+    });
+
+    it('split button has i18n aria-label with bookmark title', () => {
+      renderWithIntl(
+        <BookmarkTabs
+          openBookmarks={bookmarks}
+          activeBookmarkId="1"
+          onTabSelect={vi.fn()}
+          onTabClose={vi.fn()}
+          onSplitColumn={vi.fn()}
+        />
+      );
+      const splitButtons = screen.getAllByRole('button', { name: /Open .* in new column/ });
+      expect(splitButtons.length).toBe(3);
+      expect(splitButtons[0].getAttribute('aria-label')).toBe('Open First Bookmark in new column');
     });
   });
 });
