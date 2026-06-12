@@ -272,8 +272,12 @@ const BookmarkTabs: React.FC<BookmarkTabsProps> = ({
 
   const menuStyle: React.CSSProperties = {
     top: Math.min(contextMenu?.y ?? 0, window.innerHeight - 300),
-    left: Math.min(contextMenu?.x ?? 0, window.innerWidth - 200),
   };
+  if (dir === 'rtl') {
+    menuStyle.right = window.innerWidth - (contextMenu?.x ?? 0);
+  } else {
+    menuStyle.left = Math.min(contextMenu?.x ?? 0, window.innerWidth - 200);
+  }
 
   return (
     <>
@@ -335,7 +339,7 @@ const BookmarkTabs: React.FC<BookmarkTabsProps> = ({
       {contextMenu?.visible && (
         <div
           ref={menuRef}
-          className={styles.contextMenu}
+          className={`${styles.contextMenu} ${dir === 'rtl' ? styles.rtl : ''}`}
           style={menuStyle}
           role="menu"
         >

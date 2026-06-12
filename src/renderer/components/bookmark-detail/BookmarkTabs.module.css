@@ -119,6 +119,11 @@
   min-width: 180px;
 }
 
+.contextMenu.rtl {
+  direction: rtl;
+  text-align: right;
+}
+
 .menuItem {
   display: block;
   width: 100%;
