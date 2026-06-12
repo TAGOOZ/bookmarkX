@@ -104,5 +104,19 @@ describe('chat', () => {
       expect(messages).toHaveLength(3);
       expect(messages.map((m) => m.content)).toEqual(['First', 'Second', 'Third']);
     });
+
+    it('stores and retrieves selected_text', async () => {
+      const sessionId = await createChatSession(db, 'bm-1');
+      await addChatMessage(db, sessionId, 'user', 'What is this?', 'selected text here');
+      const messages = await getChatMessages(db, sessionId);
+      expect(messages[0].selected_text).toBe('selected text here');
+    });
+
+    it('handles null selected_text', async () => {
+      const sessionId = await createChatSession(db, 'bm-1');
+      await addChatMessage(db, sessionId, 'user', 'Hello');
+      const messages = await getChatMessages(db, sessionId);
+      expect(messages[0].selected_text).toBeNull();
+    });
   });
 });

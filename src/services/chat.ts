@@ -32,6 +32,7 @@ export async function sendMessage(
   message: string,
   articleContext?: string,
   options: ServiceOptions = {},
+  selectedText?: string,
 ): Promise<ChatResult> {
   const apiKey = options.apiKey || process.env.GEMINI_API_KEY;
   const model = options.model || 'gemini-2.0-flash';
@@ -40,7 +41,7 @@ export async function sendMessage(
     throw new Error('GEMINI_API_KEY is required');
   }
 
-  await addChatMessage(db, sessionId, 'user', message);
+  await addChatMessage(db, sessionId, 'user', message, selectedText);
 
   const history = await getChatMessages(db, sessionId);
   const prompt = buildChatPrompt(message, history, articleContext);

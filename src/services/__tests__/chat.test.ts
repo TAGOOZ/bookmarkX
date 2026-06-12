@@ -34,7 +34,7 @@ describe('sendMessage', () => {
 
     expect(result.response).toBe('AI response');
     expect(mockAddChatMessage).toHaveBeenCalledTimes(2);
-    expect(mockAddChatMessage).toHaveBeenCalledWith(expect.anything(), 'session-1', 'user', 'Hello');
+    expect(mockAddChatMessage).toHaveBeenCalledWith(expect.anything(), 'session-1', 'user', 'Hello', undefined);
     expect(mockAddChatMessage).toHaveBeenCalledWith(expect.anything(), 'session-1', 'assistant', 'AI response');
   });
 

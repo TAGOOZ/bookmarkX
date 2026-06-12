@@ -339,6 +339,13 @@ export async function initializeSchema(db: Client): Promise<void> {
     // Column already exists — ignore
   }
 
+  // Migration: add selected_text to chat_messages
+  try {
+    await db.execute('ALTER TABLE chat_messages ADD COLUMN selected_text TEXT');
+  } catch {
+    // Column already exists — ignore
+  }
+
   // Migration: drop old bookmark_topics junction (replaced by bookmarks.topic_id + bookmark_hashtags)
   try {
     await db.execute('DROP TABLE IF EXISTS bookmark_topics');

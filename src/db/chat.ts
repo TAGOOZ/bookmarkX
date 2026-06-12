@@ -11,6 +11,7 @@ export interface ChatMessage {
   session_id: string;
   role: 'user' | 'assistant';
   content: string;
+  selected_text?: string | null;
   created_at: string;
 }
 
@@ -50,11 +51,12 @@ export async function addChatMessage(
   sessionId: string,
   role: 'user' | 'assistant',
   content: string,
+  selectedText?: string,
 ): Promise<void> {
   const id = crypto.randomUUID();
   await db.execute({
-    sql: 'INSERT INTO chat_messages (id, session_id, role, content) VALUES (?, ?, ?, ?)',
-    args: [id, sessionId, role, content],
+    sql: 'INSERT INTO chat_messages (id, session_id, role, content, selected_text) VALUES (?, ?, ?, ?, ?)',
+    args: [id, sessionId, role, content, selectedText || null],
   });
 }
 
@@ -72,6 +74,7 @@ export async function getChatMessages(
     session_id: row.session_id,
     role: row.role,
     content: row.content,
+    selected_text: row.selected_text || null,
     created_at: row.created_at,
   }));
 }

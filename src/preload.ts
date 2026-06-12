@@ -22,8 +22,8 @@ contextBridge.exposeInMainWorld('api', {
   getArticleContent: (bookmarkId: string) =>
     ipcRenderer.invoke('get-article-content', bookmarkId),
   // Phase 2: Chat
-  sendChatMessage: (sessionId: string, message: string, articleContext?: string) =>
-    ipcRenderer.invoke('send-chat-message', sessionId, message, articleContext),
+  sendChatMessage: (sessionId: string, message: string, articleContext?: string, selectedText?: string) =>
+    ipcRenderer.invoke('send-chat-message', sessionId, message, articleContext, selectedText),
   createChatSession: (bookmarkId: string) =>
     ipcRenderer.invoke('create-chat-session', bookmarkId),
   getChatMessages: (sessionId: string) =>
