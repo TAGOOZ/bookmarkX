@@ -94,7 +94,8 @@ export async function extractTwitterCookies(
       ct0: ct0.value,
       encrypted: auth.encrypted || ct0.encrypted,
     };
-  } catch {
+  } catch (err) {
+    console.warn('Failed to extract Twitter cookies from Chrome profile:', err);
     return { authToken: null, ct0: null };
   }
 }

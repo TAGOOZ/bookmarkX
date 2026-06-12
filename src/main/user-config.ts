@@ -49,16 +49,17 @@ export function readConfig(userDataDir: string): UserConfig {
     const raw = fs.readFileSync(configPath, 'utf-8');
     const parsed = JSON.parse(raw);
     return { ...DEFAULT_CONFIG, ...parsed };
-  } catch {
+  } catch (err) {
+    console.warn('Failed to read user config, using defaults:', err);
     return { ...DEFAULT_CONFIG };
   }
 }
 
-export function writeConfig(userDataDir: string, config: UserConfig): void {
+export async function writeConfig(userDataDir: string, config: UserConfig): Promise<void> {
   const configPath = getConfigPath(userDataDir);
   const dir = path.dirname(configPath);
   if (!fs.existsSync(dir)) {
-    fs.mkdirSync(dir, { recursive: true });
+    await fs.promises.mkdir(dir, { recursive: true });
   }
-  fs.writeFileSync(configPath, JSON.stringify(config, null, 2), 'utf-8');
+  await fs.promises.writeFile(configPath, JSON.stringify(config, null, 2), 'utf-8');
 }

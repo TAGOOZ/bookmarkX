@@ -59,7 +59,8 @@ const SearchOverlay: React.FC<SearchOverlayProps> = ({
       try {
         const results = await (window as any).api?.searchArticles?.(query, 10);
         setArticleResults(results || []);
-      } catch {
+      } catch (err) {
+        console.error('Article search failed:', err);
         setArticleResults([]);
       } finally {
         setIsSearching(false);

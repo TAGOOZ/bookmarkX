@@ -41,9 +41,10 @@ export async function classifyAndNotify(
           sendHighPriorityNotification(bookmark, result);
           notified++;
         }
-      } catch {
-        errors++;
-      }
+    } catch (err) {
+      console.error(`Failed to classify bookmark ${bookmark.id}:`, err);
+      errors++;
+    }
     }
 
     return { classified, notified, errors };

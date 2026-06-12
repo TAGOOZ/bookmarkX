@@ -43,7 +43,11 @@ export async function callGemini(
       });
 
       if (!response.ok) {
-        const body = await response.text().catch(() => '');
+        const body = await response.text().catch(() => {
+        console.warn('Failed to read Gemini error response body');
+        return '';
+      });
+        console.error(`Gemini API response ${response.status}:`, body);
         if (isRetryableStatus(response.status) && attempt < retry.maxRetries) {
           const delay = Math.min(
             retry.initialDelayMs! * Math.pow(2, attempt),
@@ -53,7 +57,7 @@ export async function callGemini(
           continue;
         }
         throw new Error(
-          `Gemini API error: ${response.status} ${response.statusText}${body ? ` — ${body}` : ''}`,
+          `Gemini API error: ${response.status} ${response.statusText}`,
         );
       }
 

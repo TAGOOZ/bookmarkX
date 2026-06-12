@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import type { PartialBlock } from '@blocknote/core';
 
 type InlineItem = { type: 'text'; text: string; styles: Record<string, any> };
@@ -86,7 +85,7 @@ export function parseMDToBlocks(markdown: string): PartialBlock[] {
         type: 'heading',
         props: { level },
         content: headingMatch[2].trim(),
-      } as any);
+      } as any); // eslint-disable-line @typescript-eslint/no-explicit-any
       i++;
       continue;
     }
@@ -104,7 +103,7 @@ export function parseMDToBlocks(markdown: string): PartialBlock[] {
         blocks.push({
           type: 'paragraph',
           content: [{ type: 'text', text: codeContent, styles: { code: true } }],
-        } as any);
+        } as any); // eslint-disable-line @typescript-eslint/no-explicit-any
       }
       continue;
     }

@@ -14,14 +14,18 @@ function loadSplitState(): SplitState | null {
     if (!raw) return null;
     const parsed = JSON.parse(raw);
     if (parsed?.columns?.length > 0 && parsed?.activeColumnId) return parsed;
-  } catch { /* ignore */ }
+  } catch {
+    // localStorage may be unavailable
+  }
   return null;
 }
 
 function saveSplitState(state: SplitState): void {
   try {
     localStorage.setItem(SPLIT_STATE_KEY, JSON.stringify(state));
-  } catch { /* ignore */ }
+  } catch {
+    // localStorage may be unavailable
+  }
 }
 
 interface BookmarkStore {
@@ -84,7 +88,9 @@ export const useBookmarkStore = create<BookmarkStore>((set, get) => ({
       const next = typeof modeOrFn === 'function' ? modeOrFn(state.mockMode) : modeOrFn;
       try {
         localStorage.setItem(MOCK_MODE_KEY, String(next));
-      } catch { /* ignore */ }
+      } catch {
+        // localStorage may be unavailable
+      }
       return { mockMode: next };
     }),
 
@@ -256,7 +262,8 @@ export const useBookmarkStore = create<BookmarkStore>((set, get) => ({
         };
       });
       set({ bookmarks: mappedBookmarks });
-    } catch {
+    } catch (err) {
+      console.error('Failed to fetch bookmarks:', err);
       set({ bookmarks: [] });
     }
   },

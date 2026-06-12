@@ -1,15 +1,16 @@
-import { type IpcMain, BrowserWindow, session } from 'electron';
+import { type IpcMain, BrowserWindow, session, app } from 'electron';
 import path from 'node:path';
 import os from 'node:os';
 import { detectAndExtract } from '../../main/chrome-profile-detect';
+import { readConfig } from '../../main/user-config';
 import type { UserConfig } from '../../main/user-config';
 
 function getConfig(): UserConfig {
-  const { readConfig } = require('../../main/user-config');
-  const { app } = require('electron');
   const userDataDir = app.getPath('userData');
   return readConfig(userDataDir);
 }
+
+const MAX_POLL_ATTEMPTS = 120;
 
 export function registerTwitterIpc(ipcMain: IpcMain) {
   ipcMain.handle('detect-chrome-profile', async () => {
@@ -34,8 +35,17 @@ export function registerTwitterIpc(ipcMain: IpcMain) {
       loginWindow.loadURL('https://x.com/login');
 
       let resolved = false;
+      let pollCount = 0;
       const checkInterval = setInterval(async () => {
         if (resolved) return;
+        pollCount++;
+        if (pollCount >= MAX_POLL_ATTEMPTS) {
+          resolved = true;
+          clearInterval(checkInterval);
+          loginWindow.close();
+          resolve({ error: 'polling timeout' });
+          return;
+        }
         try {
           const cookies = await session
             .fromPartition('twitter-auth')
@@ -49,7 +59,10 @@ export function registerTwitterIpc(ipcMain: IpcMain) {
             resolve({ authToken, ct0 });
           }
         } catch {
-          // Window may have been closed
+          resolved = true;
+          clearInterval(checkInterval);
+          loginWindow.close();
+          resolve({ error: 'polling error' });
         }
       }, 1000);
 

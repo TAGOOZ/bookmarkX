@@ -176,7 +176,7 @@ const BookmarkEditor: React.FC<BookmarkEditorProps> = ({
             onBookmarkChange?.({ chatSessionId: sessionId });
           }
         } catch (e) {
-          // createChatSession failed silently
+          console.error('Failed to create chat session:', e);
         }
       }
     };
@@ -288,13 +288,16 @@ const BookmarkEditor: React.FC<BookmarkEditorProps> = ({
     if (notesSaveTimerRef.current) {
       clearTimeout(notesSaveTimerRef.current);
     }
+    let cancelled = false;
     notesSaveTimerRef.current = setTimeout(() => {
+      if (cancelled) return;
       (window as any).api?.saveNote?.(bookmark.id, {
         title: null,
         content: bookmark.notes || null,
       });
     }, 1000);
     return () => {
+      cancelled = true;
       if (notesSaveTimerRef.current) {
         clearTimeout(notesSaveTimerRef.current);
       }
@@ -307,7 +310,9 @@ const BookmarkEditor: React.FC<BookmarkEditorProps> = ({
       .then((tags: Array<{ id: string; name: string }>) => {
         if (tags) setHashtags(tags);
       })
-      .catch(() => {});
+      .catch((err: unknown) => {
+        console.warn('Failed to load hashtags:', err);
+      });
   }, [bookmark.id]);
 
   const handleAddHashtag = useCallback(async () => {
@@ -321,8 +326,8 @@ const BookmarkEditor: React.FC<BookmarkEditorProps> = ({
       if (updated) setHashtags(updated);
       setNewHashtag('');
       onBookmarkChange?.({ hashtags: updated });
-    } catch {
-      // addHashtag failed silently
+    } catch (err) {
+      console.error('Failed to add hashtag:', err);
     }
   }, [bookmark.id, newHashtag, hashtags, onBookmarkChange]);
 
@@ -333,8 +338,8 @@ const BookmarkEditor: React.FC<BookmarkEditorProps> = ({
       const updated = await (window as any).api?.getBookmarkHashtags?.(bookmark.id);
       if (updated) setHashtags(updated);
       onBookmarkChange?.({ hashtags: updated });
-    } catch {
-      // removeHashtag failed silently
+    } catch (err) {
+      console.error('Failed to remove hashtag:', err);
     }
   }, [bookmark.id, onBookmarkChange]);
 
@@ -417,8 +422,8 @@ const BookmarkEditor: React.FC<BookmarkEditorProps> = ({
       if (result?.enhanced_text) {
         setEnhancedText(result.enhanced_text);
       }
-    } catch {
-      // enhance failed silently
+    } catch (err) {
+      console.error('Failed to enhance note:', err);
     }
   }, [bookmark.title]);
 
@@ -430,8 +435,8 @@ const BookmarkEditor: React.FC<BookmarkEditorProps> = ({
         note: null,
         color: '#e69819',
       });
-    } catch {
-      // save failed silently
+    } catch (err) {
+      console.error('Failed to save highlight:', err);
     }
   }, [bookmark.id]);
 

@@ -1,5 +1,5 @@
 import { createReactInlineContentSpec } from '@blocknote/react';
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 
 export const createReferenceChipInline = () =>
   createReactInlineContentSpec(
@@ -17,12 +17,24 @@ export const createReferenceChipInline = () =>
         const sourceSection = props.inlineContent.props.sourceSection as string;
         const sentence = props.inlineContent.props.sentence as string;
         const [copied, setCopied] = useState(false);
+        const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+        useEffect(() => {
+          return () => {
+            if (timeoutRef.current) {
+              clearTimeout(timeoutRef.current);
+            }
+          };
+        }, []);
 
         const handleCopy = async () => {
           try {
             await navigator.clipboard.writeText(sentence);
+            if (timeoutRef.current) {
+              clearTimeout(timeoutRef.current);
+            }
             setCopied(true);
-            setTimeout(() => setCopied(false), 1500);
+            timeoutRef.current = setTimeout(() => setCopied(false), 1500);
           } catch {
             // clipboard not available
           }

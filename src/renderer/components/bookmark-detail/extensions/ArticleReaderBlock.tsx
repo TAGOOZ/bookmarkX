@@ -210,7 +210,8 @@ export const createArticleReaderBlock = createReactBlockSpec(
       let blocks: any[] = [];
       try {
         blocks = JSON.parse(blocksJson);
-      } catch {
+      } catch (err) {
+        console.error('Failed to parse article blocks JSON:', err);
         blocks = [];
       }
 

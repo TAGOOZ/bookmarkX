@@ -25,6 +25,9 @@ export function registerHashtagIpc(ipcMain: IpcMain, db: Client) {
   });
 
   ipcMain.handle('set-bookmark-hashtags', async (_event, bookmarkId: string, hashtagNames: string[]) => {
+    if (!Array.isArray(hashtagNames) || hashtagNames.length > 50) {
+      throw new Error('Hashtag list cannot exceed 50 items');
+    }
     const { setBookmarkHashtags } = await import('../../db/hashtags');
     await setBookmarkHashtags(db, bookmarkId, hashtagNames);
     return { success: true };

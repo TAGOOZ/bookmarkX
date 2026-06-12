@@ -1,11 +1,21 @@
-import { type IpcMain, dialog } from 'electron';
+import { type IpcMain, dialog, app } from 'electron';
 import type { Client } from '@libsql/client';
 import fs from 'node:fs';
 import path from 'node:path';
+import { readConfig } from '../../main/user-config';
+
+const cooldowns = new Map<string, number>();
+const COOLDOWN_MS = 2000;
+
+function checkCooldown(channel: string): boolean {
+  const now = Date.now();
+  const last = cooldowns.get(channel) ?? 0;
+  if (now - last < COOLDOWN_MS) return false;
+  cooldowns.set(channel, now);
+  return true;
+}
 
 function getConfigEnv(): { apiKey?: string } {
-  const { readConfig } = require('../../main/user-config');
-  const { app } = require('electron');
   const userDataDir = app.getPath('userData');
   const config = readConfig(userDataDir);
   return { apiKey: config.geminiApiKey || undefined };
@@ -13,6 +23,7 @@ function getConfigEnv(): { apiKey?: string } {
 
 export function registerContentIpc(ipcMain: IpcMain, db: Client) {
   ipcMain.handle('summarize-bookmark', async (_event, bookmarkId: string) => {
+    if (!checkCooldown('summarize-bookmark')) throw new Error('Rate limited — please wait');
     const { summarizeBookmark } = await import('../../services/summarize');
     const { getStoredBookmarks } = await import('../../db/bookmarks');
     const bookmarks = await getStoredBookmarks(db);
@@ -39,6 +50,10 @@ export function registerContentIpc(ipcMain: IpcMain, db: Client) {
   });
 
   ipcMain.handle('send-chat-message', async (_event, sessionId: string, message: string, articleContext?: string) => {
+    if (!checkCooldown('send-chat-message')) throw new Error('Rate limited — please wait');
+    if (typeof message === 'string' && message.length > 10000) {
+      throw new Error('Chat message exceeds 10000 character limit');
+    }
     const { sendMessage } = await import('../../services/chat');
     const env = getConfigEnv();
     return sendMessage(db, sessionId, message, articleContext, { apiKey: env.apiKey });
@@ -92,12 +107,20 @@ export function registerContentIpc(ipcMain: IpcMain, db: Client) {
   });
 
   ipcMain.handle('enhance-note', async (_event, selectedText: string, context?: string) => {
+    if (!checkCooldown('enhance-note')) throw new Error('Rate limited — please wait');
+    if (typeof selectedText === 'string' && selectedText.length > 5000) {
+      throw new Error('Text to enhance exceeds 5000 character limit');
+    }
     const { enhanceNote } = await import('../../services/enhance');
     const env = getConfigEnv();
     return enhanceNote(selectedText, context, { apiKey: env.apiKey });
   });
 
   ipcMain.handle('generate-glossary', async (_event, bookmarkId: string, content: string, title?: string) => {
+    if (!checkCooldown('generate-glossary')) throw new Error('Rate limited — please wait');
+    if (typeof content === 'string' && content.length > 50000) {
+      throw new Error('Glossary content exceeds 50000 character limit');
+    }
     const { generateGlossary } = await import('../../services/glossary');
     const { addTerm, linkTermToBookmark } = await import('../../db/glossary');
     const env = getConfigEnv();

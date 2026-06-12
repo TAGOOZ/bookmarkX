@@ -31,6 +31,7 @@ function loadClosedTabs(): Bookmark[] {
     const raw = localStorage.getItem(CLOSED_TABS_KEY);
     return raw ? JSON.parse(raw) : [];
   } catch {
+    // localStorage may be unavailable
     return [];
   }
 }
@@ -38,7 +39,9 @@ function loadClosedTabs(): Bookmark[] {
 function saveClosedTabs(tabs: Bookmark[]): void {
   try {
     localStorage.setItem(CLOSED_TABS_KEY, JSON.stringify(tabs));
-  } catch { /* noop */ }
+  } catch {
+    // localStorage may be unavailable
+  }
 }
 
 function truncateTitle(title: string, maxLen = 32): string {

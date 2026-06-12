@@ -110,6 +110,13 @@ export async function getArticleContent(
   };
 }
 
+export function sanitizeFtsQuery(query: string): string {
+  return query
+    .replace(/[*]/g, '\\*')
+    .replace(/[-]/g, '\\-')
+    .replace(/["]/g, '""');
+}
+
 export async function searchArticleContent(
   db: Client,
   query: string,
@@ -124,7 +131,7 @@ export async function searchArticleContent(
           WHERE article_content_fts MATCH ?
           ORDER BY rank
           LIMIT ?`,
-    args: [query, limit],
+    args: [sanitizeFtsQuery(query), limit],
   });
 
   return rows.map((row: any) => ({

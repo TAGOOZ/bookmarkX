@@ -8,13 +8,21 @@ export function registerTopicIpc(ipcMain: IpcMain, db: Client) {
   });
 
   ipcMain.handle('create-topic', async (_event, name: string, parentId: string | null) => {
+    const trimmed = typeof name === 'string' ? name.trim() : '';
+    if (!trimmed) {
+      throw new Error('Topic name cannot be empty');
+    }
     const { createTopic } = await import('../../db/topics');
-    return createTopic(db, name, parentId, 'user');
+    return createTopic(db, trimmed, parentId, 'user');
   });
 
   ipcMain.handle('rename-topic', async (_event, topicId: string, newName: string) => {
+    const trimmed = typeof newName === 'string' ? newName.trim() : '';
+    if (!trimmed) {
+      throw new Error('Topic name cannot be empty');
+    }
     const { renameTopic } = await import('../../db/topics');
-    await renameTopic(db, topicId, newName);
+    await renameTopic(db, topicId, trimmed);
     return { success: true };
   });
 

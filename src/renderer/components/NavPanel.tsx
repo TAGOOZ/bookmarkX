@@ -54,6 +54,7 @@ const NavPanel: React.FC<NavPanelProps> = ({
       const stored = localStorage.getItem(EXPANDED_KEY);
       return stored !== 'false';
     } catch {
+      // localStorage may be unavailable
       return true;
     }
   });
@@ -63,6 +64,7 @@ const NavPanel: React.FC<NavPanelProps> = ({
         const stored = localStorage.getItem(EXPANDED_TOPICS_KEY);
         return stored ? JSON.parse(stored) : {};
       } catch {
+        // localStorage may be unavailable
         return {};
       }
     },
@@ -75,21 +77,30 @@ const NavPanel: React.FC<NavPanelProps> = ({
   useEffect(() => {
     try {
       localStorage.setItem(EXPANDED_KEY, String(isExpanded));
-    } catch { /* noop */ }
+    } catch {
+      // localStorage may be unavailable
+    }
   }, [isExpanded]);
 
   useEffect(() => {
     try {
       localStorage.setItem(EXPANDED_TOPICS_KEY, JSON.stringify(expandedTopics));
-    } catch { /* noop */ }
+    } catch {
+      // localStorage may be unavailable
+    }
   }, [expandedTopics]);
 
   useEffect(() => {
-    window.api.getTopicTree().then(setTopicTree).catch(() => setTopicTree([]));
+    window.api.getTopicTree().then(setTopicTree).catch((err) => {
+      console.warn('Failed to load topic tree:', err);
+      setTopicTree([]);
+    });
   }, []);
 
   useEffect(() => {
-    window.api.getSettings().then((s) => setUserName(s.name || '')).catch(() => {});
+    window.api.getSettings().then((s) => setUserName(s.name || '')).catch((err) => {
+      console.warn('Failed to load settings:', err);
+    });
   }, []);
 
   useEffect(() => {
@@ -143,8 +154,8 @@ const NavPanel: React.FC<NavPanelProps> = ({
       if (tree) setTopicTree(tree);
       setNewTopicName('');
       setShowCreateTopic(false);
-    } catch {
-      // createTopic failed silently
+    } catch (err) {
+      console.error('Failed to create topic:', err);
     }
   }, [newTopicName]);
 
@@ -157,8 +168,8 @@ const NavPanel: React.FC<NavPanelProps> = ({
       await (window as any).api?.markNotificationRead?.(id);
       setNotifications((prev) => prev.map((n) => n.id === id ? { ...n, read: 1 } : n));
       setUnreadCount((prev) => Math.max(0, prev - 1));
-    } catch {
-      // silently fail
+    } catch (err) {
+      console.warn('Failed to mark notification read:', err);
     }
   }, []);
 
@@ -167,8 +178,8 @@ const NavPanel: React.FC<NavPanelProps> = ({
       await (window as any).api?.markAllNotificationsRead?.();
       setNotifications((prev) => prev.map((n) => ({ ...n, read: 1 })));
       setUnreadCount(0);
-    } catch {
-      // silently fail
+    } catch (err) {
+      console.warn('Failed to mark all notifications read:', err);
     }
   }, []);
 
@@ -180,8 +191,8 @@ const NavPanel: React.FC<NavPanelProps> = ({
         const notif = notifications.find((n) => n.id === id);
         return notif?.read === 0 ? Math.max(0, prev - 1) : prev;
       });
-    } catch {
-      // silently fail
+    } catch (err) {
+      console.warn('Failed to delete notification:', err);
     }
   }, [notifications]);
 
@@ -191,8 +202,8 @@ const NavPanel: React.FC<NavPanelProps> = ({
       await (window as any).api?.renameTopic?.(topicId, newName.trim());
       const tree = await (window as any).api?.getTopicTree?.();
       if (tree) setTopicTree(tree);
-    } catch {
-      // renameTopic failed silently
+    } catch (err) {
+      console.error('Failed to rename topic:', err);
     }
   }, []);
 
@@ -201,8 +212,8 @@ const NavPanel: React.FC<NavPanelProps> = ({
       await (window as any).api?.deleteTopic?.(topicId);
       const tree = await (window as any).api?.getTopicTree?.();
       if (tree) setTopicTree(tree);
-    } catch {
-      // deleteTopic failed silently
+    } catch (err) {
+      console.error('Failed to delete topic:', err);
     }
   }, []);
 

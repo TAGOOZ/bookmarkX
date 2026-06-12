@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import * as cheerio from 'cheerio';
 import type { PartialBlock } from '@blocknote/core';
 import type { ParserResult } from './types';
@@ -43,7 +42,9 @@ export async function parseURL(url: string, options: { timeoutMs?: number } = {}
     const blocks = parseMDToBlocks(markdown);
 
     const text = blocks
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       .filter((b: any) => typeof b.content === 'string')
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       .map((b: any) => b.content)
       .join(' ');
     const wordCount = text.split(/\s+/).filter(Boolean).length;
@@ -160,7 +161,7 @@ function parseNode($: any, el: any): PartialBlock[] {
     const level = parseInt(tag[1]);
     const text = textFromChildren(el);
     if (text) {
-      blocks.push({ type: 'heading', props: { level: Math.min(level, 6) as 1 | 2 | 3 | 4 | 5 | 6 }, content: text } as any);
+      blocks.push({ type: 'heading', props: { level: Math.min(level, 6) as 1 | 2 | 3 | 4 | 5 | 6 }, content: text } as any); // eslint-disable-line @typescript-eslint/no-explicit-any
     }
     return blocks;
   }
@@ -170,7 +171,7 @@ function parseNode($: any, el: any): PartialBlock[] {
     if (items.length > 0) {
       const text = items.map((i) => i.text).join('');
       if (text.trim()) {
-        blocks.push({ type: 'paragraph', content: items } as any);
+        blocks.push({ type: 'paragraph', content: items } as any); // eslint-disable-line @typescript-eslint/no-explicit-any
       }
     }
     return blocks;
@@ -182,7 +183,7 @@ function parseNode($: any, el: any): PartialBlock[] {
       .each((_: number, li: any) => {
         const text = textFromChildren(li);
         if (text) {
-          blocks.push({ type: 'bulletListItem', content: text } as any);
+          blocks.push({ type: 'bulletListItem', content: text } as any); // eslint-disable-line @typescript-eslint/no-explicit-any
         }
       });
     return blocks;
@@ -194,7 +195,7 @@ function parseNode($: any, el: any): PartialBlock[] {
       .each((_: number, li: any) => {
         const text = textFromChildren(li);
         if (text) {
-          blocks.push({ type: 'numberedListItem', content: text } as any);
+          blocks.push({ type: 'numberedListItem', content: text } as any); // eslint-disable-line @typescript-eslint/no-explicit-any
         }
       });
     return blocks;
@@ -207,7 +208,7 @@ function parseNode($: any, el: any): PartialBlock[] {
       blocks.push({
         type: 'paragraph',
         content: [{ type: 'text', text: text.trim(), styles: { code: true } }],
-      } as any);
+      } as any); // eslint-disable-line @typescript-eslint/no-explicit-any
     }
     return blocks;
   }
@@ -218,7 +219,7 @@ function parseNode($: any, el: any): PartialBlock[] {
       blocks.push({
         type: 'paragraph',
         content: [{ type: 'text', text, styles: { italic: true } }],
-      } as any);
+      } as any); // eslint-disable-line @typescript-eslint/no-explicit-any
     }
     return blocks;
   }
@@ -231,7 +232,7 @@ function parseNode($: any, el: any): PartialBlock[] {
         type: 'image',
         props: { url: src, alt },
         content: undefined,
-      } as any);
+      } as any); // eslint-disable-line @typescript-eslint/no-explicit-any
     }
     return blocks;
   }
@@ -242,7 +243,7 @@ function parseNode($: any, el: any): PartialBlock[] {
       type: 'tableHtml',
       props: { html: tableHtml },
       content: undefined,
-    } as any);
+    } as any); // eslint-disable-line @typescript-eslint/no-explicit-any
     return blocks;
   }
 
@@ -250,7 +251,7 @@ function parseNode($: any, el: any): PartialBlock[] {
     blocks.push({
       type: 'paragraph',
       content: [{ type: 'text', text: '---', styles: {} }],
-    } as any);
+    } as any); // eslint-disable-line @typescript-eslint/no-explicit-any
     return blocks;
   }
 

@@ -21,6 +21,7 @@ interface CacheEntry {
 
 const extractCache = new Map<string, CacheEntry>();
 const CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes
+const MAX_CACHE_SIZE = 100;
 
 function evictExpired(): void {
   const now = Date.now();
@@ -28,6 +29,15 @@ function evictExpired(): void {
     if (now - entry.timestamp > CACHE_TTL_MS) {
       extractCache.delete(key);
     }
+  }
+}
+
+function evictOldest(): void {
+  if (extractCache.size <= MAX_CACHE_SIZE) return;
+  const excess = extractCache.size - MAX_CACHE_SIZE;
+  const keys = [...extractCache.keys()];
+  for (let i = 0; i < excess; i++) {
+    extractCache.delete(keys[i]);
   }
 }
 
@@ -90,6 +100,7 @@ export async function extractArticle(
     bookmarkId,
     timestamp: Date.now(),
   });
+  evictOldest();
 
   try {
     await storeArticleContent(db, bookmarkId, {
