@@ -10,6 +10,7 @@ import SearchOverlay from './SearchOverlay';
 import ImportProgress from './ImportProgress';
 import { NotificationBell, NotificationPanel } from './notifications';
 import type { NotificationItem } from './notifications';
+import { useUIStore } from '../stores/uiStore';
 
 interface TopicTreeNode {
   id: string;
@@ -32,9 +33,6 @@ interface NavPanelProps {
   onToggleMockMode: () => void;
 }
 
-const EXPANDED_KEY = 'navPanel-expanded';
-const EXPANDED_TOPICS_KEY = 'navPanel-expandedTopics';
-
 const NavPanel: React.FC<NavPanelProps> = ({
   bookmarks,
   onSettingsClick,
@@ -50,26 +48,10 @@ const NavPanel: React.FC<NavPanelProps> = ({
   const [showNotifications, setShowNotifications] = useState(false);
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
-  const [isExpanded, setIsExpanded] = useState(() => {
-    try {
-      const stored = localStorage.getItem(EXPANDED_KEY);
-      return stored !== 'false';
-    } catch {
-      // localStorage may be unavailable
-      return true;
-    }
-  });
-  const [expandedTopics, setExpandedTopics] = useState<Record<string, boolean>>(
-    () => {
-      try {
-        const stored = localStorage.getItem(EXPANDED_TOPICS_KEY);
-        return stored ? JSON.parse(stored) : {};
-      } catch {
-        // localStorage may be unavailable
-        return {};
-      }
-    },
-  );
+  const isExpanded = useUIStore((s) => s.navExpanded);
+  const setNavExpanded = useUIStore((s) => s.setNavExpanded);
+  const expandedTopics = useUIStore((s) => s.expandedTopics);
+  const toggleTopic = useUIStore((s) => s.toggleTopic);
   const [topicTree, setTopicTree] = useState<TopicTreeNode[]>([]);
   const [userName, setUserName] = useState('');
   const [showCreateTopic, setShowCreateTopic] = useState(false);
@@ -83,22 +65,6 @@ const NavPanel: React.FC<NavPanelProps> = ({
       // ignore
     }
   }, []);
-
-  useEffect(() => {
-    try {
-      localStorage.setItem(EXPANDED_KEY, String(isExpanded));
-    } catch {
-      // localStorage may be unavailable
-    }
-  }, [isExpanded]);
-
-  useEffect(() => {
-    try {
-      localStorage.setItem(EXPANDED_TOPICS_KEY, JSON.stringify(expandedTopics));
-    } catch {
-      // localStorage may be unavailable
-    }
-  }, [expandedTopics]);
 
   useEffect(() => {
     window.api.getTopicTree().then(setTopicTree).catch((err) => {
@@ -138,15 +104,12 @@ const NavPanel: React.FC<NavPanelProps> = ({
   }, [bookmarks]);
 
   const handleToggleExpand = useCallback(() => {
-    setIsExpanded((prev) => !prev);
-  }, []);
+    setNavExpanded((prev) => !prev);
+  }, [setNavExpanded]);
 
   const handleToggleTopic = useCallback((topic: string) => {
-    setExpandedTopics((prev) => ({
-      ...prev,
-      [topic]: !prev[topic],
-    }));
-  }, []);
+    toggleTopic(topic);
+  }, [toggleTopic]);
 
   const handleOpenSearch = useCallback(() => {
     setShowSearch(true);
@@ -342,8 +305,8 @@ const NavPanel: React.FC<NavPanelProps> = ({
   return (
     <div
       className={`nav-panel ${isExpanded ? '' : 'nav-panel-collapsed'}`}
-      onMouseEnter={() => { if (!isExpanded) setIsExpanded(true); }}
-      onMouseLeave={() => { if (!isExpanded) setIsExpanded(false); }}
+      onMouseEnter={() => { if (!isExpanded) setNavExpanded(true); }}
+      onMouseLeave={() => { if (!isExpanded) setNavExpanded(false); }}
     >
       {!isExpanded && collapsedAvatar}
       {isExpanded && (
