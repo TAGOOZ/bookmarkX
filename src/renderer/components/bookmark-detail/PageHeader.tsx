@@ -1,5 +1,5 @@
-import React from 'react';
-import { FormattedMessage } from 'react-intl';
+import React, { useState, useCallback } from 'react';
+import { FormattedMessage, useIntl } from 'react-intl';
 import styles from './PageHeader.module.css';
 
 const ICONS: Record<string, string> = {
@@ -19,7 +19,10 @@ interface PageHeaderProps {
   priority?: string;
   readingTime?: number;
   createdAt?: string;
+  hashtags?: Array<{ id: string; name: string }>;
   onOpenUrl?: (url: string) => void;
+  onAddHashtag?: (name: string) => void;
+  onRemoveHashtag?: (id: string) => void;
 }
 
 const PageHeader: React.FC<PageHeaderProps> = ({
@@ -30,8 +33,27 @@ const PageHeader: React.FC<PageHeaderProps> = ({
   priority,
   readingTime,
   createdAt,
+  hashtags = [],
   onOpenUrl,
+  onAddHashtag,
+  onRemoveHashtag,
 }) => {
+  const intl = useIntl();
+  const [newHashtag, setNewHashtag] = useState('');
+
+  const handleAddHashtag = useCallback(() => {
+    const trimmed = newHashtag.trim();
+    if (trimmed && onAddHashtag) {
+      onAddHashtag(trimmed);
+      setNewHashtag('');
+    }
+  }, [newHashtag, onAddHashtag]);
+
+  const priorityClass = priority === 'high' ? styles.priorityHigh
+    : priority === 'medium' ? styles.priorityMedium
+    : priority === 'low' ? styles.priorityLow
+    : '';
+
   return (
     <div className={styles.header}>
       <h1 className={styles.title}>{title}</h1>
@@ -59,7 +81,7 @@ const PageHeader: React.FC<PageHeaderProps> = ({
           </span>
         )}
         {priority && (
-          <span className={styles.metaItem}>
+          <span className={`${styles.metaItem} ${priorityClass}`}>
             <span className={styles.metaIcon}>{ICONS.priority}</span>
             {priority.toUpperCase()}
           </span>
@@ -77,6 +99,40 @@ const PageHeader: React.FC<PageHeaderProps> = ({
           </span>
         )}
       </div>
+      {(hashtags.length > 0 || onAddHashtag) && (
+        <div className={styles.hashtagRow}>
+          <div className={styles.hashtagList}>
+            {hashtags.map((tag) => (
+              <span key={tag.id} className={styles.hashtagChip}>
+                #{tag.name}
+                {onRemoveHashtag && (
+                  <button
+                    className={styles.hashtagRemove}
+                    onClick={() => onRemoveHashtag(tag.id)}
+                    aria-label={`Remove ${tag.name}`}
+                  >
+                    ×
+                  </button>
+                )}
+              </span>
+            ))}
+          </div>
+          {onAddHashtag && (
+            <div className={styles.hashtagAdd}>
+              <input
+                className={styles.hashtagInput}
+                value={newHashtag}
+                onChange={(e) => setNewHashtag(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') handleAddHashtag();
+                }}
+                placeholder="#"
+                aria-label={intl.formatMessage({ id: 'addHashtag' })}
+              />
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 };

@@ -1,9 +1,10 @@
 .header {
-  margin-bottom: var(--space-m);
+  padding: var(--space-m) 40px;
+  border-bottom: 1px solid var(--background-modifier-border);
 }
 
 .title {
-  font-size: var(--font-h1);
+  font-size: var(--font-h2);
   font-weight: 700;
   color: var(--text-normal);
   margin: 0 0 var(--space-s) 0;
@@ -47,6 +48,7 @@
   flex-wrap: wrap;
   gap: var(--space-s);
   align-items: center;
+  margin-bottom: var(--space-s);
 }
 
 .metaItem {
@@ -60,4 +62,77 @@
 
 .metaIcon {
   flex-shrink: 0;
+}
+
+.priorityHigh {
+  color: var(--priority-high);
+}
+
+.priorityMedium {
+  color: var(--priority-medium);
+}
+
+.priorityLow {
+  color: var(--priority-low);
+}
+
+.hashtagRow {
+  display: flex;
+  align-items: center;
+  gap: var(--space-s);
+  flex-wrap: wrap;
+}
+
+.hashtagList {
+  display: flex;
+  gap: var(--space-xs);
+  flex-wrap: wrap;
+  flex: 1;
+}
+
+.hashtagChip {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  padding: 2px 8px;
+  background: var(--background-secondary);
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 12px;
+  font-size: var(--font-ui-xs);
+  color: var(--accent-color);
+  font-weight: 500;
+}
+
+.hashtagRemove {
+  border: none;
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+  font-size: 12px;
+  padding: 0 2px;
+  line-height: 1;
+}
+
+.hashtagRemove:hover {
+  color: var(--color-error, #fb464c);
+}
+
+.hashtagAdd {
+  display: flex;
+  align-items: center;
+}
+
+.hashtagInput {
+  width: 60px;
+  padding: 2px 6px;
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 12px;
+  background: var(--background-primary);
+  color: var(--text-normal);
+  font-size: var(--font-ui-xs);
+  outline: none;
+}
+
+.hashtagInput:focus {
+  border-color: var(--accent-color);
 }

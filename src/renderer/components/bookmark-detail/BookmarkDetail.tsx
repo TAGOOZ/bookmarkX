@@ -9,8 +9,10 @@ import { BookmarkDetailData, CustomSection } from './types';
 import { bookmarkToBlocks } from './bookmarkToBlocks';
 import { blocksToBookmark } from './blocksToBookmark';
 import ContentsBar from './ContentsBar';
+import EditorToolbar from './EditorToolbar';
 import EnhanceToolbar from './EnhanceToolbar';
 import GlossaryPanel from './GlossaryPanel';
+import PageHeader from './PageHeader';
 import CustomSectionComponent from './CustomSection';
 import { detectDir } from './rtl-detect';
 import { blocksToMarkdown } from '../../../parser/blocks-to-markdown';
@@ -131,9 +133,7 @@ const BookmarkEditor: React.FC<BookmarkEditorProps> = ({
   const [isGeneratingGlossary, setIsGeneratingGlossary] = useState(false);
   const notesSaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [hashtags, setHashtags] = useState<Array<{ id: string; name: string }>>([]);
-  const [newHashtag, setNewHashtag] = useState('');
   const sessionRequestId = useRef(0);
-  const hashtagTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [showGlossaryPanel, setShowGlossaryPanel] = useState(false);
   const [customSections, setCustomSections] = useState<CustomSection[]>([]);
 
@@ -322,26 +322,20 @@ const BookmarkEditor: React.FC<BookmarkEditorProps> = ({
       });
   }, [bookmark.id]);
 
-  const handleAddHashtag = useCallback(async () => {
-    if (!bookmark.id || !newHashtag.trim()) return;
-    if (hashtagTimerRef.current) {
-      clearTimeout(hashtagTimerRef.current);
+  const handleAddHashtag = useCallback(async (name: string) => {
+    if (!bookmark.id || !name.trim()) return;
+    try {
+      await (window as any).api?.setBookmarkHashtags?.(
+        bookmark.id,
+        [...hashtags.map((h) => h.name), name.trim()],
+      );
+      const updated = await (window as any).api?.getBookmarkHashtags?.(bookmark.id);
+      if (updated) setHashtags(updated);
+      onBookmarkChange?.({ hashtags: updated });
+    } catch {
+      // addHashtag failed silently
     }
-    hashtagTimerRef.current = setTimeout(async () => {
-      try {
-        await (window as any).api?.setBookmarkHashtags?.(
-          bookmark.id,
-          [...hashtags.map((h) => h.name), newHashtag.trim()],
-        );
-        const updated = await (window as any).api?.getBookmarkHashtags?.(bookmark.id);
-        if (updated) setHashtags(updated);
-        setNewHashtag('');
-        onBookmarkChange?.({ hashtags: updated });
-      } catch {
-        // addHashtag failed silently
-      }
-    }, 300);
-  }, [bookmark.id, newHashtag, hashtags, onBookmarkChange]);
+  }, [bookmark.id, hashtags, onBookmarkChange]);
 
   const handleRemoveHashtag = useCallback(async (hashtagId: string) => {
     if (!bookmark.id) return;
@@ -354,14 +348,6 @@ const BookmarkEditor: React.FC<BookmarkEditorProps> = ({
       console.error('Failed to remove hashtag:', err);
     }
   }, [bookmark.id, onBookmarkChange]);
-
-  useEffect(() => {
-    return () => {
-      if (hashtagTimerRef.current) {
-        clearTimeout(hashtagTimerRef.current);
-      }
-    };
-  }, []);
 
   useEffect(() => {
     if (!bookmark.id) return;
@@ -659,117 +645,50 @@ const BookmarkEditor: React.FC<BookmarkEditorProps> = ({
         activeSection={activeSection}
         onNavigate={handleNavigate}
       />
-      <div className={styles.toolbarRow}>
-        <button
-          className={styles.toolbarBtn}
-          onClick={handleExpandCollapseAll}
-          aria-label={intl.formatMessage({ id: 'expandCollapseAll' })}
-        >
-          ⇕
-        </button>
-        <button
-          className={styles.toolbarBtn}
-          onClick={() => setIsReaderMode(!isReaderMode)}
-          aria-label={intl.formatMessage({ id: isReaderMode ? 'exitReaderMode' : 'readerMode' })}
-        >
-          {isReaderMode ? '✕' : '⛶'}
-        </button>
-        <div className={styles.exportGroup}>
-          <button
-            className={styles.toolbarBtn}
-            onClick={() => handleExport('md')}
-            aria-label={intl.formatMessage({ id: 'exportMd' })}
-            title={intl.formatMessage({ id: 'exportMd' })}
-          >
-            ↓MD
-          </button>
-          <button
-            className={styles.toolbarBtn}
-            onClick={() => handleExport('json')}
-            aria-label={intl.formatMessage({ id: 'exportJson' })}
-            title={intl.formatMessage({ id: 'exportJson' })}
-          >
-            ↓JSON
-          </button>
-        </div>
-        <button
-          className={styles.toolbarBtn}
-          onClick={handleImportMarkdown}
-          aria-label={intl.formatMessage({ id: 'importMd' })}
-          title={intl.formatMessage({ id: 'importMd' })}
-        >
-          ↑MD
-        </button>
-        <div className={styles.exportGroup}>
-          <button
-            className={styles.toolbarBtn}
-            onClick={handleSummarize}
-            disabled={isSummarizing}
-            aria-label={intl.formatMessage({ id: 'summarize' })}
-            title={intl.formatMessage({ id: 'summarize' })}
-          >
-            {isSummarizing ? '...' : 'Σ'}
-          </button>
-          <button
-            className={styles.toolbarBtn}
-            onClick={handleGenerateGlossary}
-            disabled={isGeneratingGlossary}
-            aria-label={intl.formatMessage({ id: 'generateGlossary' })}
-            title={intl.formatMessage({ id: 'generateGlossary' })}
-          >
-            {isGeneratingGlossary ? '...' : 'G'}
-          </button>
-        </div>
-        <button
-          className={`${styles.toolbarBtn} ${showGlossaryPanel ? styles.toolbarBtnActive : ''}`}
-          onClick={() => setShowGlossaryPanel(!showGlossaryPanel)}
-          aria-label={intl.formatMessage({ id: 'openGlossaryPanel' })}
-          title={intl.formatMessage({ id: 'openGlossaryPanel' })}
-        >
-          📖
-        </button>
-        <button
-          className={styles.toolbarBtn}
-          onClick={handleCreateCustomSection}
-          aria-label={intl.formatMessage({ id: 'addCustomSection' })}
-          title={intl.formatMessage({ id: 'addCustomSection' })}
-        >
-          +§
-        </button>
-      </div>
+      <PageHeader
+        title={bookmark.title || ''}
+        url={bookmark.url}
+        topic={bookmark.topic}
+        contentType={bookmark.contentType}
+        priority={bookmark.priority}
+        readingTime={bookmark.readingTime}
+        createdAt={bookmark.createdAt}
+        hashtags={hashtags}
+        onOpenUrl={(url) => window.open(url, '_blank')}
+        onAddHashtag={handleAddHashtag}
+        onRemoveHashtag={handleRemoveHashtag}
+      />
+      <EditorToolbar
+        isReaderMode={isReaderMode}
+        isSummarizing={isSummarizing}
+        isGeneratingGlossary={isGeneratingGlossary}
+        showGlossaryPanel={showGlossaryPanel}
+        onToggleReaderMode={() => setIsReaderMode(!isReaderMode)}
+        onExpandCollapseAll={handleExpandCollapseAll}
+        onSummarize={handleSummarize}
+        onGenerateGlossary={handleGenerateGlossary}
+        onExportMd={() => handleExport('md')}
+        onExportJson={() => handleExport('json')}
+        onImportMarkdown={handleImportMarkdown}
+        onAddCustomSection={handleCreateCustomSection}
+        onToggleGlossaryPanel={() => setShowGlossaryPanel(!showGlossaryPanel)}
+      />
       {notification && (
         <div className={styles.notification}>{notification}</div>
       )}
-      {hashtags.length > 0 || newHashtag ? (
-        <div className={styles.hashtagBar}>
-          <div className={styles.hashtagList}>
-            {hashtags.map((tag) => (
-              <span key={tag.id} className={styles.hashtagChip}>
-                #{tag.name}
-                <button
-                  className={styles.hashtagRemove}
-                  onClick={() => handleRemoveHashtag(tag.id)}
-                  aria-label={`Remove ${tag.name}`}
-                >
-                  ×
-                </button>
-              </span>
-            ))}
-          </div>
-          <div className={styles.hashtagAdd}>
-            <input
-              className={styles.hashtagInput}
-              value={newHashtag}
-              onChange={(e) => setNewHashtag(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') handleAddHashtag();
-              }}
-              placeholder="#"
-              aria-label={intl.formatMessage({ id: 'addHashtag' })}
-            />
-          </div>
+      {enhancedText && (
+        <div className={styles.toast} role="alert">
+          <span className={styles.toastLabel}>{intl.formatMessage({ id: 'enhanced' })}</span>
+          <span className={styles.toastContent}>{enhancedText}</span>
+          <button
+            className={styles.toastClose}
+            onClick={() => setEnhancedText(null)}
+            aria-label={intl.formatMessage({ id: 'dismissEnhanced' })}
+          >
+            ×
+          </button>
         </div>
-      ) : null}
+      )}
       <EnhanceToolbar
         selectedText={selectionToolbar?.text || ''}
         position={selectionToolbar?.position || null}
@@ -778,19 +697,6 @@ const BookmarkEditor: React.FC<BookmarkEditorProps> = ({
         onReference={handleReference}
         onClose={() => setSelectionToolbar(null)}
       />
-      {enhancedText && (
-        <div className={styles.enhancedBanner}>
-          <span className={styles.enhancedLabel}>{intl.formatMessage({ id: 'enhanced' })}</span>
-          <span className={styles.enhancedContent}>{enhancedText}</span>
-          <button
-            className={styles.enhancedClose}
-            onClick={() => setEnhancedText(null)}
-            aria-label={intl.formatMessage({ id: 'dismissEnhanced' })}
-          >
-            ×
-          </button>
-        </div>
-      )}
       {isParsing && (
         <div className={styles.parsingBanner}>
           <span className={styles.spinner} />

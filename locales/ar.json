@@ -159,5 +159,6 @@
   "pauseImport": "إيقاف مؤقت",
   "resumeImport": "استئناف",
   "fetched": "تم الجلب",
-  "classified": "تم التصنيف"
+  "classified": "تم التصنيف",
+  "actions": "إجراءات"
 }

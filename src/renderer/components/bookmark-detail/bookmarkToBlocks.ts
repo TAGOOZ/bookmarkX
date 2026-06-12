@@ -16,79 +16,8 @@ function paragraph(text: string): PartialBlock {
   return { type: 'paragraph', content: text };
 }
 
-function styledText(text: string, styles: Record<string, boolean> = {}): { type: 'text'; text: string; styles: Record<string, boolean> } {
-  return { type: 'text', text, styles };
-}
-
-function _bulletListItem(text: string): PartialBlock {
-  return { type: 'bulletListItem', content: text };
-}
-
-function _splitParagraphs(text: string): PartialBlock[] {
-  return text
-    .split(/\n\n+/)
-    .map((p) => p.trim())
-    .filter(Boolean)
-    .map((p) => paragraph(p));
-}
-
-const ICONS: Record<string, string> = {
-  topic: '📁',
-  type: '📄',
-  priority: '⚡',
-  time: '⏱️',
-  calendar: '📅',
-  link: '🔗',
-};
-
 export function bookmarkToBlocks(bookmark: BookmarkDetailData): PartialBlock[] {
   const blocks: PartialBlock[] = [];
-
-  blocks.push(heading(bookmark.title, 1));
-
-  if (bookmark.url) {
-    blocks.push({
-      type: 'paragraph',
-      content: [
-        styledText(`${ICONS.link} `),
-        styledText(bookmark.url, { bold: true }),
-      ],
-    });
-  }
-
-  const metaParts: { type: 'text'; text: string; styles: Record<string, boolean> }[] = [];
-  if (bookmark.topic) {
-    metaParts.push(styledText(`${ICONS.topic} ${bookmark.topic}`, { bold: true }));
-    metaParts.push(styledText('   '));
-  }
-  if (bookmark.contentType) {
-    metaParts.push(styledText(`${ICONS.type} ${bookmark.contentType}`, { bold: true }));
-    metaParts.push(styledText('   '));
-  }
-  if (bookmark.priority) {
-    metaParts.push(styledText(`${ICONS.priority} ${bookmark.priority.toUpperCase()}`, { bold: true }));
-    metaParts.push(styledText('   '));
-  }
-  if (bookmark.readingTime) {
-    metaParts.push(styledText(`${ICONS.time} ${bookmark.readingTime} min read`));
-    metaParts.push(styledText('   '));
-  }
-  if (metaParts.length > 0) {
-    metaParts.pop();
-    blocks.push({ type: 'paragraph', content: metaParts });
-  }
-
-  if (bookmark.createdAt) {
-    const date = new Date(bookmark.createdAt);
-    blocks.push({
-      type: 'paragraph',
-      content: [
-        styledText(`${ICONS.calendar} `, {}),
-        styledText('Created: ', { bold: true }),
-        styledText(date.toLocaleDateString()),
-      ],
-    });
-  }
 
   if (bookmark.summaryAr && bookmark.summary) {
     blocks.push(heading('Summary', 2));

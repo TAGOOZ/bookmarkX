@@ -1,0 +1,131 @@
+.toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-xs) 40px;
+  flex-shrink: 0;
+  border-bottom: 1px solid var(--background-modifier-border);
+  min-height: 36px;
+}
+
+.leftGroup {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+}
+
+.rightGroup {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+}
+
+.toolBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 28px;
+  border: 1px solid var(--background-modifier-border);
+  background: var(--background-secondary);
+  color: var(--text-muted);
+  border-radius: var(--radius-m);
+  cursor: pointer;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 0 8px;
+  transition: background 0.15s, color 0.15s;
+  gap: var(--space-xs);
+}
+
+.toolBtn:hover {
+  background: var(--background-modifier-hover);
+  color: var(--text-normal);
+}
+
+.toolBtnActive {
+  background: var(--accent-color);
+  color: var(--text-on-accent);
+  border-color: var(--accent-color);
+}
+
+.toolBtnActive:hover {
+  background: var(--accent-color-hover);
+  color: var(--text-on-accent);
+}
+
+.dropdownContainer {
+  position: relative;
+}
+
+.dropdownTrigger {
+  gap: var(--space-xs);
+}
+
+.dropdownArrow {
+  font-size: 9px;
+  opacity: 0.6;
+}
+
+.dropdownOpen {
+  background: var(--background-modifier-active);
+}
+
+.dropdown {
+  position: absolute;
+  top: calc(100% + 4px);
+  right: 0;
+  z-index: 1000;
+  background: var(--background-primary);
+  border: 1px solid var(--background-modifier-border);
+  border-radius: var(--radius-m);
+  box-shadow: var(--shadow-l);
+  padding: var(--space-xs) 0;
+  min-width: 200px;
+  animation: fadeIn 0.1s ease-out;
+}
+
+[dir="rtl"] .dropdown {
+  right: auto;
+  left: 0;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.dropdownSection {
+  padding: var(--space-xs) 0;
+}
+
+.dropdownSeparator {
+  height: 1px;
+  background: var(--background-modifier-border);
+  margin: var(--space-xs) 0;
+}
+
+.dropdownItem {
+  display: block;
+  width: 100%;
+  padding: var(--space-xs) var(--space-m);
+  border: none;
+  background: none;
+  color: var(--text-normal);
+  font-size: var(--font-ui-sm);
+  text-align: start;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.dropdownItem:hover {
+  background: var(--background-modifier-hover);
+}
+
+.dropdownItem:disabled {
+  color: var(--text-faint);
+  cursor: default;
+}
+
+.dropdownItem:disabled:hover {
+  background: none;
+}

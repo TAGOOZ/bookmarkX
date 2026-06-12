@@ -160,5 +160,6 @@
   "pauseImport": "Pause",
   "resumeImport": "Resume",
   "fetched": "fetched",
-  "classified": "classified"
+  "classified": "classified",
+  "actions": "Actions"
 }
