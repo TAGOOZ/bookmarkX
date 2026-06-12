@@ -7,15 +7,16 @@ vi.mock('../gemini', () => ({
 vi.mock('../../db/chat', () => ({
   addChatMessage: vi.fn(),
   getChatMessages: vi.fn(),
+  getRecentChatMessages: vi.fn(),
 }));
 
 import { sendMessage } from '../chat';
 import { callGemini } from '../gemini';
-import { addChatMessage, getChatMessages } from '../../db/chat';
+import { addChatMessage, getRecentChatMessages } from '../../db/chat';
 
 const mockCallGemini = vi.mocked(callGemini);
 const mockAddChatMessage = vi.mocked(addChatMessage);
-const mockGetChatMessages = vi.mocked(getChatMessages);
+const mockGetRecentChatMessages = vi.mocked(getRecentChatMessages);
 
 function createMockDb() {
   return {} as any;
@@ -24,7 +25,7 @@ function createMockDb() {
 describe('sendMessage', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    mockGetChatMessages.mockResolvedValue([]);
+    mockGetRecentChatMessages.mockResolvedValue([]);
   });
 
   it('sends message and returns response', async () => {
@@ -56,7 +57,7 @@ describe('sendMessage', () => {
   });
 
   it('includes conversation history in prompt', async () => {
-    mockGetChatMessages.mockResolvedValue([
+    mockGetRecentChatMessages.mockResolvedValue([
       { id: '1', session_id: 's', role: 'user', content: 'Previous question', created_at: '' },
       { id: '2', session_id: 's', role: 'assistant', content: 'Previous answer', created_at: '' },
     ]);

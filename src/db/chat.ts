@@ -78,3 +78,23 @@ export async function getChatMessages(
     created_at: row.created_at,
   }));
 }
+
+export async function getRecentChatMessages(
+  db: Client,
+  sessionId: string,
+  limit: number,
+): Promise<ChatMessage[]> {
+  const { rows } = await db.execute({
+    sql: 'SELECT * FROM (SELECT * FROM chat_messages WHERE session_id = ? ORDER BY created_at DESC LIMIT ?) ORDER BY created_at ASC',
+    args: [sessionId, limit],
+  });
+
+  return (rows as any[]).map((row) => ({
+    id: row.id,
+    session_id: row.session_id,
+    role: row.role,
+    content: row.content,
+    selected_text: row.selected_text || null,
+    created_at: row.created_at,
+  }));
+}

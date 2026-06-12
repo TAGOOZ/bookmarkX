@@ -1,6 +1,6 @@
 import type { Client } from '@libsql/client';
 import { callGemini } from './gemini';
-import { addChatMessage, getChatMessages } from '../db/chat';
+import { addChatMessage, getRecentChatMessages } from '../db/chat';
 import type { ServiceOptions, ChatResult } from './types';
 
 function buildChatPrompt(
@@ -43,7 +43,7 @@ export async function sendMessage(
 
   await addChatMessage(db, sessionId, 'user', message, selectedText);
 
-  const history = await getChatMessages(db, sessionId);
+  const history = await getRecentChatMessages(db, sessionId, 20);
   const prompt = buildChatPrompt(message, history, articleContext);
   const response = await callGemini(prompt, { apiKey, model });
 
