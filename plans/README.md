@@ -55,7 +55,7 @@ honor its STOP conditions, and update your row when done.
 | 045 | Batch glossary term inserts in generate-glossary IPC | P2 | S | — | DONE |
 | 046 | Limit chat history sent to Gemini API | P2 | S | — | TODO |
 | 047 | Cache getConfigEnv to avoid repeated disk reads | P2 | S | — | TODO |
-| 048 | Fix silent error swallowing in IPC handlers | P2 | S | — | TODO |
+| 048 | Fix silent error swallowing in IPC handlers | P2 | S | — | DONE |
 | 049 | Add input validation to glossary and custom-section IPC handlers | P2 | S | — | TODO |
 | 050 | Remove dead code and unused types | P3 | S | — | TODO |
 | 051 | Standardize IPC error handling pattern | P2 | M | 048 | TODO |

@@ -65,8 +65,8 @@ export async function extractArticle(
         og_image: cached.og_image,
         og_site_name: cached.og_site_name,
       });
-    } catch {
-      // FK constraint may fail for mock/transient bookmarks
+    } catch (err) {
+      console.warn('Failed to store cached article:', err);
     }
     return cached;
   }
@@ -112,8 +112,8 @@ export async function extractArticle(
       og_image: result.ogImage,
       og_site_name: result.ogSiteName,
     });
-  } catch {
-    // FK constraint may fail for mock/transient bookmarks — extraction still valid
+  } catch (err) {
+    console.warn('Failed to store article content:', err);
   }
 
   return extractResult;
