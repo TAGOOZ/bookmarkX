@@ -20,6 +20,26 @@ export async function addTerm(
   return id;
 }
 
+export async function batchAddTermsAndLink(
+  db: Client,
+  bookmarkId: string,
+  terms: Array<{ term: string; definition: string }>,
+): Promise<string[]> {
+  const ids = terms.map(() => crypto.randomUUID());
+  const stmts = [
+    ...terms.map((t, i) => ({
+      sql: 'INSERT INTO glossary_terms (id, term, definition) VALUES (?, ?, ?)',
+      args: [ids[i], t.term, t.definition] as any[],
+    })),
+    ...ids.map((id) => ({
+      sql: 'INSERT OR IGNORE INTO bookmark_glossary (bookmark_id, term_id) VALUES (?, ?)',
+      args: [bookmarkId, id] as any[],
+    })),
+  ];
+  await db.batch(stmts);
+  return ids;
+}
+
 export async function searchTerms(
   db: Client,
   query: string,

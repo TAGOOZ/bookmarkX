@@ -59,13 +59,8 @@ export function registerContentIpc(ipcMain: IpcMain, db: Client) {
   });
 
   ipcMain.handle('create-chat-session', async (_event, bookmarkId: string) => {
-    try {
-      const { createChatSession } = await import('../../db/chat');
-      return await createChatSession(db, bookmarkId);
-    } catch (err) {
-      console.warn('Failed to create chat session:', err);
-      return null;
-    }
+    const { createChatSession } = await import('../../db/chat');
+    return createChatSession(db, bookmarkId);
   });
 
   ipcMain.handle('get-chat-messages', async (_event, sessionId: string) => {
@@ -133,13 +128,10 @@ export function registerContentIpc(ipcMain: IpcMain, db: Client) {
       throw new Error('Glossary content exceeds 50000 character limit');
     }
     const { generateGlossary } = await import('../../services/glossary');
-    const { addTerm, linkTermToBookmark } = await import('../../db/glossary');
+    const { batchAddTermsAndLink } = await import('../../db/glossary');
     const env = await getConfigEnv();
     const terms = await generateGlossary(content, { apiKey: env.apiKey, title });
-    for (const t of terms) {
-      const termId = await addTerm(db, t.term, t.definition);
-      await linkTermToBookmark(db, bookmarkId, termId);
-    }
+    await batchAddTermsAndLink(db, bookmarkId, terms);
     return terms;
   });
 
@@ -217,12 +209,7 @@ export function registerContentIpc(ipcMain: IpcMain, db: Client) {
 
   ipcMain.handle('search-articles', async (_event, query: string, limit?: number) => {
     if (!query || query.trim().length < 2) return [];
-    try {
-      const { searchArticleContent } = await import('../../db/article-content');
-      return await searchArticleContent(db, query, limit);
-    } catch (err) {
-      console.error('search-articles error:', err);
-      return [];
-    }
+    const { searchArticleContent } = await import('../../db/article-content');
+    return searchArticleContent(db, query, limit);
   });
 }

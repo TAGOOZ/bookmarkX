@@ -52,7 +52,7 @@ honor its STOP conditions, and update your row when done.
 | 042 | Fix openBookmarks drift and validate column limit on load | P1 | M | — | DONE |
 | 043 | Collapse drop zones when not dragging | P1 | S | — | DONE |
 | 044 | Batch column resize into single state update | P2 | S | — | DONE |
-| 045 | Batch glossary term inserts in generate-glossary IPC | P2 | S | — | TODO |
+| 045 | Batch glossary term inserts in generate-glossary IPC | P2 | S | — | DONE |
 | 046 | Limit chat history sent to Gemini API | P2 | S | — | TODO |
 | 047 | Cache getConfigEnv to avoid repeated disk reads | P2 | S | — | TODO |
 | 048 | Fix silent error swallowing in IPC handlers | P2 | S | — | TODO |
