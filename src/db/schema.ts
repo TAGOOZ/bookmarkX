@@ -265,8 +265,10 @@ export async function initializeSchema(db: Client): Promise<void> {
     CREATE INDEX IF NOT EXISTS idx_notes_bookmark_id ON notes(bookmark_id);
     CREATE INDEX IF NOT EXISTS idx_highlights_bookmark_id ON highlights(bookmark_id);
     CREATE INDEX IF NOT EXISTS idx_chat_messages_session_id ON chat_messages(session_id);
+    CREATE INDEX IF NOT EXISTS idx_chat_sessions_bookmark_id ON chat_sessions(bookmark_id);
     CREATE INDEX IF NOT EXISTS idx_custom_sections_bookmark_id ON custom_sections(bookmark_id);
     CREATE INDEX IF NOT EXISTS idx_article_content_bookmark_id ON article_content(bookmark_id);
+    CREATE INDEX IF NOT EXISTS idx_glossary_terms_term ON glossary_terms(term);
   `);
 
   // Migration: add title_ar and title_en if missing (existing databases)

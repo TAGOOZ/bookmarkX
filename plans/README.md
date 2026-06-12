@@ -57,7 +57,7 @@ honor its STOP conditions, and update your row when done.
 | 047 | Cache getConfigEnv to avoid repeated disk reads | P2 | S | — | DONE |
 | 048 | Fix silent error swallowing in IPC handlers | P2 | S | — | DONE |
 | 049 | Add input validation to glossary and custom-section IPC handlers | P2 | S | — | DONE |
-| 050 | Remove dead code and unused types | P3 | S | — | TODO |
+| 050 | Remove dead code and unused types | P3 | S | — | DONE |
 | 051 | Standardize IPC error handling pattern | P2 | M | 048 | TODO |
 | 052 | Extract duplicate Bookmark row-to-object mapping | P2 | S | — | DONE |
 | 053 | Split content.ts god handler into domain modules | P2 | M | 051 | TODO |
@@ -70,7 +70,7 @@ honor its STOP conditions, and update your row when done.
 | 060 | Add CI workflow with pnpm check | P3 | S | — | TODO |
 | 061 | Standardize DB operation naming conventions | P3 | M | 052 | TODO |
 | 062 | Add missing index on chat_sessions.bookmark_id | P3 | S | — | TODO |
-| 063 | Add index on glossary_terms.term for LIKE queries | P3 | S | — | TODO |
+| 063 | Add index on glossary_terms.term for LIKE queries | P3 | S | — | DONE |
 | 064 | Add bookmarkStore split-view unit tests | P2 | M | 054 | TODO |
 | 065 | Split NavPanel into child components and hooks | P2 | M | — | TODO |
 | 066 | Split Settings.tsx into section components | P2 | M | — | TODO |
