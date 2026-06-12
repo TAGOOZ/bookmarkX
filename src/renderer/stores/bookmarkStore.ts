@@ -47,6 +47,7 @@ interface BookmarkStore {
   handleMergeColumn: (columnId: string) => void;
   handleColumnActive: (columnId: string) => void;
   handleColumnResize: (columnId: string, width: number) => void;
+  handleTabCloseTab: (columnId: string, bookmarkId: string) => void;
 
   getActiveBookmark: () => Bookmark | null;
   fetchBookmarks: () => Promise<void>;
@@ -198,6 +199,38 @@ export const useBookmarkStore = create<BookmarkStore>((set, get) => ({
           ? remaining[remaining.length - 1].id
           : state.splitState.activeColumnId;
       const newSplit: SplitState = { columns: remaining, activeColumnId: newActive };
+      saveSplitState(newSplit);
+      return { splitState: newSplit, openBookmarks: newOpen };
+    });
+  },
+
+  handleTabCloseTab: (columnId, bookmarkId) => {
+    set((state) => {
+      const col = state.splitState.columns.find((c) => c.id === columnId);
+      if (!col) return state;
+
+      if (state.splitState.columns.length === 1) {
+        const newSplit: SplitState = {
+          columns: [{ ...col, bookmarkId: null }],
+          activeColumnId: col.id,
+        };
+        const newOpen = state.openBookmarks.filter((b) => b.id !== bookmarkId);
+        saveSplitState(newSplit);
+        return { splitState: newSplit, openBookmarks: newOpen };
+      }
+
+      const newColumns = state.splitState.columns.map((c) =>
+        c.id === columnId ? { ...c, bookmarkId: null } : c,
+      );
+      const newOpen = state.openBookmarks.filter((b) => b.id !== bookmarkId);
+
+      let newActiveId = state.splitState.activeColumnId;
+      if (newActiveId === columnId) {
+        const firstWithBookmark = newColumns.find((c) => c.bookmarkId);
+        newActiveId = firstWithBookmark?.id ?? newColumns[0].id;
+      }
+
+      const newSplit: SplitState = { columns: newColumns, activeColumnId: newActiveId };
       saveSplitState(newSplit);
       return { splitState: newSplit, openBookmarks: newOpen };
     });

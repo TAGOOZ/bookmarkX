@@ -14,6 +14,7 @@ const SplitLayout: React.FC<SplitLayoutProps> = ({
   openBookmarks,
   onSplitColumn,
   onMergeColumn,
+  onTabCloseTab,
   onColumnActive,
   onColumnResize,
   onBookmarkChange,
@@ -26,9 +27,13 @@ const SplitLayout: React.FC<SplitLayoutProps> = ({
     void bookmarkId;
   }, [onColumnActive]);
 
-  const handleTabClose = useCallback((columnId: string, _bookmarkId: string) => {
-    onMergeColumn(columnId);
-  }, [onMergeColumn]);
+  const handleTabClose = useCallback((columnId: string, bookmarkId: string) => {
+    if (onTabCloseTab) {
+      onTabCloseTab(columnId, bookmarkId);
+    } else {
+      onMergeColumn(columnId);
+    }
+  }, [onTabCloseTab, onMergeColumn]);
 
   const totalWidth = useMemo(
     () => splitState.columns.reduce((sum, col) => sum + col.width, 0),

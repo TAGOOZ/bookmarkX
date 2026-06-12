@@ -17,6 +17,7 @@ export interface SplitLayoutProps {
   openBookmarks: Bookmark[];
   onSplitColumn: (columnId: string, bookmarkId: string) => void;
   onMergeColumn: (columnId: string) => void;
+  onTabCloseTab?: (columnId: string, bookmarkId: string) => void;
   onColumnActive: (columnId: string) => void;
   onColumnResize: (columnId: string, width: number) => void;
   onBookmarkChange: (bookmarkId: string, updated: Partial<BookmarkDetailData>) => void;

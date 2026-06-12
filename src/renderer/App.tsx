@@ -47,6 +47,7 @@ function AppContent() {
   const handleBookmarkChange = useBookmarkStore((s) => s.handleBookmarkChange);
   const handleSplitColumn = useBookmarkStore((s) => s.handleSplitColumn);
   const handleMergeColumn = useBookmarkStore((s) => s.handleMergeColumn);
+  const handleTabCloseTab = useBookmarkStore((s) => s.handleTabCloseTab);
   const handleColumnActive = useBookmarkStore((s) => s.handleColumnActive);
   const handleColumnResize = useBookmarkStore((s) => s.handleColumnResize);
   const setMockMode = useBookmarkStore((s) => s.setMockMode);
@@ -96,6 +97,7 @@ function AppContent() {
             openBookmarks={openBookmarks}
             onSplitColumn={handleSplitColumn}
             onMergeColumn={handleMergeColumn}
+            onTabCloseTab={handleTabCloseTab}
             onColumnActive={handleColumnActive}
             onColumnResize={handleColumnResize}
             onBookmarkChange={handleBookmarkChange}
