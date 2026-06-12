@@ -65,7 +65,7 @@ honor its STOP conditions, and update your row when done.
 | 055 | Add IPC handler unit tests | P2 | M | 053 | TODO |
 | 056 | Remove duplicate unfetched/unclassified query | P3 | S | — | DONE |
 | 057 | Replace `rows as any[]` with typed row interfaces in DB layer | P2 | L | 052 | TODO |
-| 058 | Fix stale closures in useHashtags and useCustomSections hooks | P2 | M | — | TODO |
+| 058 | Fix stale closures in useHashtags and useCustomSections hooks | P2 | M | — | DONE |
 | 059 | Add CSP headers to BrowserWindow | P2 | M | — | DONE |
 | 060 | Add CI workflow with pnpm check | P3 | S | — | TODO |
 | 061 | Standardize DB operation naming conventions | P3 | M | 052 | TODO |

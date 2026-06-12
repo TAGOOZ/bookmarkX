@@ -25,9 +25,11 @@ export function useHashtags({ bookmarkId, onBookmarkChange }: UseHashtagsProps) 
 
   const addHashtag = useCallback(async (name: string) => {
     const newHashtag: Hashtag = { id: `tag-${Date.now()}`, name };
-    const updated = [...hashtags, newHashtag];
-    setHashtags(updated);
-    onBookmarkChange?.({ hashtags: updated });
+    setHashtags(prev => {
+      const updated = [...prev, newHashtag];
+      onBookmarkChange?.({ hashtags: updated });
+      return updated;
+    });
     try {
       const allHashtags = await window.api.getAllHashtags();
       const existing = allHashtags.find((h) => h.name === name);
@@ -35,20 +37,34 @@ export function useHashtags({ bookmarkId, onBookmarkChange }: UseHashtagsProps) 
         await window.api.attachHashtagToBookmark(bookmarkId, existing.id);
       }
     } catch {
-      // silently fail
+      setHashtags(prev => {
+        const reverted = prev.filter(h => h.id !== newHashtag.id);
+        onBookmarkChange?.({ hashtags: reverted });
+        return reverted;
+      });
     }
-  }, [bookmarkId, hashtags, onBookmarkChange]);
+  }, [bookmarkId, onBookmarkChange]);
 
   const removeHashtag = useCallback(async (id: string) => {
-    const updated = hashtags.filter((h) => h.id !== id);
-    setHashtags(updated);
-    onBookmarkChange?.({ hashtags: updated });
+    let removedTag: Hashtag | undefined;
+    setHashtags(prev => {
+      removedTag = prev.find(h => h.id === id);
+      const updated = prev.filter(h => h.id !== id);
+      onBookmarkChange?.({ hashtags: updated });
+      return updated;
+    });
     try {
       await window.api.detachHashtagFromBookmark(bookmarkId, id);
     } catch {
-      // silently fail
+      if (removedTag) {
+        setHashtags(prev => {
+          const reverted = [...prev, removedTag!];
+          onBookmarkChange?.({ hashtags: reverted });
+          return reverted;
+        });
+      }
     }
-  }, [bookmarkId, hashtags, onBookmarkChange]);
+  }, [bookmarkId, onBookmarkChange]);
 
   return { hashtags, addHashtag, removeHashtag };
 }
