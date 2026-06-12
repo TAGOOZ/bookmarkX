@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import type { Client } from '@libsql/client';
 import { createTestDb } from './test-client';
-import { storeArticleContent, getArticleContent } from '../article-content';
+import { storeArticleContent, getArticleContent, sanitizeFtsQuery } from '../article-content';
 
 describe('article_content', () => {
   let db: Client;
@@ -123,6 +123,24 @@ describe('article_content', () => {
 
       const result = await getArticleContent(db, 'bm-1');
       expect(result!.blocks_json).toBeUndefined();
+    });
+  });
+
+  describe('sanitizeFtsQuery', () => {
+    it('wraps query in double quotes', () => {
+      expect(sanitizeFtsQuery('hello')).toBe('"hello"');
+    });
+
+    it('escapes existing double quotes', () => {
+      expect(sanitizeFtsQuery('say "hello"')).toBe('"say ""hello"""');
+    });
+
+    it('handles parentheses without FTS5 error', () => {
+      expect(sanitizeFtsQuery('(AI)')).toBe('"(AI)"');
+    });
+
+    it('handles OR/AND/NOT operators', () => {
+      expect(sanitizeFtsQuery('machine OR learning')).toBe('"machine OR learning"');
     });
   });
 });
