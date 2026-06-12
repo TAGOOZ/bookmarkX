@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import type { Client } from '@libsql/client';
 import { createTestDb } from './test-client';
-import { storeBookmarks, getStoredBookmarks, getUnfetchedBookmarks } from '../bookmarks';
+import { storeBookmarks, getStoredBookmarks, getUnclassifiedBookmarks } from '../bookmarks';
 import type { Bookmark } from '../../fetch/types';
 
 describe('Bookmark CRUD', () => {
@@ -113,16 +113,16 @@ describe('Bookmark CRUD', () => {
     });
   });
 
-  describe('getUnfetchedBookmarks', () => {
+  describe('getUnclassifiedBookmarks', () => {
     it('returns empty array when no bookmarks stored', async () => {
-      const result = await getUnfetchedBookmarks(db);
+      const result = await getUnclassifiedBookmarks(db);
       expect(result).toEqual([]);
     });
 
     it('returns all bookmarks when none have been classified', async () => {
       await storeBookmarks(db, [mockBookmark, mockBookmark2]);
 
-      const result = await getUnfetchedBookmarks(db);
+      const result = await getUnclassifiedBookmarks(db);
       expect(result).toHaveLength(2);
     });
 
@@ -134,7 +134,7 @@ describe('Bookmark CRUD', () => {
         args: ['class-1', mockBookmark.id, 'high', 5],
       });
 
-      const result = await getUnfetchedBookmarks(db);
+      const result = await getUnclassifiedBookmarks(db);
       expect(result).toHaveLength(1);
       expect(result[0].tweet_id).toBe(mockBookmark2.tweet_id);
     });
@@ -152,7 +152,7 @@ describe('Bookmark CRUD', () => {
         args: ['class-2', mockBookmark2.id, 'low', 10],
       });
 
-      const result = await getUnfetchedBookmarks(db);
+      const result = await getUnclassifiedBookmarks(db);
       expect(result).toHaveLength(0);
     });
   });

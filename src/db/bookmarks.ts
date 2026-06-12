@@ -1,6 +1,22 @@
 import type { Client } from '@libsql/client';
 import type { Bookmark } from '../fetch/types';
 
+export function rowToBookmark(row: any): Bookmark {
+  return {
+    id: row.id,
+    tweet_id: row.tweet_id,
+    url: row.url,
+    content_type: row.content_type,
+    title: row.title,
+    title_ar: row.title_ar,
+    title_en: row.title_en,
+    author_name: row.author_name,
+    author_handle: row.author_handle,
+    tweet_text: row.tweet_text,
+    fetched_at: row.fetched_at,
+  };
+}
+
 export async function storeBookmarks(db: Client, bookmarks: Bookmark[]): Promise<void> {
   if (bookmarks.length === 0) return;
 
@@ -27,19 +43,7 @@ export async function storeBookmarks(db: Client, bookmarks: Bookmark[]): Promise
 
 export async function getStoredBookmarks(db: Client): Promise<Bookmark[]> {
   const { rows } = await db.execute('SELECT * FROM bookmarks ORDER BY created_at DESC');
-  return (rows as any[]).map((row) => ({
-    id: row.id,
-    tweet_id: row.tweet_id,
-    url: row.url,
-    content_type: row.content_type,
-    title: row.title,
-    title_ar: row.title_ar,
-    title_en: row.title_en,
-    author_name: row.author_name,
-    author_handle: row.author_handle,
-    tweet_text: row.tweet_text,
-    fetched_at: row.fetched_at,
-  }));
+  return (rows as any[]).map(rowToBookmark);
 }
 
 export async function getBookmarkById(
@@ -67,7 +71,7 @@ export async function getBookmarkById(
   };
 }
 
-export async function getUnfetchedBookmarks(db: Client): Promise<Bookmark[]> {
+export async function getUnclassifiedBookmarks(db: Client): Promise<Bookmark[]> {
   const { rows } = await db.execute(`
     SELECT b.* FROM bookmarks b
     LEFT JOIN classifications c ON b.id = c.bookmark_id
@@ -75,17 +79,5 @@ export async function getUnfetchedBookmarks(db: Client): Promise<Bookmark[]> {
     ORDER BY b.created_at DESC
   `);
 
-  return (rows as any[]).map((row) => ({
-    id: row.id,
-    tweet_id: row.tweet_id,
-    url: row.url,
-    content_type: row.content_type,
-    title: row.title,
-    title_ar: row.title_ar,
-    title_en: row.title_en,
-    author_name: row.author_name,
-    author_handle: row.author_handle,
-    tweet_text: row.tweet_text,
-    fetched_at: row.fetched_at,
-  }));
+  return (rows as any[]).map(rowToBookmark);
 }

@@ -1,36 +1,13 @@
 import type { Client } from '@libsql/client';
 import { classifyBookmark } from '../classify/classifier';
+import { getUnclassifiedBookmarks } from '../db/bookmarks';
 import { storeClassification } from '../db/classifications';
 import { createNotification } from '../db/notifications';
 import { sendHighPriorityNotification } from '../notify/notify';
 
-import type { Bookmark } from '../fetch/types';
 import type { ClassifierOptions } from '../classify/types';
 
 let isRunning = false;
-
-async function getUnclassifiedBookmarks(db: Client): Promise<Bookmark[]> {
-  const { rows } = await db.execute({
-    sql: `SELECT b.* FROM bookmarks b
-          LEFT JOIN classifications c ON c.bookmark_id = b.id
-          WHERE c.id IS NULL
-          ORDER BY b.created_at DESC`,
-    args: [],
-  });
-  return rows.map((row: any) => ({
-    id: row.id,
-    tweet_id: row.tweet_id,
-    url: row.url,
-    content_type: row.content_type,
-    title: row.title,
-    title_ar: row.title_ar,
-    title_en: row.title_en,
-    author_name: row.author_name,
-    author_handle: row.author_handle,
-    tweet_text: row.tweet_text,
-    fetched_at: row.fetched_at,
-  }));
-}
 
 interface ClassifyResult {
   classified: number;
