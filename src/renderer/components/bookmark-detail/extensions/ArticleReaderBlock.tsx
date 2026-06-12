@@ -5,11 +5,14 @@ import { useIntl } from 'react-intl';
 import hljs from 'highlight.js';
 import 'highlight.js/styles/github.css';
 import styles from './ArticleReaderBlock.module.css';
+import DOMPurify from 'dompurify';
 
-function sanitizeTableHtml(html: string): string {
-  return html.replace(/<([^>]+)>/g, (match, tag) => {
-    return '<' + tag.replace(/&/g, '&amp;').replace(/"/g, '&quot;') + '>';
-  }).replace(/&(?!amp;|lt;|gt;|quot;|#39;)/g, '&amp;');
+export function sanitizeTableHtml(html: string): string {
+  return DOMPurify.sanitize(html, {
+    ALLOWED_TAGS: ['table', 'thead', 'tbody', 'tr', 'td', 'th', 'caption', 'colgroup', 'col', 'div', 'span', 'p', 'br', 'strong', 'em', 'code', 'pre', 'a', 'img', 'ul', 'ol', 'li', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'blockquote', 'hr', 'figure', 'figcaption'],
+    ALLOWED_ATTR: ['href', 'src', 'alt', 'title', 'colspan', 'rowspan', 'scope', 'class', 'target', 'rel', 'width', 'height', 'loading'],
+    ALLOW_DATA_ATTR: false,
+  });
 }
 
 interface InlineItem {
