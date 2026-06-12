@@ -3,7 +3,7 @@
  */
 import React from 'react';
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import { screen, cleanup } from '@testing-library/react';
+import { screen, cleanup, fireEvent } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import BookmarkTabs from '../BookmarkTabs';
 import { renderWithIntl } from '../../../__tests__/test-utils';
@@ -193,6 +193,165 @@ describe('BookmarkTabs', () => {
       );
       const tabs = screen.getAllByRole('tab');
       expect(tabs[0].className).not.toContain('dragging');
+    });
+  });
+
+  describe('context menu', () => {
+    it('opens context menu on right-click', () => {
+      renderWithIntl(
+        <BookmarkTabs openBookmarks={bookmarks} activeBookmarkId="1" onTabSelect={vi.fn()} onTabClose={vi.fn()} />
+      );
+      fireEvent.contextMenu(screen.getByText('Second Bookmark'));
+      expect(screen.getByRole('menu')).toBeTruthy();
+      expect(screen.getAllByRole('menuitem').length).toBeGreaterThan(0);
+    });
+
+    it('closes context menu on Escape', async () => {
+      const user = userEvent.setup();
+      renderWithIntl(
+        <BookmarkTabs openBookmarks={bookmarks} activeBookmarkId="1" onTabSelect={vi.fn()} onTabClose={vi.fn()} />
+      );
+      fireEvent.contextMenu(screen.getByText('Second Bookmark'));
+      expect(screen.getByRole('menu')).toBeTruthy();
+      await user.keyboard('{Escape}');
+      expect(screen.queryByRole('menu')).toBeNull();
+    });
+
+    it('calls onTabClose for close menu item', async () => {
+      const onTabClose = vi.fn();
+      const user = userEvent.setup();
+      renderWithIntl(
+        <BookmarkTabs openBookmarks={bookmarks} activeBookmarkId="1" onTabSelect={vi.fn()} onTabClose={onTabClose} />
+      );
+      fireEvent.contextMenu(screen.getByText('Second Bookmark'));
+      await user.click(screen.getByText('Close'));
+      expect(onTabClose).toHaveBeenCalledWith('2');
+    });
+
+    it('calls onTabCloseBatch for close all when prop provided', async () => {
+      const onTabCloseBatch = vi.fn();
+      const user = userEvent.setup();
+      renderWithIntl(
+        <BookmarkTabs
+          openBookmarks={bookmarks}
+          activeBookmarkId="1"
+          onTabSelect={vi.fn()}
+          onTabClose={vi.fn()}
+          onTabCloseBatch={onTabCloseBatch}
+        />
+      );
+      fireEvent.contextMenu(screen.getByText('Second Bookmark'));
+      await user.click(screen.getByText('Close All'));
+      expect(onTabCloseBatch).toHaveBeenCalledWith(['1', '2', '3']);
+    });
+
+    it('calls onTabCloseBatch for close to right when prop provided', async () => {
+      const onTabCloseBatch = vi.fn();
+      const user = userEvent.setup();
+      renderWithIntl(
+        <BookmarkTabs
+          openBookmarks={bookmarks}
+          activeBookmarkId="1"
+          onTabSelect={vi.fn()}
+          onTabClose={vi.fn()}
+          onTabCloseBatch={onTabCloseBatch}
+        />
+      );
+      fireEvent.contextMenu(screen.getByText('Second Bookmark'));
+      await user.click(screen.getByText('Close to Right'));
+      expect(onTabCloseBatch).toHaveBeenCalledWith(['3']);
+    });
+
+    it('calls onTabCloseBatch for close to left when prop provided', async () => {
+      const onTabCloseBatch = vi.fn();
+      const user = userEvent.setup();
+      renderWithIntl(
+        <BookmarkTabs
+          openBookmarks={bookmarks}
+          activeBookmarkId="1"
+          onTabSelect={vi.fn()}
+          onTabClose={vi.fn()}
+          onTabCloseBatch={onTabCloseBatch}
+        />
+      );
+      fireEvent.contextMenu(screen.getByText('Second Bookmark'));
+      await user.click(screen.getByText('Close to Left'));
+      expect(onTabCloseBatch).toHaveBeenCalledWith(['1']);
+    });
+
+    it('calls onTabCloseBatch for close others when prop provided', async () => {
+      const onTabCloseBatch = vi.fn();
+      const user = userEvent.setup();
+      renderWithIntl(
+        <BookmarkTabs
+          openBookmarks={bookmarks}
+          activeBookmarkId="1"
+          onTabSelect={vi.fn()}
+          onTabClose={vi.fn()}
+          onTabCloseBatch={onTabCloseBatch}
+        />
+      );
+      fireEvent.contextMenu(screen.getByText('Second Bookmark'));
+      await user.click(screen.getByText('Close Others'));
+      expect(onTabCloseBatch).toHaveBeenCalledWith(['1', '3']);
+    });
+  });
+
+  describe('keyboard navigation', () => {
+    it('arrow right moves to next tab', async () => {
+      const onTabSelect = vi.fn();
+      const user = userEvent.setup();
+      renderWithIntl(
+        <BookmarkTabs openBookmarks={bookmarks} activeBookmarkId="1" onTabSelect={onTabSelect} onTabClose={vi.fn()} />
+      );
+      await user.tab();
+      await user.keyboard('{ArrowRight}');
+      expect(onTabSelect).toHaveBeenCalledWith('2');
+    });
+
+    it('arrow left moves to previous tab and wraps around', async () => {
+      const onTabSelect = vi.fn();
+      const user = userEvent.setup();
+      renderWithIntl(
+        <BookmarkTabs openBookmarks={bookmarks} activeBookmarkId="1" onTabSelect={onTabSelect} onTabClose={vi.fn()} />
+      );
+      await user.tab();
+      await user.keyboard('{ArrowLeft}');
+      expect(onTabSelect).toHaveBeenCalledWith('3');
+    });
+
+    it('Home moves to first tab', async () => {
+      const onTabSelect = vi.fn();
+      const user = userEvent.setup();
+      renderWithIntl(
+        <BookmarkTabs openBookmarks={bookmarks} activeBookmarkId="3" onTabSelect={onTabSelect} onTabClose={vi.fn()} />
+      );
+      await user.tab();
+      await user.keyboard('{Home}');
+      expect(onTabSelect).toHaveBeenCalledWith('1');
+    });
+
+    it('End moves to last tab', async () => {
+      const onTabSelect = vi.fn();
+      const user = userEvent.setup();
+      renderWithIntl(
+        <BookmarkTabs openBookmarks={bookmarks} activeBookmarkId="1" onTabSelect={onTabSelect} onTabClose={vi.fn()} />
+      );
+      await user.tab();
+      await user.keyboard('{End}');
+      expect(onTabSelect).toHaveBeenLastCalledWith('3');
+    });
+  });
+
+  describe('auto-scroll', () => {
+    it('each tab has data-bookmark-id attribute', () => {
+      renderWithIntl(
+        <BookmarkTabs openBookmarks={bookmarks} activeBookmarkId="1" onTabSelect={vi.fn()} onTabClose={vi.fn()} />
+      );
+      const tabs = screen.getAllByRole('tab');
+      expect(tabs[0].getAttribute('data-bookmark-id')).toBe('1');
+      expect(tabs[1].getAttribute('data-bookmark-id')).toBe('2');
+      expect(tabs[2].getAttribute('data-bookmark-id')).toBe('3');
     });
   });
 });
