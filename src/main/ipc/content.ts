@@ -1,3 +1,7 @@
+// Error handling: All IPC handlers let errors propagate to the renderer.
+// Do NOT add try/catch blocks that return null/[] — the renderer's error
+// handlers need the exception to trigger error UI. Structured returns
+// ({ success: true }, { cancelled: true }) are intentional, not error swallowing.
 import { type IpcMain, dialog, app } from 'electron';
 import type { Client } from '@libsql/client';
 import fs from 'node:fs';
