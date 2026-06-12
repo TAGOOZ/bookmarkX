@@ -66,6 +66,7 @@ const BookmarkTabs: React.FC<BookmarkTabsProps> = ({
   const [closedTabs, setClosedTabs] = useState<Bookmark[]>(loadClosedTabs);
   const [draggingId, setDraggingId] = useState<string | null>(null);
   const menuRef = useRef<HTMLDivElement>(null);
+  const tabBarRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     saveClosedTabs(closedTabs);
@@ -88,6 +89,14 @@ const BookmarkTabs: React.FC<BookmarkTabsProps> = ({
       document.removeEventListener('keydown', handleEscape);
     };
   }, [contextMenu?.visible]);
+
+  useEffect(() => {
+    if (!activeBookmarkId || !tabBarRef.current) return;
+    const activeTab = tabBarRef.current.querySelector(`[data-bookmark-id="${activeBookmarkId}"]`);
+    if (activeTab) {
+      activeTab.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'nearest' });
+    }
+  }, [activeBookmarkId]);
 
   const handleContextMenu = useCallback((e: React.MouseEvent, bookmarkId: string) => {
     e.preventDefault();
@@ -185,17 +194,66 @@ const BookmarkTabs: React.FC<BookmarkTabsProps> = ({
   const handleMenuReopen = useCallback(() => {
     const last = closedTabs[0];
     if (last && onReopenClosedTab) {
-      onReopenClosedTab(last);
+      // Skip if already open
+      const alreadyOpen = openBookmarks.some((b) => b.id === last.id);
+      if (!alreadyOpen) {
+        onReopenClosedTab(last);
+      }
+      // Always remove from closed stack (even if already open — it was closed)
       setClosedTabs((prev) => prev.slice(1));
     }
     setContextMenu(null);
-  }, [closedTabs, onReopenClosedTab]);
+  }, [closedTabs, onReopenClosedTab, openBookmarks]);
 
   const handleMenuOpenInNewColumn = useCallback(() => {
     if (!contextMenu || !onSplitColumn) return;
     onSplitColumn(contextMenu.targetBookmarkId);
     setContextMenu(null);
   }, [contextMenu, onSplitColumn]);
+
+  const handleTabKeyDown = useCallback((e: React.KeyboardEvent) => {
+    const tabs = openBookmarks;
+    if (tabs.length === 0) return;
+
+    const currentIndex = tabs.findIndex((b) => b.id === activeBookmarkId);
+    let nextIndex: number | null = null;
+
+    const isRtl = dir === 'rtl';
+    const prevKey = isRtl ? 'ArrowRight' : 'ArrowLeft';
+    const nextKey = isRtl ? 'ArrowLeft' : 'ArrowRight';
+
+    switch (e.key) {
+      case prevKey:
+        e.preventDefault();
+        nextIndex = currentIndex <= 0 ? tabs.length - 1 : currentIndex - 1;
+        break;
+      case nextKey:
+        e.preventDefault();
+        nextIndex = currentIndex >= tabs.length - 1 ? 0 : currentIndex + 1;
+        break;
+      case 'Home':
+        e.preventDefault();
+        nextIndex = 0;
+        break;
+      case 'End':
+        e.preventDefault();
+        nextIndex = tabs.length - 1;
+        break;
+      case 'Enter':
+      case ' ':
+        e.preventDefault();
+        if (activeBookmarkId) {
+          onTabSelect(activeBookmarkId);
+        }
+        break;
+      default:
+        return;
+    }
+
+    if (nextIndex !== null && tabs[nextIndex]) {
+      onTabSelect(tabs[nextIndex].id);
+    }
+  }, [openBookmarks, activeBookmarkId, onTabSelect, dir]);
 
   const handleDragStart = useCallback((e: React.DragEvent, bookmarkId: string) => {
     if (!columnId) return;
@@ -212,13 +270,21 @@ const BookmarkTabs: React.FC<BookmarkTabsProps> = ({
 
   if (openBookmarks.length === 0 && closedTabs.length === 0) return null;
 
+  const menuStyle: React.CSSProperties = {
+    top: Math.min(contextMenu?.y ?? 0, window.innerHeight - 300),
+    left: Math.min(contextMenu?.x ?? 0, window.innerWidth - 200),
+  };
+
   return (
     <>
       <div
+        ref={tabBarRef}
         className={`${styles.tabBar} ${dir === 'rtl' ? styles.rtl : ''}`}
         role="tablist"
         aria-label="Open bookmarks"
         dir={dir}
+        tabIndex={0}
+        onKeyDown={handleTabKeyDown}
       >
         {openBookmarks.map((bookmark) => {
           const isActive = bookmark.id === activeBookmarkId;
@@ -228,6 +294,7 @@ const BookmarkTabs: React.FC<BookmarkTabsProps> = ({
           return (
             <div
               key={bookmark.id}
+              data-bookmark-id={bookmark.id}
               className={`${styles.tab} ${isActive ? styles.active : ''} ${draggingId === bookmark.id ? styles.dragging : ''}`}
               role="tab"
               aria-selected={isActive}
@@ -269,7 +336,7 @@ const BookmarkTabs: React.FC<BookmarkTabsProps> = ({
         <div
           ref={menuRef}
           className={styles.contextMenu}
-          style={{ top: contextMenu.y, left: contextMenu.x }}
+          style={menuStyle}
           role="menu"
         >
           <button className={styles.menuItem} onClick={handleMenuClose} role="menuitem">
