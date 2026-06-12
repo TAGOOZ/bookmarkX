@@ -40,7 +40,7 @@ honor its STOP conditions, and update your row when done.
 | 030 | Fix context menu to stay within viewport bounds | P3 | S | — | DONE |
 | 031 | Add auto-scroll active tab into view | P3 | S | — | DONE |
 | 032 | Add keyboard navigation to tabs | P2 | M | — | DONE |
-| 033 | Fix stale closed tabs by storing only IDs | P3 | S | — | REJECTED — complexity outweighs benefit for edge case |
+| 033 | Fix stale closed tabs by storing only IDs | P3 | S | — | DONE |
 | 034 | Fix RTL context menu positioning | P3 | S | 030 | DONE |
 | 035 | Add comprehensive test coverage for tabs | P2 | M | 027,028,029,030,031,032 | DONE |
 | 036 | Fix focus management after tab close | P1 | S | — | DONE |
@@ -52,6 +52,29 @@ honor its STOP conditions, and update your row when done.
 | 042 | Fix openBookmarks drift and validate column limit on load | P1 | M | — | DONE |
 | 043 | Collapse drop zones when not dragging | P1 | S | — | DONE |
 | 044 | Batch column resize into single state update | P2 | S | — | DONE |
+| 045 | Batch glossary term inserts in generate-glossary IPC | P2 | S | — | TODO |
+| 046 | Limit chat history sent to Gemini API | P2 | S | — | TODO |
+| 047 | Cache getConfigEnv to avoid repeated disk reads | P2 | S | — | TODO |
+| 048 | Fix silent error swallowing in IPC handlers | P2 | S | — | TODO |
+| 049 | Add input validation to glossary and custom-section IPC handlers | P2 | S | — | TODO |
+| 050 | Remove dead code and unused types | P3 | S | — | TODO |
+| 051 | Standardize IPC error handling pattern | P2 | M | 048 | TODO |
+| 052 | Extract duplicate Bookmark row-to-object mapping | P2 | S | — | TODO |
+| 053 | Split content.ts god handler into domain modules | P2 | M | 051 | TODO |
+| 054 | Extract split-view state into dedicated Zustand store | P2 | M | — | TODO |
+| 055 | Add IPC handler unit tests | P2 | M | 053 | TODO |
+| 056 | Remove duplicate unfetched/unclassified query | P3 | S | — | TODO |
+| 057 | Replace `rows as any[]` with typed row interfaces in DB layer | P2 | L | 052 | TODO |
+| 058 | Fix stale closures in useHashtags and useCustomSections hooks | P2 | M | — | TODO |
+| 059 | Add CSP headers to BrowserWindow | P2 | M | — | TODO |
+| 060 | Add CI workflow with pnpm check | P3 | S | — | TODO |
+| 061 | Standardize DB operation naming conventions | P3 | M | 052 | TODO |
+| 062 | Add missing index on chat_sessions.bookmark_id | P3 | S | — | TODO |
+| 063 | Add index on glossary_terms.term for LIKE queries | P3 | S | — | TODO |
+| 064 | Add bookmarkStore split-view unit tests | P2 | M | 054 | TODO |
+| 065 | Split NavPanel into child components and hooks | P2 | M | — | TODO |
+| 066 | Split Settings.tsx into section components | P2 | M | — | TODO |
+| 067 | Migrate credentials to OS keychain via safeStorage | P2 | L | — | TODO |
 
 Status values: TODO | IN PROGRESS | DONE | BLOCKED (with one-line reason) | REJECTED (with one-line rationale)
 
@@ -75,6 +98,29 @@ Status values: TODO | IN PROGRESS | DONE | BLOCKED (with one-line reason) | REJE
 - 042 is independent (openBookmarks drift fix)
 - 043 is independent (drop zone collapse)
 - 044 is independent (resize batching)
+- 045 is independent (glossary batch inserts)
+- 046 is independent (chat history limit)
+- 047 is independent (config caching)
+- 048 is independent (IPC error swallowing)
+- 049 is independent (input validation)
+- 050 is independent (dead code removal)
+- 051 depends on 048 because standardized error handling builds on fixing the swallowing patterns
+- 052 is independent (row mapper extraction)
+- 053 depends on 051 because the split modules need the standardized error pattern
+- 054 is independent (split-view store extraction)
+- 055 depends on 053 because IPC tests should test the final split modules
+- 056 is independent (duplicate query removal)
+- 057 depends on 052 because typed row interfaces are easier to apply after the mapper is extracted
+- 058 is independent (stale closure fixes)
+- 059 is independent (CSP headers)
+- 060 is independent (CI workflow)
+- 061 depends on 052 because naming standardization touches the same files as row mapper extraction
+- 062 is independent (chat sessions index)
+- 063 is independent (glossary term index)
+- 064 depends on 054 because split-view tests should test the extracted store
+- 065 is independent (NavPanel decomposition)
+- 066 is independent (Settings decomposition)
+- 067 is independent (credential security)
 
 ## Recommended execution order
 
@@ -99,13 +145,25 @@ Status values: TODO | IN PROGRESS | DONE | BLOCKED (with one-line reason) | REJE
 **Phase 7 — Feature plumbing (P2)**:
 026
 
+**Phase 8 — Audit quick wins (P2, new plans)**:
+045 → 046 → 047 → 048 → 049 → 050 → 052 → 056
+
+**Phase 9 — Audit medium effort (P2, new plans)**:
+051 → 058 → 059 → 062 → 063 → 064
+
+**Phase 10 — Audit larger refactors (P2-P3, new plans)**:
+053 → 055 → 054 → 057 → 061 → 060
+
+**Phase 11 — Previously deferred (P2, new plans)**:
+065 → 066 → 067
+
 ## Findings considered and rejected
 
 - **Topic deletion cascade (CORRECTNESS-09)**: Behavior is by-design per schema (ON DELETE SET NULL). The cascade is intentional — bookmarks become uncategorized, not deleted. Reassignment is a UX decision, not a bug.
 - **computeContentHash 32-bit overflow (CORRECTNESS-10)**: Hash is used for change detection, not security. 32-bit collisions are rare enough for this use case. Low confidence it causes real problems.
 - **Stale closure in NavPanel (CORRECTNESS-12)**: Race window is extremely small with React batching. Not worth the complexity of fixing.
 - **getImportStatus currentBatch: 0 (CORRECTNESS-08)**: Hardcoded value is a known limitation, not a bug. The progress bar is cosmetic. Would require schema migration to fix properly.
-- **plaintext credentials on disk (CRED-02)**: Electron safeStorage is the right fix but is a larger effort than this round. Documented as a future improvement.
+- **plaintext credentials on disk (CRED-02)**: Addressed by plan 067 (OS keychain migration).
 - **Twitter auth tokens in renderer (CRED-03)**: The preload bridge already exposes these via IPC. Fixing requires restructuring the login flow — out of scope for this round.
 - **SSRF validation (DATA-01)**: URLs come from the user's own bookmarks, not external input. Low risk in a local desktop app.
 - **FTS5 sanitization incomplete (DATA-02)**: The current sanitizer handles the most common FTS5 special chars. Edge cases are low risk.
@@ -115,23 +173,23 @@ Status values: TODO | IN PROGRESS | DONE | BLOCKED (with one-line reason) | REJE
 - **shamefully-hoist (DX-02)**: Changing this may break many things. Documented tradeoff, not a quick fix.
 - **tsconfig strict mode (DX-04)**: Enabling strict would surface many type errors. Better done incrementally. Deferred.
 - **N+1 in setBookmarkHashtags (PERF-02)**: Addressed by plan 025 (transaction wrapping includes batching).
-- **N+1 in generate-glossary (PERF-03)**: Lower priority — glossary generation is a manual action, not a hot path.
+- **N+1 in generate-glossary (PERF-03)**: Addressed by plan 045 (batch inserts).
 - **N+1 in reorderCustomSections (PERF-04)**: Lower priority — reordering is infrequent.
 - **SELECT * over-fetching (PERF-05)**: Broader refactor, deferred to a future round.
 - **Unbounded getStoredBookmarks (PERF-06)**: Broader refactor, deferred.
-- **Duplicate bookmark construction in batch-import (PERF-07)**: Code quality, not runtime perf. Deferred.
+- **Duplicate bookmark construction in batch-import (PERF-07)**: Addressed by plan 052 (row mapper extraction).
 - **getClassification 3 queries (PERF-08)**: Addressed indirectly by plan 021 (classifyAndNotify no longer calls getClassification per-bookmark).
-- **getConfigEnv duplicated (DEBT-01)**: Low priority cleanup, deferred.
+- **getConfigEnv duplicated (DEBT-01)**: Addressed by plan 047 (config caching).
 - **checkCooldown duplicated (DEBT-02)**: Low priority cleanup, deferred.
 - **Bookmark type duplicated (DEBT-03)**: Larger refactor, deferred.
 - **(window as any).api bypass (DEBT-04)**: Addressed by plan 009 (DONE).
 - **API key resolution with process.env fallback (DEBT-05)**: Low priority cleanup, deferred.
-- **rows as any[] boilerplate (DEBT-06)**: Broader refactor, deferred.
-- **try/catch migration pattern (DEBT-07)**: Works but inelegant. Deferred.
+- **rows as any[] boilerplate (DEBT-06)**: Addressed by plan 057 (typed row interfaces).
+- **try/catch migration pattern (DEBT-07)**: Addressed by plan 048/051 (error handling standardization).
 - **inline style tag in BookmarkDetail (DEBT-09)**: Low priority, deferred.
-- **classifyAndNotify silent empty result (DEBT-10)**: UX improvement, deferred.
-- **NavPanel god component (DEBT-11)**: Larger refactor, deferred.
-- **Settings.tsx monolith (DEBT-12)**: Larger refactor, deferred.
+- **classifyAndNotify silent empty result (DEBT-10)**: Addressed by plan 048 (error swallowing fix).
+- **NavPanel god component (DEBT-11)**: Addressed by plan 065 (split into child components).
+- **Settings.tsx monolith (DEBT-12)**: Addressed by plan 066 (split into section components).
 - **SearchOverlay no memoization (PERF-09)**: Minor, deferred.
 - **Notification state stale (PERF-10)**: Needs IPC event infrastructure, deferred.
 - **User config file permissions (CRED-01)**: Low risk in single-user desktop app. Deferred.
@@ -140,25 +198,25 @@ Status values: TODO | IN PROGRESS | DONE | BLOCKED (with one-line reason) | REJE
 - **dotenv loaded from CWD (EXEC-01)**: Low priority, deferred.
 - **npm audit vulnerabilities (DEP-01)**: Addressed by plan 015 (DONE).
 - **Config validation (CONFIG-01)**: Low risk in single-user app. Deferred.
-- **No CSP (CONFIG-02)**: Defense-in-depth, deferred.
+- **No CSP (CONFIG-02)**: Addressed by plan 059.
 - **Login window contextIsolation (CONFIG-03)**: Electron 42 defaults are safe. Hardening, deferred.
 - **Zero tests for 5 db modules (TESTCOV-01)**: Important but larger effort. Deferred.
-- **Zero tests for IPC handlers (TESTCOV-02)**: Important but requires Electron mocking. Deferred.
-- **Zero tests for Zustand stores (TESTCOV-03)**: Important but lower priority. Deferred.
+- **Zero tests for IPC handlers (TESTCOV-02)**: Addressed by plan 055.
+- **Zero tests for Zustand stores (TESTCOV-03)**: Addressed by plan 064.
 - **Service tests mock entire db (TESTCOV-04)**: Test quality, deferred.
 - **No IPC contract tests (TESTCOV-05)**: Important but lower priority. Deferred.
 - **Batch-import test dead code (TESTCOV-06)**: Code quality, deferred.
 - **No NavPanel/ImportProgress/SearchOverlay tests (TESTCOV-07)**: Important but larger effort. Deferred.
 - **No vitest config (TESTCOV-08)**: Works without it. Deferred.
 - **Duplicate window.api mock (TESTCOV-09)**: DX friction, deferred.
-- **57 silent catch blocks (TESTCOV-10)**: Broader cleanup, deferred.
+- **57 silent catch blocks (TESTCOV-10)**: Partially addressed by plan 048 (IPC error swallowing). Broader cleanup deferred.
 - **No pre-commit hooks (DX-01)**: DX improvement, deferred.
 - **No formatter (DX-02)**: DX improvement, deferred.
 - **97 lint warnings (DX-03)**: Larger effort, deferred.
 - **Stale README structure (DX-04)**: Docs-only, deferred.
 - **No .env.example in README (DX-05)**: Docs-only, deferred.
 - **pnpm check not documented (DX-06)**: Docs-only, deferred.
-- **Schema migration via try/catch (TECHDEBT-01)**: Works but inelegant. Deferred.
+- **Schema migration via try/catch (TECHDEBT-01)**: Partially addressed by plan 048 (error handling). Full migration system deferred.
 - **Module-level isRunning flag (TECHDEBT-02)**: Test ordering concern. Deferred.
 - **configCache mutable state (TECHDEBT-03)**: Minor, deferred.
 - **Semantic search (DIRECTION-01)**: Phase 3 roadmap item, not a bug fix.
@@ -175,4 +233,4 @@ Status values: TODO | IN PROGRESS | DONE | BLOCKED (with one-line reason) | REJE
 - **bookmarkToBlocks round-trip (DIRECTION-12)**: Low risk, deferred.
 - **No Ollama fallback (DIRECTION-13)**: Phase 4 roadmap item.
 - **Print stylesheet missing (DIRECTION-14)**: Feature gap, deferred.
-- **Stale closed tabs in localStorage (TABS-07)**: Complexity outweighs benefit — storing only IDs requires resolving on load, backward compat handling, and the staleness is an edge case. Revisit if users report stale data.
+

@@ -1,7 +1,8 @@
-import React, { useState, useCallback, useRef, useEffect } from 'react';
+import React, { useState, useCallback, useMemo, useRef, useEffect } from 'react';
 import { useIntl } from 'react-intl';
 import type { Bookmark } from '../../types';
 import { useLocale } from '../../App';
+import { useBookmarkStore } from '../../stores/bookmarkStore';
 import styles from './BookmarkTabs.module.css';
 
 interface BookmarkTabsProps {
@@ -26,19 +27,24 @@ interface ContextMenuState {
 const CLOSED_TABS_KEY = 'bookmarkx-closed-tabs';
 const MAX_CLOSED = 20;
 
-function loadClosedTabs(): Bookmark[] {
+function loadClosedTabIds(): string[] {
   try {
     const raw = localStorage.getItem(CLOSED_TABS_KEY);
-    return raw ? JSON.parse(raw) : [];
+    if (!raw) return [];
+    const parsed = JSON.parse(raw);
+    // Backward compat: if it's an array of objects, extract IDs
+    if (Array.isArray(parsed) && parsed.length > 0 && typeof parsed[0] === 'object') {
+      return parsed.map((t: Bookmark) => t.id);
+    }
+    return parsed;
   } catch {
-    // localStorage may be unavailable
     return [];
   }
 }
 
-function saveClosedTabs(tabs: Bookmark[]): void {
+function saveClosedTabIds(ids: string[]): void {
   try {
-    localStorage.setItem(CLOSED_TABS_KEY, JSON.stringify(tabs));
+    localStorage.setItem(CLOSED_TABS_KEY, JSON.stringify(ids));
   } catch {
     // localStorage may be unavailable
   }
@@ -62,8 +68,9 @@ const BookmarkTabs: React.FC<BookmarkTabsProps> = ({
 }) => {
   const { locale } = useLocale();
   const intl = useIntl();
+  const allBookmarks = useBookmarkStore((s) => s.bookmarks);
   const [contextMenu, setContextMenu] = useState<ContextMenuState | null>(null);
-  const [closedTabs, setClosedTabs] = useState<Bookmark[]>(loadClosedTabs);
+  const [closedTabIds, setClosedTabIds] = useState<string[]>(loadClosedTabIds);
   const [draggingId, setDraggingId] = useState<string | null>(null);
   const menuRef = useRef<HTMLDivElement>(null);
   const tabBarRef = useRef<HTMLDivElement>(null);
@@ -71,9 +78,29 @@ const BookmarkTabs: React.FC<BookmarkTabsProps> = ({
   const openBookmarksRef = useRef(openBookmarks);
   openBookmarksRef.current = openBookmarks;
 
+  const closedTabs = useMemo(() => {
+    return closedTabIds.map((id) => {
+      const found = allBookmarks.find((b) => b.id === id);
+      if (found) return found;
+      // Stub for IDs not yet in the store (e.g. before bookmarks load)
+      return {
+        id,
+        title: id,
+        titleAr: null,
+        titleEn: null,
+        url: '',
+        topic: '',
+        priority: 'medium' as const,
+        contentType: 'article' as const,
+        content: '',
+        createdAt: '',
+      };
+    });
+  }, [closedTabIds, allBookmarks]);
+
   useEffect(() => {
-    saveClosedTabs(closedTabs);
-  }, [closedTabs]);
+    saveClosedTabIds(closedTabIds);
+  }, [closedTabIds]);
 
   useEffect(() => {
     if (!contextMenu?.visible) return;
@@ -121,18 +148,15 @@ const BookmarkTabs: React.FC<BookmarkTabsProps> = ({
   }, []);
 
   const closeAndTrack = useCallback((bookmarkId: string) => {
-    const bookmark = openBookmarks.find((b) => b.id === bookmarkId);
-    if (bookmark) {
-      setClosedTabs((prev) => {
-        const next = [bookmark, ...prev.filter((t) => t.id !== bookmarkId)];
-        return next.slice(0, MAX_CLOSED);
-      });
-    }
+    setClosedTabIds((prev) => {
+      const next = [bookmarkId, ...prev.filter((id) => id !== bookmarkId)];
+      return next.slice(0, MAX_CLOSED);
+    });
     onTabClose(bookmarkId);
     requestAnimationFrame(() => {
       focusTabAfterClose(bookmarkId);
     });
-  }, [openBookmarks, onTabClose, focusTabAfterClose]);
+  }, [onTabClose, focusTabAfterClose]);
 
   const handleMenuClose = useCallback(() => {
     if (!contextMenu) return;
@@ -143,10 +167,10 @@ const BookmarkTabs: React.FC<BookmarkTabsProps> = ({
   const handleMenuCloseAll = useCallback(() => {
     if (!contextMenu) return;
     const ids = openBookmarks.map((b) => b.id);
-    setClosedTabs((prev) => {
-      const existing = new Set(prev.map((t) => t.id));
-      const newClosed = openBookmarks.filter((b) => !existing.has(b.id));
-      return [...newClosed, ...prev].slice(0, MAX_CLOSED);
+    setClosedTabIds((prev) => {
+      const existing = new Set(prev);
+      const newIds = ids.filter((id) => !existing.has(id));
+      return [...newIds, ...prev].slice(0, MAX_CLOSED);
     });
     if (onTabCloseBatch) {
       onTabCloseBatch(ids);
@@ -161,11 +185,10 @@ const BookmarkTabs: React.FC<BookmarkTabsProps> = ({
     const idx = openBookmarks.findIndex((b) => b.id === contextMenu.targetBookmarkId);
     if (idx === -1) { setContextMenu(null); return; }
     const ids = openBookmarks.slice(idx + 1).map((b) => b.id);
-    setClosedTabs((prev) => {
-      const toClose = openBookmarks.slice(idx + 1);
-      const existing = new Set(prev.map((t) => t.id));
-      const newClosed = toClose.filter((b) => !existing.has(b.id));
-      return [...newClosed, ...prev].slice(0, MAX_CLOSED);
+    setClosedTabIds((prev) => {
+      const existing = new Set(prev);
+      const newIds = ids.filter((id) => !existing.has(id));
+      return [...newIds, ...prev].slice(0, MAX_CLOSED);
     });
     if (onTabCloseBatch) {
       onTabCloseBatch(ids);
@@ -180,11 +203,10 @@ const BookmarkTabs: React.FC<BookmarkTabsProps> = ({
     const idx = openBookmarks.findIndex((b) => b.id === contextMenu.targetBookmarkId);
     if (idx === -1) { setContextMenu(null); return; }
     const ids = openBookmarks.slice(0, idx).map((b) => b.id);
-    setClosedTabs((prev) => {
-      const toClose = openBookmarks.slice(0, idx);
-      const existing = new Set(prev.map((t) => t.id));
-      const newClosed = toClose.filter((b) => !existing.has(b.id));
-      return [...newClosed, ...prev].slice(0, MAX_CLOSED);
+    setClosedTabIds((prev) => {
+      const existing = new Set(prev);
+      const newIds = ids.filter((id) => !existing.has(id));
+      return [...newIds, ...prev].slice(0, MAX_CLOSED);
     });
     if (onTabCloseBatch) {
       onTabCloseBatch(ids);
@@ -197,11 +219,10 @@ const BookmarkTabs: React.FC<BookmarkTabsProps> = ({
   const handleMenuCloseOthers = useCallback(() => {
     if (!contextMenu) return;
     const ids = openBookmarks.filter((b) => b.id !== contextMenu.targetBookmarkId).map((b) => b.id);
-    setClosedTabs((prev) => {
-      const toClose = openBookmarks.filter((b) => b.id !== contextMenu.targetBookmarkId);
-      const existing = new Set(prev.map((t) => t.id));
-      const newClosed = toClose.filter((b) => !existing.has(b.id));
-      return [...newClosed, ...prev].slice(0, MAX_CLOSED);
+    setClosedTabIds((prev) => {
+      const existing = new Set(prev);
+      const newIds = ids.filter((id) => !existing.has(id));
+      return [...newIds, ...prev].slice(0, MAX_CLOSED);
     });
     if (onTabCloseBatch) {
       onTabCloseBatch(ids);
@@ -220,7 +241,7 @@ const BookmarkTabs: React.FC<BookmarkTabsProps> = ({
         onReopenClosedTab(last);
       }
       // Always remove from closed stack (even if already open — it was closed)
-      setClosedTabs((prev) => prev.slice(1));
+      setClosedTabIds((prev) => prev.slice(1));
     }
     setContextMenu(null);
   }, [closedTabs, onReopenClosedTab, openBookmarks]);
