@@ -15,10 +15,21 @@ function checkCooldown(channel: string): boolean {
   return true;
 }
 
+let cachedConfig: { apiKey?: string; ts: number } | null = null;
+
 async function getConfigEnv(): Promise<{ apiKey?: string }> {
+  const now = Date.now();
+  if (cachedConfig && now - cachedConfig.ts < 5000) {
+    return { apiKey: cachedConfig.apiKey };
+  }
   const userDataDir = app.getPath('userData');
   const config = await readConfig(userDataDir);
+  cachedConfig = { apiKey: config.geminiApiKey || undefined, ts: now };
   return { apiKey: config.geminiApiKey || undefined };
+}
+
+export function invalidateConfigCache() {
+  cachedConfig = null;
 }
 
 export function registerContentIpc(ipcMain: IpcMain, db: Client) {
