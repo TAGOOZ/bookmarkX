@@ -66,6 +66,7 @@ const SplitLayout: React.FC<SplitLayoutProps> = ({
   );
 
   const isMaxColumns = splitState.columns.length >= MAX_COLUMNS;
+  const isSingleColumn = splitState.columns.length === 1;
 
   const handleDragOver = useCallback((e: React.DragEvent, edge: 'left' | 'right') => {
     e.preventDefault();
@@ -108,14 +109,16 @@ const SplitLayout: React.FC<SplitLayoutProps> = ({
         }
       }}
     >
-      <div
-        className={`${styles.dropZone} ${!isDragging ? styles.dropZoneCollapsed : ''} ${activeDropZone === 'left' ? styles.dropZoneActive : ''}`}
-        data-drop-zone="left"
-        aria-disabled={isMaxColumns}
-        onDragOver={(e) => handleDragOver(e, 'left')}
-        onDragLeave={handleDragLeave}
-        onDrop={(e) => handleDrop(e, 'left')}
-      />
+      {!isSingleColumn && (
+        <div
+          className={`${styles.dropZone} ${!isDragging ? styles.dropZoneCollapsed : ''} ${activeDropZone === 'left' ? styles.dropZoneActive : ''}`}
+          data-drop-zone="left"
+          aria-disabled={isMaxColumns}
+          onDragOver={(e) => handleDragOver(e, 'left')}
+          onDragLeave={handleDragLeave}
+          onDrop={(e) => handleDrop(e, 'left')}
+        />
+      )}
       {splitState.columns.length === 0 && (
         <div className={styles.emptyState}>
           <div className={styles.emptyIcon}>📑</div>
@@ -131,9 +134,42 @@ const SplitLayout: React.FC<SplitLayoutProps> = ({
           .map((id) => openBookmarks.find((b) => b.id === id))
           .filter((b): b is Bookmark => b !== undefined);
 
-        const flexBasis = `${(column.width / totalWidth) * 100}%`;
         const isActive = column.id === splitState.activeColumnId;
 
+        if (isSingleColumn) {
+          return (
+            <div
+              key={column.id}
+              className={styles.singleColumn}
+              onPointerEnter={() => onColumnActive(column.id)}
+            >
+              {column.tabs.length > 0 && (
+                <BookmarkTabs
+                  openBookmarks={columnBookmarks}
+                  activeBookmarkId={column.activeTabId}
+                  onTabSelect={(id) => handleBookmarkSelect(column.id, id)}
+                  onTabClose={(id) => handleTabClose(column.id, id)}
+                  onTabCloseBatch={onTabCloseBatch ? (ids) => onTabCloseBatch(column.id, ids) : undefined}
+                  onReopenClosedTab={onReopenClosedTab}
+                  onSplitColumn={(id) => onSplitColumn(column.id, id)}
+                  columnId={column.id}
+                  dir={dir}
+                />
+              )}
+              <BookmarkDetail
+                bookmark={bookmark}
+                onBookmarkChange={
+                  bookmark
+                    ? (updated: Partial<BookmarkDetailData>) =>
+                        onBookmarkChange(bookmark.id, updated)
+                    : undefined
+                }
+              />
+            </div>
+          );
+        }
+
+        const flexBasis = `${(column.width / totalWidth) * 100}%`;
         return (
           <React.Fragment key={column.id}>
             {index > 0 && (
@@ -190,14 +226,16 @@ const SplitLayout: React.FC<SplitLayoutProps> = ({
           </React.Fragment>
         );
       })}
-      <div
-        className={`${styles.dropZone} ${!isDragging ? styles.dropZoneCollapsed : ''} ${activeDropZone === 'right' ? styles.dropZoneActive : ''}`}
-        data-drop-zone="right"
-        aria-disabled={isMaxColumns}
-        onDragOver={(e) => handleDragOver(e, 'right')}
-        onDragLeave={handleDragLeave}
-        onDrop={(e) => handleDrop(e, 'right')}
-      />
+      {!isSingleColumn && (
+        <div
+          className={`${styles.dropZone} ${!isDragging ? styles.dropZoneCollapsed : ''} ${activeDropZone === 'right' ? styles.dropZoneActive : ''}`}
+          data-drop-zone="right"
+          aria-disabled={isMaxColumns}
+          onDragOver={(e) => handleDragOver(e, 'right')}
+          onDragLeave={handleDragLeave}
+          onDrop={(e) => handleDrop(e, 'right')}
+        />
+      )}
     </div>
   );
 };

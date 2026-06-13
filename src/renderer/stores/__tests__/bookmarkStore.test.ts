@@ -60,18 +60,20 @@ describe('bookmarkStore', () => {
       expect(openBookmarks).toHaveLength(1);
     });
 
-    it('creates new column for bookmark when empty column exists', () => {
+    it('adds bookmark as tab in active column when empty column exists', () => {
       useBookmarkStore.getState().handleBookmarkSelect(bookmark1);
       const { splitState } = useSplitStore.getState();
-      expect(splitState.columns[1].tabs).toEqual(['b1']);
-      expect(splitState.columns[1].activeTabId).toBe('b1');
+      expect(splitState.columns[0].tabs).toEqual(['b1']);
+      expect(splitState.columns[0].activeTabId).toBe('b1');
     });
 
-    it('creates separate columns for multiple bookmarks', () => {
+    it('adds multiple bookmarks as tabs in active column', () => {
       useBookmarkStore.getState().handleBookmarkSelect(bookmark1);
       useBookmarkStore.getState().handleBookmarkSelect(bookmark2);
       const { splitState } = useSplitStore.getState();
-      expect(splitState.columns).toHaveLength(3);
+      expect(splitState.columns).toHaveLength(1);
+      expect(splitState.columns[0].tabs).toEqual(['b1', 'b2']);
+      expect(splitState.columns[0].activeTabId).toBe('b2');
     });
 
     it('no-ops when selecting the already active tab', () => {

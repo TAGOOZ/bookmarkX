@@ -84,6 +84,7 @@ honor its STOP conditions, and update your row when done.
 | 074 | Defer cron scheduler startup to after window creation | P2 | S | — | DONE |
 | 075 | Defer initial bookmarks fetch to after first paint | P2 | M | — | DONE |
 | 076 | Skip electron-squirrel-startup import on non-Windows | P3 | S | — | DONE |
+| 077 | Fix tabs to match Obsidian behavior (add tab to active column, keep tab on split, hide chrome for 1 column) | P1 | M | — | DONE |
 
 Status values: TODO | IN PROGRESS | DONE | BLOCKED (with one-line reason) | REJECTED (with one-line rationale)
 
@@ -139,6 +140,7 @@ Status values: TODO | IN PROGRESS | DONE | BLOCKED (with one-line reason) | REJE
 - 074 is independent (cron deferral)
 - 075 is independent (bookmarks fetch deferral)
 - 076 is independent (squirrel platform guard)
+- 077 is independent (Obsidian tab behavior fix)
 
 ## Recommended execution order
 
@@ -177,6 +179,9 @@ Status values: TODO | IN PROGRESS | DONE | BLOCKED (with one-line reason) | REJE
 
 **Phase 12 — Startup optimization (P1-P3, new plans)**:
 068 → 069 → 070 → 071 → 074 → 073 → 075 → 072 → 076
+
+**Phase 13 — Tab behavior Obsidian alignment (P1)**:
+077
 
 ## Findings considered and rejected
 

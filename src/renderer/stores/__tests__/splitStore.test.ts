@@ -157,6 +157,27 @@ describe('splitStore', () => {
       useSplitStore.getState().handleSplitColumn('nonexistent', 'b1');
       expect(useSplitStore.getState().splitState.columns).toHaveLength(1);
     });
+
+    it('does not remove bookmark from source column when splitting', () => {
+      useSplitStore.getState().setSplitState({
+        columns: [{ id: 'col-1', tabs: ['b1', 'b2'], activeTabId: 'b1', width: 1 }],
+        activeColumnId: 'col-1',
+      });
+      useSplitStore.getState().handleSplitColumn('col-1', 'b2');
+      const { splitState } = useSplitStore.getState();
+      expect(splitState.columns[0].tabs).toContain('b2');
+      expect(splitState.columns[1].tabs).toContain('b2');
+    });
+
+    it('split preserves source column activeTabId', () => {
+      useSplitStore.getState().setSplitState({
+        columns: [{ id: 'col-1', tabs: ['b1'], activeTabId: 'b1', width: 1 }],
+        activeColumnId: 'col-1',
+      });
+      useSplitStore.getState().handleSplitColumn('col-1', 'b1');
+      const { splitState } = useSplitStore.getState();
+      expect(splitState.columns[0].activeTabId).toBe('b1');
+    });
   });
 
   describe('handleMergeColumn', () => {

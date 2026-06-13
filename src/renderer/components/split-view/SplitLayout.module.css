@@ -67,3 +67,12 @@
   font-size: 48px;
   margin-bottom: var(--space-2);
 }
+
+.singleColumn {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  overflow: hidden;
+  min-width: 0;
+  width: 100%;
+}

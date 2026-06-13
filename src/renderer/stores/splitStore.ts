@@ -95,11 +95,7 @@ export const useSplitStore = create<SplitStore>((set) => ({
       const sourceCol = state.splitState.columns.find((c) => c.id === columnId);
       if (!sourceCol) return state;
 
-      // Remove bookmark from source column tabs
-      const newSourceTabs = sourceCol.tabs.filter((id) => id !== bookmarkId);
-      const newSourceActive = sourceCol.activeTabId === bookmarkId
-        ? (newSourceTabs[0] ?? null)
-        : sourceCol.activeTabId;
+      // Keep bookmark in source column (Obsidian behavior: split duplicates, doesn't move)
 
       const newCol: SplitColumn = {
         id: `col-${Date.now()}`,
@@ -110,7 +106,7 @@ export const useSplitStore = create<SplitStore>((set) => ({
 
       const newCols = state.splitState.columns.map((c) =>
         c.id === columnId
-          ? { ...c, tabs: newSourceTabs, activeTabId: newSourceActive }
+          ? { ...c } // source stays unchanged
           : c,
       );
 

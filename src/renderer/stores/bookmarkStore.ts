@@ -48,7 +48,6 @@ export const useBookmarkStore = create<BookmarkStore>((set, get) => ({
 
   handleBookmarkSelect: (bookmark) => {
     const { splitState, openBookmarks } = useSplitStore.getState();
-    const MAX_COLUMNS = 3;
 
     // Already open in the active column — no-op
     const activeCol = splitState.columns.find((c) => c.id === splitState.activeColumnId);
@@ -76,25 +75,13 @@ export const useBookmarkStore = create<BookmarkStore>((set, get) => ({
         width: 1,
       };
       newSplit = { columns: [newCol], activeColumnId: newCol.id };
-    } else if (splitState.columns.length < MAX_COLUMNS) {
-      // Create new column for this bookmark
-      const newCol = {
-        id: `col-${Date.now()}`,
-        tabs: [bookmark.id],
-        activeTabId: bookmark.id,
-        width: 1,
-      };
-      newSplit = {
-        columns: [...splitState.columns, newCol],
-        activeColumnId: newCol.id,
-      };
     } else {
-      // Max columns reached — replace active column's bookmark
+      // Add bookmark as a new tab in the active column (Obsidian behavior)
       newSplit = {
         ...splitState,
         columns: splitState.columns.map((c) =>
           c.id === activeCol.id
-            ? { ...c, tabs: [bookmark.id], activeTabId: bookmark.id }
+            ? { ...c, tabs: [...c.tabs, bookmark.id], activeTabId: bookmark.id }
             : c,
         ),
         activeColumnId: activeCol.id,

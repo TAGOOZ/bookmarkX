@@ -138,9 +138,12 @@ describe('SplitLayout', () => {
   });
 
   describe('drag-to-edge drop zones', () => {
-    it('renders left and right drop zones', () => {
+    it('renders left and right drop zones with 2+ columns', () => {
       const state: SplitState = {
-        columns: [{ id: 'col-1', tabs: ['1'], activeTabId: '1', width: 1 }],
+        columns: [
+          { id: 'col-1', tabs: ['1'], activeTabId: '1', width: 1 },
+          { id: 'col-2', tabs: ['2'], activeTabId: '2', width: 1 },
+        ],
         activeColumnId: 'col-1',
       };
       const { container } = renderWithIntl(
@@ -150,10 +153,25 @@ describe('SplitLayout', () => {
       expect(container.querySelector('[data-drop-zone="right"]')).toBeTruthy();
     });
 
+    it('does not render drop zones with single column', () => {
+      const state: SplitState = {
+        columns: [{ id: 'col-1', tabs: ['1'], activeTabId: '1', width: 1 }],
+        activeColumnId: 'col-1',
+      };
+      const { container } = renderWithIntl(
+        <SplitLayout {...defaultProps} splitState={state} />
+      );
+      expect(container.querySelector('[data-drop-zone="left"]')).toBeNull();
+      expect(container.querySelector('[data-drop-zone="right"]')).toBeNull();
+    });
+
     it('calls onSplitColumn with position when drop occurs on left edge', () => {
       const onSplitColumn = vi.fn();
       const state: SplitState = {
-        columns: [{ id: 'col-1', tabs: ['1'], activeTabId: '1', width: 1 }],
+        columns: [
+          { id: 'col-1', tabs: ['1'], activeTabId: '1', width: 1 },
+          { id: 'col-2', tabs: ['2'], activeTabId: '2', width: 1 },
+        ],
         activeColumnId: 'col-1',
       };
       const { container } = renderWithIntl(
@@ -182,7 +200,10 @@ describe('SplitLayout', () => {
 
     it('shows active state when dragging over drop zone', () => {
       const state: SplitState = {
-        columns: [{ id: 'col-1', tabs: ['1'], activeTabId: '1', width: 1 }],
+        columns: [
+          { id: 'col-1', tabs: ['1'], activeTabId: '1', width: 1 },
+          { id: 'col-2', tabs: ['2'], activeTabId: '2', width: 1 },
+        ],
         activeColumnId: 'col-1',
       };
       const { container } = renderWithIntl(
