@@ -62,7 +62,7 @@ honor its STOP conditions, and update your row when done.
 | 052 | Extract duplicate Bookmark row-to-object mapping | P2 | S | — | DONE |
 | 053 | Split content.ts god handler into domain modules | P2 | M | 051 | DONE |
 | 054 | Extract split-view state into dedicated Zustand store | P2 | M | — | DONE |
-| 055 | Add IPC handler unit tests | P2 | M | 053 | TODO |
+| 055 | Add IPC handler unit tests | P2 | M | 053 | DONE |
 | 056 | Remove duplicate unfetched/unclassified query | P3 | S | — | DONE |
 | 057 | Replace `rows as any[]` with typed row interfaces in DB layer | P2 | L | 052 | DONE |
 | 058 | Fix stale closures in useHashtags and useCustomSections hooks | P2 | M | — | DONE |
