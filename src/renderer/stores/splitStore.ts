@@ -203,6 +203,19 @@ export const useSplitStore = create<SplitStore>((set) => ({
         return { splitState: newSplit, openBookmarks: newOpen };
       }
 
+      // If column has no tabs left and other columns exist, remove it
+      if (newTabs.length === 0 && state.splitState.columns.length > 1) {
+        const remaining = state.splitState.columns.filter((c) => c.id !== columnId);
+        const newActive =
+          state.splitState.activeColumnId === columnId
+            ? remaining[remaining.length - 1].id
+            : state.splitState.activeColumnId;
+        const newSplit: SplitState = { columns: remaining, activeColumnId: newActive };
+        const newOpen = computeOpenBookmarks(remaining, state.openBookmarks);
+        saveSplitState(newSplit);
+        return { splitState: newSplit, openBookmarks: newOpen };
+      }
+
       const newColumns = state.splitState.columns.map((c) =>
         c.id === columnId
           ? { ...c, tabs: newTabs, activeTabId: newActiveTabId }
@@ -234,6 +247,19 @@ export const useSplitStore = create<SplitStore>((set) => ({
 
       if (col.activeTabId && idsToRemove.has(col.activeTabId)) {
         newActiveTabId = newTabs[0] ?? null;
+      }
+
+      // If column has no tabs left and other columns exist, remove it
+      if (newTabs.length === 0 && state.splitState.columns.length > 1) {
+        const remaining = state.splitState.columns.filter((c) => c.id !== columnId);
+        const newActive =
+          state.splitState.activeColumnId === columnId
+            ? remaining[remaining.length - 1].id
+            : state.splitState.activeColumnId;
+        const newSplit: SplitState = { columns: remaining, activeColumnId: newActive };
+        const newOpen = computeOpenBookmarks(remaining, state.openBookmarks);
+        saveSplitState(newSplit);
+        return { splitState: newSplit, openBookmarks: newOpen };
       }
 
       const newColumns = state.splitState.columns.map((c) =>

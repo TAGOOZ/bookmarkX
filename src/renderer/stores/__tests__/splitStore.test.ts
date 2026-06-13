@@ -250,7 +250,7 @@ describe('splitStore', () => {
       expect(openBookmarks).toHaveLength(0);
     });
 
-    it('clears activeTabId when closing tab in multi-column', () => {
+    it('removes empty column when closing last tab in multi-column', () => {
       useSplitStore.getState().setSplitState({
         columns: [
           { id: 'col-1', tabs: ['b1'], activeTabId: 'b1', width: 1 },
@@ -259,8 +259,9 @@ describe('splitStore', () => {
         activeColumnId: 'col-1',
       });
       useSplitStore.getState().handleTabCloseTab('col-1', 'b1');
-      expect(useSplitStore.getState().splitState.columns[0].activeTabId).toBeNull();
-      expect(useSplitStore.getState().splitState.columns).toHaveLength(2);
+      const { splitState } = useSplitStore.getState();
+      expect(splitState.columns).toHaveLength(1);
+      expect(splitState.columns[0].id).toBe('col-2');
     });
 
     it('updates activeColumnId if active column tab is closed', () => {
