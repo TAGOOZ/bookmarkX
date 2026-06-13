@@ -76,6 +76,18 @@ app.on('activate', () => {
 
 // Initialize database after app is ready, then register IPC handlers
 app.whenReady().then(async () => {
+  // Inject CSP headers
+  session.defaultSession.webRequest.onHeadersReceived((details, callback) => {
+    callback({
+      responseHeaders: {
+        ...details.responseHeaders,
+        'Content-Security-Policy': [
+          "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self' https://generativelanguage.googleapis.com; font-src 'self' https://fonts.gstatic.com;",
+        ],
+      },
+    });
+  });
+
   const userDataDir = app.getPath('userData');
 
   // Delete .env on first launch after update
@@ -98,16 +110,5 @@ app.whenReady().then(async () => {
   const cronJob = startCronScheduler(db, '0 */6 * * *');
   app.on('before-quit', () => {
     cronJob.stop();
-  });
-});
-
-session.defaultSession.webRequest.onHeadersReceived((details, callback) => {
-  callback({
-    responseHeaders: {
-      ...details.responseHeaders,
-      'Content-Security-Policy': [
-        "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self' https://generativelanguage.googleapis.com; font-src 'self' https://fonts.gstatic.com;",
-      ],
-    },
   });
 });

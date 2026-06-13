@@ -16,7 +16,12 @@ import { registerHashtagIpc } from './hashtags';
 import { registerNotificationIpc } from './notifications';
 import { type IpcMain } from 'electron';
 
+let registered = false;
+
 export function registerAllIpc(ipcMain: IpcMain, db: Client) {
+  if (registered) return;
+  registered = true;
+
   registerBookmarkIpc(ipcMain, db);
   registerSettingsIpc(ipcMain);
   registerTwitterIpc(ipcMain);
