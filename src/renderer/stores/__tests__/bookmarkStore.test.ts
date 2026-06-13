@@ -37,7 +37,7 @@ beforeEach(() => {
   });
   useSplitStore.setState({
     splitState: {
-      columns: [{ id: 'col-1', bookmarkId: null, width: 1 }],
+      columns: [{ id: 'col-1', bookmarkId: null, tabs: [], activeTabId: null, width: 1 }],
       activeColumnId: 'col-1',
     },
     openBookmarks: [],
@@ -64,35 +64,38 @@ describe('bookmarkStore', () => {
       useBookmarkStore.getState().handleBookmarkSelect(bookmark1);
       const { splitState } = useSplitStore.getState();
       expect(splitState.columns[0].bookmarkId).toBe('b1');
+      expect(splitState.columns[0].tabs).toEqual(['b1']);
+      expect(splitState.columns[0].activeTabId).toBe('b1');
     });
 
-    it('creates new column when active column is occupied and columns < 3', () => {
+    it('adds bookmark to active column tabs when active column is occupied', () => {
       useBookmarkStore.getState().handleBookmarkSelect(bookmark1);
       useBookmarkStore.getState().handleBookmarkSelect(bookmark2);
       const { splitState } = useSplitStore.getState();
-      expect(splitState.columns).toHaveLength(2);
-      expect(splitState.columns[1].bookmarkId).toBe('b2');
+      expect(splitState.columns).toHaveLength(1);
+      expect(splitState.columns[0].tabs).toEqual(['b1', 'b2']);
+      expect(splitState.columns[0].activeTabId).toBe('b2');
+      expect(splitState.columns[0].bookmarkId).toBe('b2');
     });
 
-    it('replaces active column when max columns reached', () => {
-      const bm3: Bookmark = { ...bookmark1, id: 'b3', title: 'Third' };
-      const bm4: Bookmark = { ...bookmark1, id: 'b4', title: 'Fourth' };
+    it('no-ops when selecting the already active tab', () => {
       useBookmarkStore.getState().handleBookmarkSelect(bookmark1);
-      useBookmarkStore.getState().handleBookmarkSelect(bookmark2);
-      useBookmarkStore.getState().handleBookmarkSelect(bm3);
-      useBookmarkStore.getState().handleBookmarkSelect(bm4);
-      const { splitState } = useSplitStore.getState();
-      expect(splitState.columns).toHaveLength(3);
-      expect(splitState.columns.find((c) => c.bookmarkId === 'b4')).toBeTruthy();
+      const { splitState: before } = useSplitStore.getState();
+      useBookmarkStore.getState().handleBookmarkSelect(bookmark1);
+      const { splitState: after } = useSplitStore.getState();
+      expect(after.columns[0].tabs).toEqual(before.columns[0].tabs);
+      expect(after.columns[0].activeTabId).toBe('b1');
     });
   });
 
   describe('handleTabCloseTab', () => {
-    it('clears column bookmarkId', () => {
+    it('clears column bookmarkId and tabs', () => {
       useBookmarkStore.getState().handleBookmarkSelect(bookmark1);
       useSplitStore.getState().handleTabCloseTab('col-1', 'b1');
       const { splitState } = useSplitStore.getState();
       expect(splitState.columns[0].bookmarkId).toBeNull();
+      expect(splitState.columns[0].tabs).toEqual([]);
+      expect(splitState.columns[0].activeTabId).toBeNull();
     });
 
     it('removes bookmark from openBookmarks', () => {
@@ -109,11 +112,18 @@ describe('bookmarkStore', () => {
       useSplitStore.getState().handleMergeColumn('col-1');
       const { splitState } = useSplitStore.getState();
       expect(splitState.columns[0].bookmarkId).toBeNull();
+      expect(splitState.columns[0].tabs).toEqual([]);
+      expect(splitState.columns[0].activeTabId).toBeNull();
     });
 
     it('removes column when multiple columns exist', () => {
-      useBookmarkStore.getState().handleBookmarkSelect(bookmark1);
-      useBookmarkStore.getState().handleBookmarkSelect(bookmark2);
+      useSplitStore.getState().setSplitState({
+        columns: [
+          { id: 'col-1', bookmarkId: 'b1', tabs: ['b1'], activeTabId: 'b1', width: 1 },
+          { id: 'col-2', bookmarkId: 'b2', tabs: ['b2'], activeTabId: 'b2', width: 1 },
+        ],
+        activeColumnId: 'col-1',
+      });
       const { splitState } = useSplitStore.getState();
       expect(splitState.columns).toHaveLength(2);
       const secondColId = splitState.columns[1].id;

@@ -45,7 +45,7 @@ const bookmark3: Bookmark = {
 function resetStore() {
   useSplitStore.setState({
     splitState: {
-      columns: [{ id: 'col-1', bookmarkId: null, width: 1 }],
+      columns: [{ id: 'col-1', bookmarkId: null, tabs: [], activeTabId: null, width: 1 }],
       activeColumnId: 'col-1',
     },
     openBookmarks: [],
@@ -60,8 +60,8 @@ describe('splitStore', () => {
   describe('computeOpenBookmarks', () => {
     it('returns bookmarks referenced by columns', () => {
       const cols: SplitColumn[] = [
-        { id: 'c1', bookmarkId: 'b1', width: 1 },
-        { id: 'c2', bookmarkId: 'b2', width: 1 },
+        { id: 'c1', bookmarkId: 'b1', tabs: ['b1'], activeTabId: 'b1', width: 1 },
+        { id: 'c2', bookmarkId: 'b2', tabs: ['b2'], activeTabId: 'b2', width: 1 },
       ];
       const result = computeOpenBookmarks(cols, [bookmark1, bookmark2, bookmark3]);
       expect(result).toHaveLength(2);
@@ -69,7 +69,7 @@ describe('splitStore', () => {
     });
 
     it('ignores bookmarks not referenced by any column', () => {
-      const cols: SplitColumn[] = [{ id: 'c1', bookmarkId: 'b1', width: 1 }];
+      const cols: SplitColumn[] = [{ id: 'c1', bookmarkId: 'b1', tabs: ['b1'], activeTabId: 'b1', width: 1 }];
       const result = computeOpenBookmarks(cols, [bookmark1, bookmark2]);
       expect(result).toHaveLength(1);
       expect(result[0].id).toBe('b1');
@@ -77,8 +77,8 @@ describe('splitStore', () => {
 
     it('filters out columns with null bookmarkId', () => {
       const cols: SplitColumn[] = [
-        { id: 'c1', bookmarkId: null, width: 1 },
-        { id: 'c2', bookmarkId: 'b1', width: 1 },
+        { id: 'c1', bookmarkId: null, tabs: [], activeTabId: null, width: 1 },
+        { id: 'c2', bookmarkId: 'b1', tabs: ['b1'], activeTabId: 'b1', width: 1 },
       ];
       const result = computeOpenBookmarks(cols, [bookmark1]);
       expect(result).toHaveLength(1);
@@ -88,7 +88,7 @@ describe('splitStore', () => {
   describe('setSplitState', () => {
     it('sets state with an object', () => {
       const newState = {
-        columns: [{ id: 'c1', bookmarkId: 'b1', width: 1 }],
+        columns: [{ id: 'c1', bookmarkId: 'b1', tabs: ['b1'], activeTabId: 'b1', width: 1 }],
         activeColumnId: 'c1',
       };
       useSplitStore.getState().setSplitState(newState);
@@ -120,7 +120,7 @@ describe('splitStore', () => {
   describe('handleSplitColumn', () => {
     it('inserts new column after source column', () => {
       useSplitStore.getState().setSplitState({
-        columns: [{ id: 'col-1', bookmarkId: 'b1', width: 1 }],
+        columns: [{ id: 'col-1', bookmarkId: 'b1', tabs: ['b1'], activeTabId: 'b1', width: 1 }],
         activeColumnId: 'col-1',
       });
       useSplitStore.getState().handleSplitColumn('col-1', 'b2');
@@ -132,7 +132,7 @@ describe('splitStore', () => {
 
     it('sets activeColumnId to the new column', () => {
       useSplitStore.getState().setSplitState({
-        columns: [{ id: 'col-1', bookmarkId: 'b1', width: 1 }],
+        columns: [{ id: 'col-1', bookmarkId: 'b1', tabs: ['b1'], activeTabId: 'b1', width: 1 }],
         activeColumnId: 'col-1',
       });
       useSplitStore.getState().handleSplitColumn('col-1', 'b2');
@@ -143,9 +143,9 @@ describe('splitStore', () => {
     it('does not split when at MAX_COLUMNS (3)', () => {
       useSplitStore.getState().setSplitState({
         columns: [
-          { id: 'col-1', bookmarkId: 'b1', width: 1 },
-          { id: 'col-2', bookmarkId: 'b2', width: 1 },
-          { id: 'col-3', bookmarkId: 'b3', width: 1 },
+          { id: 'col-1', bookmarkId: 'b1', tabs: ['b1'], activeTabId: 'b1', width: 1 },
+          { id: 'col-2', bookmarkId: 'b2', tabs: ['b2'], activeTabId: 'b2', width: 1 },
+          { id: 'col-3', bookmarkId: 'b3', tabs: ['b3'], activeTabId: 'b3', width: 1 },
         ],
         activeColumnId: 'col-1',
       });
@@ -163,8 +163,8 @@ describe('splitStore', () => {
     it('removes column when multiple exist', () => {
       useSplitStore.getState().setSplitState({
         columns: [
-          { id: 'col-1', bookmarkId: 'b1', width: 1 },
-          { id: 'col-2', bookmarkId: 'b2', width: 1 },
+          { id: 'col-1', bookmarkId: 'b1', tabs: ['b1'], activeTabId: 'b1', width: 1 },
+          { id: 'col-2', bookmarkId: 'b2', tabs: ['b2'], activeTabId: 'b2', width: 1 },
         ],
         activeColumnId: 'col-1',
       });
@@ -178,7 +178,7 @@ describe('splitStore', () => {
 
     it('clears bookmarkId when closing the only column', () => {
       useSplitStore.getState().setSplitState({
-        columns: [{ id: 'col-1', bookmarkId: 'b1', width: 1 }],
+        columns: [{ id: 'col-1', bookmarkId: 'b1', tabs: ['b1'], activeTabId: 'b1', width: 1 }],
         activeColumnId: 'col-1',
       });
       useSplitStore.getState().setOpenBookmarks([bookmark1]);
@@ -192,8 +192,8 @@ describe('splitStore', () => {
     it('updates activeColumnId when active column is closed', () => {
       useSplitStore.getState().setSplitState({
         columns: [
-          { id: 'col-1', bookmarkId: 'b1', width: 1 },
-          { id: 'col-2', bookmarkId: 'b2', width: 1 },
+          { id: 'col-1', bookmarkId: 'b1', tabs: ['b1'], activeTabId: 'b1', width: 1 },
+          { id: 'col-2', bookmarkId: 'b2', tabs: ['b2'], activeTabId: 'b2', width: 1 },
         ],
         activeColumnId: 'col-1',
       });
@@ -205,9 +205,9 @@ describe('splitStore', () => {
     it('collapses to single column when all remaining are empty', () => {
       useSplitStore.getState().setSplitState({
         columns: [
-          { id: 'col-1', bookmarkId: 'b1', width: 1 },
-          { id: 'col-2', bookmarkId: null, width: 1 },
-          { id: 'col-3', bookmarkId: null, width: 1 },
+          { id: 'col-1', bookmarkId: 'b1', tabs: ['b1'], activeTabId: 'b1', width: 1 },
+          { id: 'col-2', bookmarkId: null, tabs: [], activeTabId: null, width: 1 },
+          { id: 'col-3', bookmarkId: null, tabs: [], activeTabId: null, width: 1 },
         ],
         activeColumnId: 'col-1',
       });
@@ -220,7 +220,7 @@ describe('splitStore', () => {
   describe('handleTabCloseTab', () => {
     it('clears bookmarkId when closing tab in single column', () => {
       useSplitStore.getState().setSplitState({
-        columns: [{ id: 'col-1', bookmarkId: 'b1', width: 1 }],
+        columns: [{ id: 'col-1', bookmarkId: 'b1', tabs: ['b1'], activeTabId: 'b1', width: 1 }],
         activeColumnId: 'col-1',
       });
       useSplitStore.getState().setOpenBookmarks([bookmark1]);
@@ -233,8 +233,8 @@ describe('splitStore', () => {
     it('clears bookmarkId when closing tab in multi-column', () => {
       useSplitStore.getState().setSplitState({
         columns: [
-          { id: 'col-1', bookmarkId: 'b1', width: 1 },
-          { id: 'col-2', bookmarkId: 'b2', width: 1 },
+          { id: 'col-1', bookmarkId: 'b1', tabs: ['b1'], activeTabId: 'b1', width: 1 },
+          { id: 'col-2', bookmarkId: 'b2', tabs: ['b2'], activeTabId: 'b2', width: 1 },
         ],
         activeColumnId: 'col-1',
       });
@@ -246,8 +246,8 @@ describe('splitStore', () => {
     it('updates activeColumnId if active column tab is closed', () => {
       useSplitStore.getState().setSplitState({
         columns: [
-          { id: 'col-1', bookmarkId: 'b1', width: 1 },
-          { id: 'col-2', bookmarkId: 'b2', width: 1 },
+          { id: 'col-1', bookmarkId: 'b1', tabs: ['b1'], activeTabId: 'b1', width: 1 },
+          { id: 'col-2', bookmarkId: 'b2', tabs: ['b2'], activeTabId: 'b2', width: 1 },
         ],
         activeColumnId: 'col-1',
       });
@@ -265,7 +265,7 @@ describe('splitStore', () => {
   describe('handleTabCloseBatch', () => {
     it('clears column bookmarkId when batch includes it', () => {
       useSplitStore.getState().setSplitState({
-        columns: [{ id: 'col-1', bookmarkId: 'b1', width: 1 }],
+        columns: [{ id: 'col-1', bookmarkId: 'b1', tabs: ['b1'], activeTabId: 'b1', width: 1 }],
         activeColumnId: 'col-1',
       });
       useSplitStore.getState().setOpenBookmarks([bookmark1]);
@@ -277,7 +277,7 @@ describe('splitStore', () => {
 
     it('does not clear column when batch does not include its bookmark', () => {
       useSplitStore.getState().setSplitState({
-        columns: [{ id: 'col-1', bookmarkId: 'b1', width: 1 }],
+        columns: [{ id: 'col-1', bookmarkId: 'b1', tabs: ['b1'], activeTabId: 'b1', width: 1 }],
         activeColumnId: 'col-1',
       });
       useSplitStore.getState().setOpenBookmarks([bookmark1]);
@@ -308,8 +308,8 @@ describe('splitStore', () => {
     it('does not affect other columns', () => {
       useSplitStore.getState().setSplitState({
         columns: [
-          { id: 'col-1', bookmarkId: 'b1', width: 1 },
-          { id: 'col-2', bookmarkId: 'b2', width: 1 },
+          { id: 'col-1', bookmarkId: 'b1', tabs: ['b1'], activeTabId: 'b1', width: 1 },
+          { id: 'col-2', bookmarkId: 'b2', tabs: ['b2'], activeTabId: 'b2', width: 1 },
         ],
         activeColumnId: 'col-1',
       });
@@ -323,8 +323,8 @@ describe('splitStore', () => {
     it('updates multiple columns at once', () => {
       useSplitStore.getState().setSplitState({
         columns: [
-          { id: 'col-1', bookmarkId: 'b1', width: 1 },
-          { id: 'col-2', bookmarkId: 'b2', width: 1 },
+          { id: 'col-1', bookmarkId: 'b1', tabs: ['b1'], activeTabId: 'b1', width: 1 },
+          { id: 'col-2', bookmarkId: 'b2', tabs: ['b2'], activeTabId: 'b2', width: 1 },
         ],
         activeColumnId: 'col-1',
       });
@@ -350,22 +350,21 @@ describe('splitStore', () => {
     it('cannot exceed MAX_COLUMNS (3) via splitColumn', () => {
       useSplitStore.getState().setSplitState({
         columns: [
-          { id: 'col-1', bookmarkId: 'b1', width: 1 },
-          { id: 'col-2', bookmarkId: 'b2', width: 1 },
-          { id: 'col-3', bookmarkId: 'b3', width: 1 },
+          { id: 'col-1', bookmarkId: 'b1', tabs: ['b1'], activeTabId: 'b1', width: 1 },
+          { id: 'col-2', bookmarkId: 'b2', tabs: ['b2'], activeTabId: 'b2', width: 1 },
+          { id: 'col-3', bookmarkId: 'b3', tabs: ['b3'], activeTabId: 'b3', width: 1 },
         ],
         activeColumnId: 'col-1',
       });
       useSplitStore.getState().handleSplitColumn('col-1', 'b1');
       expect(useSplitStore.getState().splitState.columns).toHaveLength(3);
     });
-
   });
 
   describe('integration', () => {
     it('split then merge returns to original column count', () => {
       useSplitStore.getState().setSplitState({
-        columns: [{ id: 'col-1', bookmarkId: 'b1', width: 1 }],
+        columns: [{ id: 'col-1', bookmarkId: 'b1', tabs: ['b1'], activeTabId: 'b1', width: 1 }],
         activeColumnId: 'col-1',
       });
       useSplitStore.getState().handleSplitColumn('col-1', 'b2');
@@ -377,7 +376,7 @@ describe('splitStore', () => {
 
     it('openBookmarks updates correctly through split and merge cycle', () => {
       useSplitStore.getState().setSplitState({
-        columns: [{ id: 'col-1', bookmarkId: 'b1', width: 1 }],
+        columns: [{ id: 'col-1', bookmarkId: 'b1', tabs: ['b1'], activeTabId: 'b1', width: 1 }],
         activeColumnId: 'col-1',
       });
       useSplitStore.getState().setOpenBookmarks([bookmark1]);
@@ -392,7 +391,7 @@ describe('splitStore', () => {
 
     it('resize after split updates both columns', () => {
       useSplitStore.getState().setSplitState({
-        columns: [{ id: 'col-1', bookmarkId: 'b1', width: 1 }],
+        columns: [{ id: 'col-1', bookmarkId: 'b1', tabs: ['b1'], activeTabId: 'b1', width: 1 }],
         activeColumnId: 'col-1',
       });
       useSplitStore.getState().handleSplitColumn('col-1', 'b2');
