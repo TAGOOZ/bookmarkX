@@ -635,8 +635,16 @@ body {
   padding: var(--space-s) var(--space-m);
   background-color: rgba(168, 130, 255, 0.08);
   border-bottom: 1px solid rgba(168, 130, 255, 0.2);
-  flex-shrink: 0;
+  position: fixed;
+  top: 36px;
+  left: 0;
+  right: 0;
+  z-index: 99;
   animation: bannerSlideIn 0.3s ease;
+}
+
+.first-run-banner-visible .app-container {
+  padding-top: 80px;
 }
 
 [dir="rtl"] .first-run-banner {

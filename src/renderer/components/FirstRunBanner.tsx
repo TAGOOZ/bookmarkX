@@ -17,6 +17,7 @@ const FirstRunBanner: React.FC<FirstRunBannerProps> = ({ onOpenSettings }) => {
       const setupDismissed = localStorage.getItem(SETUP_COMPLETE_KEY) === 'true';
       if (!hasAuth && !setupDismissed) {
         setVisible(true);
+        document.documentElement.classList.add('first-run-banner-visible');
       }
     }).catch(() => {});
   }, []);
@@ -25,6 +26,7 @@ const FirstRunBanner: React.FC<FirstRunBannerProps> = ({ onOpenSettings }) => {
     const handleStorage = (e: StorageEvent) => {
       if (e.key === SETUP_COMPLETE_KEY && e.newValue === 'true') {
         setVisible(false);
+        document.documentElement.classList.remove('first-run-banner-visible');
       }
     };
     window.addEventListener('storage', handleStorage);
@@ -33,6 +35,7 @@ const FirstRunBanner: React.FC<FirstRunBannerProps> = ({ onOpenSettings }) => {
 
   const handleDismiss = () => {
     setVisible(false);
+    document.documentElement.classList.remove('first-run-banner-visible');
   };
 
   const handleOpenSettings = () => {
