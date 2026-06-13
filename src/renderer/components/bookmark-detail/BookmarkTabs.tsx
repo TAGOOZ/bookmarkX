@@ -185,11 +185,16 @@ const BookmarkTabs: React.FC<BookmarkTabsProps> = ({
     setContextMenu(null);
   }, [contextMenu, openBookmarks, onTabClose, onTabCloseBatch]);
 
+  const isRtl = dir === 'rtl';
+
   const handleMenuCloseToRight = useCallback(() => {
     if (!contextMenu) return;
     const idx = openBookmarks.findIndex((b) => b.id === contextMenu.targetBookmarkId);
     if (idx === -1) { setContextMenu(null); return; }
-    const ids = openBookmarks.slice(idx + 1).map((b) => b.id);
+    // In RTL, visual "right" = array "left" (earlier indices)
+    const ids = isRtl
+      ? openBookmarks.slice(0, idx).map((b) => b.id)
+      : openBookmarks.slice(idx + 1).map((b) => b.id);
     setClosedTabIds((prev) => {
       const existing = new Set(prev);
       const newIds = ids.filter((id) => !existing.has(id));
@@ -201,13 +206,16 @@ const BookmarkTabs: React.FC<BookmarkTabsProps> = ({
       ids.forEach((id) => onTabClose(id));
     }
     setContextMenu(null);
-  }, [contextMenu, openBookmarks, onTabClose, onTabCloseBatch]);
+  }, [contextMenu, openBookmarks, onTabClose, onTabCloseBatch, isRtl]);
 
   const handleMenuCloseToLeft = useCallback(() => {
     if (!contextMenu) return;
     const idx = openBookmarks.findIndex((b) => b.id === contextMenu.targetBookmarkId);
     if (idx === -1) { setContextMenu(null); return; }
-    const ids = openBookmarks.slice(0, idx).map((b) => b.id);
+    // In RTL, visual "left" = array "right" (later indices)
+    const ids = isRtl
+      ? openBookmarks.slice(idx + 1).map((b) => b.id)
+      : openBookmarks.slice(0, idx).map((b) => b.id);
     setClosedTabIds((prev) => {
       const existing = new Set(prev);
       const newIds = ids.filter((id) => !existing.has(id));
@@ -219,7 +227,7 @@ const BookmarkTabs: React.FC<BookmarkTabsProps> = ({
       ids.forEach((id) => onTabClose(id));
     }
     setContextMenu(null);
-  }, [contextMenu, openBookmarks, onTabClose, onTabCloseBatch]);
+  }, [contextMenu, openBookmarks, onTabClose, onTabCloseBatch, isRtl]);
 
   const handleMenuCloseOthers = useCallback(() => {
     if (!contextMenu) return;
