@@ -1,14 +1,15 @@
-import React, { useEffect, createContext, useContext } from 'react';
+import React, { useEffect, createContext, useContext, Suspense } from 'react';
 import { IntlProvider, useIntl } from 'react-intl';
 import NavPanel from './components/NavPanel';
 import { SplitLayout } from './components/split-view';
-import Settings from './components/Settings';
 import FirstRunBanner from './components/FirstRunBanner';
 import arMessages from '../../locales/ar.json';
 import enMessages from '../../locales/en.json';
 import { useBookmarkStore } from './stores/bookmarkStore';
 import { useSplitStore } from './stores/splitStore';
 import { useSettingsStore } from './stores/settingsStore';
+
+const Settings = React.lazy(() => import('./components/Settings'));
 
 export type { Bookmark } from './types';
 
@@ -121,7 +122,9 @@ function AppContent() {
           onToggleMockMode={toggleMockMode}
         />
         {showSettings && (
-          <Settings onClose={() => setShowSettings(false)} mockMode={mockMode} />
+          <Suspense fallback={null}>
+            <Settings onClose={() => setShowSettings(false)} mockMode={mockMode} />
+          </Suspense>
         )}
       </div>
     </>

@@ -73,7 +73,6 @@ export async function writeSecureConfig(userDataDir: string, config: UserConfig)
 
 export async function removePlaintextSecrets(userDataDir: string): Promise<void> {
   const configPath = getConfigPath(userDataDir);
-  if (!fs.existsSync(configPath)) return;
   try {
     const raw = await fs.promises.readFile(configPath, 'utf-8');
     const parsed = JSON.parse(raw);
@@ -84,7 +83,7 @@ export async function removePlaintextSecrets(userDataDir: string): Promise<void>
     if (changed) {
       await fs.promises.writeFile(configPath, JSON.stringify(parsed, null, 2), 'utf-8');
     }
-  } catch { /* ignore parse errors */ }
+  } catch { /* file doesn't exist or parse error — nothing to do */ }
 }
 
 export async function readConfig(userDataDir: string): Promise<UserConfig> {
@@ -92,12 +91,10 @@ export async function readConfig(userDataDir: string): Promise<UserConfig> {
 
   const configPath = getConfigPath(userDataDir);
   let base: UserConfig = { ...DEFAULT_CONFIG };
-  if (fs.existsSync(configPath)) {
-    try {
-      const raw = await fs.promises.readFile(configPath, 'utf-8');
-      base = { ...DEFAULT_CONFIG, ...JSON.parse(raw) };
-    } catch { /* use defaults */ }
-  }
+  try {
+    const raw = await fs.promises.readFile(configPath, 'utf-8');
+    base = { ...DEFAULT_CONFIG, ...JSON.parse(raw) };
+  } catch { /* file doesn't exist or parse error — use defaults */ }
   const secrets = await readSecureConfig(userDataDir);
   configCache = { ...base, ...secrets };
   return configCache;
@@ -115,6 +112,6 @@ export async function writeConfig(userDataDir: string, config: UserConfig): Prom
   ) as UserConfig;
   const configPath = getConfigPath(userDataDir);
   const dir = path.dirname(configPath);
-  if (!fs.existsSync(dir)) { await fs.promises.mkdir(dir, { recursive: true }); }
+  await fs.promises.mkdir(dir, { recursive: true });
   await fs.promises.writeFile(configPath, JSON.stringify(safeConfig, null, 2), 'utf-8');
 }

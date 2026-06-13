@@ -3,10 +3,6 @@ import path from 'node:path';
 import fs from 'node:fs';
 import started from 'electron-squirrel-startup';
 import { createClient, type Client } from '@libsql/client';
-import { registerAllIpc } from './main/ipc';
-import { initializeSchema } from './db/schema';
-import { startCronScheduler } from './scheduler/cron';
-import { removePlaintextSecrets } from './main/user-config';
 
 // Disable GPU acceleration on Linux to avoid crashes
 // NOTE: --no-sandbox MUST be passed as CLI arg, not appendSwitch (see electron/electron#47650)
@@ -88,17 +84,30 @@ app.whenReady().then(async () => {
 
   // Delete .env on first launch after update
   const envPath = path.join(app.getAppPath(), '.env');
-  if (fs.existsSync(envPath)) {
-    fs.unlinkSync(envPath);
+  try {
+    await fs.promises.access(envPath);
+    await fs.promises.unlink(envPath);
+  } catch {
+    // .env doesn't exist — nothing to delete
   }
 
   // Initialize SQLite database
   const dbPath = path.join(userDataDir, 'bookmarks.db');
   db = createClient({ url: `file:${dbPath}` });
+
+  // Lazy-load schema, IPC, and cron modules
+  const [{ initializeSchema }, { registerAllIpc }, { startCronScheduler }, { removePlaintextSecrets }] =
+    await Promise.all([
+      import('./db/schema'),
+      import('./main/ipc'),
+      import('./scheduler/cron'),
+      import('./main/user-config'),
+    ]);
+
   await initializeSchema(db);
   await removePlaintextSecrets(userDataDir);
 
-  // Register all IPC handlers (was: 390 lines of inline handlers)
+  // Register all IPC handlers
   const { ipcMain } = await import('electron');
   registerAllIpc(ipcMain, db);
 
