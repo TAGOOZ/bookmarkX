@@ -252,11 +252,6 @@ const BookmarkEditor: React.FC<BookmarkEditorProps> = ({
       <div className={styles.progressBar}>
         <div className={styles.progressFill} style={{ width: `${scrollProgress * 100}%` }} />
       </div>
-      <ContentsBar
-        sections={sections}
-        activeSection={activeSection}
-        onNavigate={handleNavigate}
-      />
       <PageHeader
         title={bookmark.title || ''}
         url={bookmark.url}
@@ -333,6 +328,11 @@ const BookmarkEditor: React.FC<BookmarkEditorProps> = ({
         </div>
       )}
       <div className={styles.mainContent}>
+        <ContentsBar
+          sections={sections}
+          activeSection={activeSection}
+          onNavigate={handleNavigate}
+        />
         <div ref={scrollRef} className={styles.editorScroll}>
           <BlockNoteView
             editor={editor}

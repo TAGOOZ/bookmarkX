@@ -22,6 +22,8 @@ const ContentsBar: React.FC<ContentsBarProps> = ({
   const [hoveredId, setHoveredId] = useState<string | null>(null);
   const visibleSections = sections.filter((s) => s.visible);
 
+  if (visibleSections.length === 0) return null;
+
   return (
     <nav className={styles.bar} aria-label="Contents">
       {visibleSections.map((section) => (
