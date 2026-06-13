@@ -1,4 +1,4 @@
-import { useState, useCallback, RefObject } from 'react';
+import { useState, useCallback, useEffect, RefObject } from 'react';
 import { IntlShape } from 'react-intl';
 
 interface Section {
@@ -14,22 +14,39 @@ interface UseSectionNavigationProps {
   intl: IntlShape;
 }
 
+function scanHeadings(editorEl: HTMLDivElement | null): Section[] {
+  if (!editorEl) return [];
+  const headings = editorEl.querySelectorAll('h1, h2, h3, h4, h5, h6');
+  return Array.from(headings).map((heading, i) => ({
+    id: `section-${i}`,
+    label: heading.textContent || '',
+    visible: true,
+    level: parseInt(heading.tagName.charAt(1)),
+  }));
+}
+
 export function useSectionNavigation({ editorRef }: UseSectionNavigationProps) {
   const [activeSection, setActiveSection] = useState<string>('');
+  const [sections, setSections] = useState<Section[]>([]);
+
+  useEffect(() => {
+    const el = editorRef.current;
+    if (!el) return;
+
+    const update = () => setSections(scanHeadings(el));
+
+    update();
+
+    const observer = new MutationObserver(update);
+    observer.observe(el, { childList: true, subtree: true });
+    return () => observer.disconnect();
+  }, [editorRef]);
 
   const getSections = useCallback((): Section[] => {
-    if (!editorRef.current) return [];
-    const headings = editorRef.current.querySelectorAll('h1, h2, h3, h4, h5, h6');
-    return Array.from(headings).map((heading, i) => ({
-      id: `section-${i}`,
-      label: heading.textContent || '',
-      visible: true,
-      level: parseInt(heading.tagName.charAt(1)),
-    }));
+    return scanHeadings(editorRef.current);
   }, [editorRef]);
 
   const handleNavigate = useCallback((sectionId: string) => {
-    const sections = getSections();
     const idx = sections.findIndex((s) => s.id === sectionId);
     if (idx < 0) return;
     const headings = editorRef.current?.querySelectorAll('h1, h2, h3, h4, h5, h6');
@@ -37,7 +54,7 @@ export function useSectionNavigation({ editorRef }: UseSectionNavigationProps) {
       headings[idx].scrollIntoView({ behavior: 'smooth', block: 'start' });
       setActiveSection(sectionId);
     }
-  }, [getSections, editorRef]);
+  }, [sections, editorRef]);
 
-  return { activeSection, getSections, handleNavigate };
+  return { activeSection, sections, getSections, handleNavigate };
 }

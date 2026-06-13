@@ -163,7 +163,7 @@ const BookmarkEditor: React.FC<BookmarkEditorProps> = ({
     setNotification,
   });
 
-  const { activeSection, getSections, handleNavigate } = useSectionNavigation({
+  const { activeSection, sections, handleNavigate } = useSectionNavigation({
     editorRef,
     scrollRef,
     intl,
@@ -253,7 +253,7 @@ const BookmarkEditor: React.FC<BookmarkEditorProps> = ({
         <div className={styles.progressFill} style={{ width: `${scrollProgress * 100}%` }} />
       </div>
       <ContentsBar
-        sections={getSections()}
+        sections={sections}
         activeSection={activeSection}
         onNavigate={handleNavigate}
       />
