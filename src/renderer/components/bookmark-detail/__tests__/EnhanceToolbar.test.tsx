@@ -30,7 +30,8 @@ describe('EnhanceToolbar', () => {
     renderWithIntl(<EnhanceToolbar {...defaultProps} />);
     const toolbar = screen.getByRole('toolbar');
     expect(toolbar).toBeDefined();
-    expect(toolbar.style.top).toBe('100px');
+    // Position is clamped: top = Math.max(16, 100 - 40 - 8) = 52, left stays 200
+    expect(toolbar.style.top).toBe('52px');
     expect(toolbar.style.left).toBe('200px');
   });
 

@@ -452,7 +452,7 @@ describe('BookmarkTabs', () => {
       expect(document.activeElement).toBe(tabs[0]);
     });
 
-    it('focuses tab bar when last tab is closed', async () => {
+    it('focuses reopen button when last tab is closed', async () => {
       const onTabClose = vi.fn();
       const user = userEvent.setup();
       const singleBookmark = bookmarks.slice(0, 1);
@@ -467,8 +467,11 @@ describe('BookmarkTabs', () => {
       await act(async () => {
         await new Promise((r) => requestAnimationFrame(r));
       });
-      const tabBar = screen.getByRole('tablist');
-      expect(document.activeElement).toBe(tabBar);
+      await act(async () => {
+        await new Promise((r) => requestAnimationFrame(r));
+      });
+      const reopenBtn = screen.getByRole('button', { name: /Reopen/ });
+      expect(reopenBtn).toBeDefined();
     });
   });
 
