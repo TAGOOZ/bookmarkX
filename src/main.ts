@@ -1,16 +1,18 @@
-import { app, BrowserWindow, Menu, session } from 'electron';
+import { app, BrowserWindow, Menu } from 'electron';
 import path from 'node:path';
 import fs from 'node:fs';
 import started from 'electron-squirrel-startup';
 import { createClient, type Client } from '@libsql/client';
 
-// Disable GPU acceleration on Linux to avoid crashes
+// Linux-specific flags for GPU-less systems (Electron 42 compat)
 // NOTE: --no-sandbox MUST be passed as CLI arg, not appendSwitch (see electron/electron#47650)
 // Use: pnpm start:linux
 if (process.platform === 'linux') {
   app.commandLine.appendSwitch('disable-gpu');
   app.commandLine.appendSwitch('disable-gpu-compositing');
   app.commandLine.appendSwitch('disable-dev-shm-usage');
+  // in-process-gpu prevents separate GPU process launch which crashes on systems
+  // without GPU hardware — GPU runs in the browser process instead
   app.commandLine.appendSwitch('in-process-gpu');
 }
 
@@ -47,6 +49,18 @@ const createWindow = () => {
       path.join(__dirname, `../renderer/${MAIN_WINDOW_VITE_NAME}/index.html`),
     );
   }
+
+  // Retry page load on failure (e.g., network service crash on startup)
+  mainWindow.webContents.on('did-fail-load', (_event, errorCode, errorDescription) => {
+    if (errorCode !== 0 && errorCode !== -3) {
+      console.warn(`Page load failed (${errorCode}: ${errorDescription}), retrying...`);
+      setTimeout(() => {
+        if (MAIN_WINDOW_VITE_DEV_SERVER_URL) {
+          mainWindow?.loadURL(MAIN_WINDOW_VITE_DEV_SERVER_URL);
+        }
+      }, 1500);
+    }
+  });
 };
 
 // Quit when all windows are closed, except on macOS. There, it's common
@@ -68,17 +82,7 @@ app.on('activate', () => {
 
 // Initialize database, register IPC handlers, then create window
 app.whenReady().then(async () => {
-  // Inject CSP headers
-  session.defaultSession.webRequest.onHeadersReceived((details, callback) => {
-    callback({
-      responseHeaders: {
-        ...details.responseHeaders,
-        'Content-Security-Policy': [
-          "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self' https://generativelanguage.googleapis.com; font-src 'self' https://fonts.gstatic.com;",
-        ],
-      },
-    });
-  });
+  // CSP is applied via <meta> tag in index.html (avoids network service crash on Electron 42/Linux with session.webRequest)
 
   const userDataDir = app.getPath('userData');
 
@@ -91,32 +95,52 @@ app.whenReady().then(async () => {
     // .env doesn't exist — nothing to delete
   }
 
-  // Initialize SQLite database
-  const dbPath = path.join(userDataDir, 'bookmarks.db');
-  db = createClient({ url: `file:${dbPath}` });
+  // Initialize SQLite database with error handling
+  let dbInitialized = false;
+  try {
+    const dbPath = path.join(userDataDir, 'bookmarks.db');
+    db = createClient({ url: `file:${dbPath}` });
+    dbInitialized = true;
+  } catch (err) {
+    console.error('Failed to initialize database:', err);
+  }
 
-  // Lazy-load schema, IPC, and cron modules
-  const [{ initializeSchema }, { registerAllIpc }, { startCronScheduler }, { removePlaintextSecrets }] =
-    await Promise.all([
-      import('./db/schema'),
-      import('./main/ipc'),
-      import('./scheduler/cron'),
-      import('./main/user-config'),
-    ]);
+  if (dbInitialized) {
+    // Lazy-load schema, IPC, and cron modules
+    try {
+      const [{ initializeSchema }, { registerAllIpc }, { startCronScheduler }, { removePlaintextSecrets }] =
+        await Promise.all([
+          import('./db/schema'),
+          import('./main/ipc'),
+          import('./scheduler/cron'),
+          import('./main/user-config'),
+        ]);
 
-  await initializeSchema(db);
-  await removePlaintextSecrets(userDataDir);
+      await initializeSchema(db);
+      await removePlaintextSecrets(userDataDir);
 
-  // Register all IPC handlers
-  const { ipcMain } = await import('electron');
-  registerAllIpc(ipcMain, db);
+      // Register all IPC handlers
+      const { ipcMain } = await import('electron');
+      registerAllIpc(ipcMain, db);
 
-  // Start cron scheduler: fetch every 6 hours, then classify
-  const cronJob = startCronScheduler(db, '0 */6 * * *');
-  app.on('before-quit', () => {
-    cronJob.stop();
-  });
+      // Start cron scheduler: fetch every 6 hours, then classify
+      try {
+        const cronJob = startCronScheduler(db, '0 */6 * * *');
+        app.on('before-quit', () => {
+          cronJob.stop();
+        });
+      } catch (err) {
+        console.error('Failed to start cron scheduler:', err);
+      }
+    } catch (err) {
+      console.error('Failed to initialize app modules:', err);
+    }
+  }
 
-  // Create window after IPC handlers are ready
+  // Create window regardless of initialization success
   createWindow();
+}).catch((err) => {
+  console.error('Fatal startup error:', err);
+  // Still attempt to create window so user sees something
+  try { createWindow(); } catch { /* ignore */ }
 });
