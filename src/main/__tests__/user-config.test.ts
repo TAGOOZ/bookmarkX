@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import fs from 'node:fs';
 import path from 'node:path';
 import os from 'node:os';
-import { readConfig, writeConfig, configExists, getConfigPath, DEFAULT_CONFIG, resetConfigCache } from '../user-config';
+import { readConfig, writeConfig, configExists, getConfigPath, DEFAULT_CONFIG, resetConfigCache, removePlaintextSecrets } from '../user-config';
 
 let tmpDir: string;
 
@@ -90,7 +90,12 @@ describe('user-config', () => {
       await writeConfig(tmpDir, config);
 
       const raw = fs.readFileSync(path.join(tmpDir, 'user.json'), 'utf-8');
-      expect(JSON.parse(raw)).toEqual(config);
+      const parsed = JSON.parse(raw);
+      expect(parsed.name).toBe('Test');
+      expect(parsed.theme).toBe(DEFAULT_CONFIG.theme);
+      expect(parsed).not.toHaveProperty('geminiApiKey');
+      expect(parsed).not.toHaveProperty('birdAuthToken');
+      expect(parsed).not.toHaveProperty('birdCt0');
     });
 
     it('overwrites existing config file', async () => {
@@ -106,6 +111,44 @@ describe('user-config', () => {
       await writeConfig(nestedDir, DEFAULT_CONFIG);
 
       expect(fs.existsSync(path.join(nestedDir, 'user.json'))).toBe(true);
+    });
+  });
+
+  describe('removePlaintextSecrets', () => {
+    it('removes secret keys from existing config file', async () => {
+      const configWithSecrets = {
+        ...DEFAULT_CONFIG,
+        name: 'Test',
+        geminiApiKey: 'secret-key',
+        birdAuthToken: 'auth-token',
+        birdCt0: 'ct0-value',
+      };
+      fs.writeFileSync(path.join(tmpDir, 'user.json'), JSON.stringify(configWithSecrets), 'utf-8');
+
+      await removePlaintextSecrets(tmpDir);
+
+      const raw = fs.readFileSync(path.join(tmpDir, 'user.json'), 'utf-8');
+      const parsed = JSON.parse(raw);
+      expect(parsed.name).toBe('Test');
+      expect(parsed.geminiApiKey).toBeUndefined();
+      expect(parsed.birdAuthToken).toBeUndefined();
+      expect(parsed.birdCt0).toBeUndefined();
+    });
+
+    it('does nothing when config file does not exist', async () => {
+      await removePlaintextSecrets(tmpDir);
+      expect(fs.existsSync(path.join(tmpDir, 'user.json'))).toBe(false);
+    });
+
+    it('does nothing when no secrets present', async () => {
+      const configWithoutSecrets = { ...DEFAULT_CONFIG, name: 'No Secrets' };
+      fs.writeFileSync(path.join(tmpDir, 'user.json'), JSON.stringify(configWithoutSecrets), 'utf-8');
+
+      await removePlaintextSecrets(tmpDir);
+
+      const raw = fs.readFileSync(path.join(tmpDir, 'user.json'), 'utf-8');
+      const parsed = JSON.parse(raw);
+      expect(parsed).toEqual(configWithoutSecrets);
     });
   });
 });
