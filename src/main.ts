@@ -97,13 +97,16 @@ app.whenReady().then(async () => {
     console.error('Failed to initialize database:', err);
   }
 
+  let startCronScheduler: ((db: any, schedule: string) => { stop: () => void }) | undefined;
+
   if (dbInitialized) {
-    // Lazy-load schema and IPC modules
+    // Lazy-load schema, IPC, and cron modules
     try {
-      const [{ initializeSchema }, { registerAllIpc }] =
+      const [{ initializeSchema }, { registerAllIpc }, cronMod] =
         await Promise.all([
           import('./db/schema'),
           import('./main/ipc'),
+          import('./scheduler/cron'),
         ]);
 
       await initializeSchema(db);
@@ -111,6 +114,8 @@ app.whenReady().then(async () => {
       // Register all IPC handlers
       const { ipcMain } = await import('electron');
       registerAllIpc(ipcMain, db);
+
+      startCronScheduler = cronMod.startCronScheduler;
     } catch (err) {
       console.error('Failed to initialize app modules:', err);
     }
@@ -130,7 +135,7 @@ app.whenReady().then(async () => {
     });
 
     // Start cron scheduler in background (first run is 6 hours away)
-    import('./scheduler/cron').then(({ startCronScheduler }) => {
+    if (startCronScheduler) {
       try {
         const cronJob = startCronScheduler(db, '0 */6 * * *');
         app.on('before-quit', () => {
@@ -139,9 +144,7 @@ app.whenReady().then(async () => {
       } catch (err) {
         console.error('Failed to start cron scheduler:', err);
       }
-    }).catch((err) => {
-      console.error('Failed to import cron scheduler:', err);
-    });
+    }
   }
 }).catch((err) => {
   console.error('Fatal startup error:', err);

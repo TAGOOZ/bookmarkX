@@ -4,6 +4,8 @@ import type { BookmarkDetailData } from '../bookmark-detail/types';
 export interface SplitColumn {
   id: string;
   bookmarkId: string | null;
+  tabs: string[];
+  activeTabId: string | null;
   width: number;
 }
 

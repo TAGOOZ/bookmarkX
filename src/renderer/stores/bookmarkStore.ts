@@ -48,44 +48,27 @@ export const useBookmarkStore = create<BookmarkStore>((set, get) => ({
 
   handleBookmarkSelect: (bookmark) => {
     const { splitState, openBookmarks } = useSplitStore.getState();
-    const MAX_COLUMNS = 3;
 
-    let newSplit: typeof splitState;
     const activeCol = splitState.columns.find((c) => c.id === splitState.activeColumnId);
-    if (!activeCol) {
-      newSplit = splitState;
-    } else if (activeCol.bookmarkId === bookmark.id) {
-      newSplit = splitState;
-    } else if (!activeCol.bookmarkId) {
-      newSplit = {
-        ...splitState,
-        columns: splitState.columns.map((c) =>
-          c.id === activeCol.id ? { ...c, bookmarkId: bookmark.id } : c,
-        ),
-      };
-    } else if (splitState.columns.length < MAX_COLUMNS) {
-      const newCol = {
-        id: `col-${Date.now()}`,
-        bookmarkId: bookmark.id,
-        width: 1,
-      };
-      newSplit = {
-        columns: [...splitState.columns, newCol],
-        activeColumnId: newCol.id,
-      };
-    } else {
-      newSplit = {
-        ...splitState,
-        columns: splitState.columns.map((c) =>
-          c.id === activeCol.id ? { ...c, bookmarkId: bookmark.id } : c,
-        ),
-        activeColumnId: activeCol.id,
-      };
-    }
+    if (!activeCol) return;
 
-    if (newSplit.columns.length > MAX_COLUMNS) {
-      newSplit = { ...newSplit, columns: newSplit.columns.slice(0, MAX_COLUMNS) };
-    }
+    // Already the active tab — no-op
+    if (activeCol.activeTabId === bookmark.id) return;
+
+    const isInTabs = activeCol.tabs.includes(bookmark.id);
+
+    const newTabs = isInTabs
+      ? activeCol.tabs
+      : [...activeCol.tabs, bookmark.id];
+
+    const newSplit: typeof splitState = {
+      ...splitState,
+      columns: splitState.columns.map((c) =>
+        c.id === activeCol.id
+          ? { ...c, tabs: newTabs, activeTabId: bookmark.id, bookmarkId: bookmark.id }
+          : c,
+      ),
+    };
 
     const newOpen = (() => {
       const bookmarkInOpen = openBookmarks.find((b) => b.id === bookmark.id);

@@ -4,6 +4,7 @@ import BookmarkTabs from '../bookmark-detail/BookmarkTabs';
 import SplitDivider from './SplitDivider';
 import type { SplitLayoutProps } from './types';
 import type { BookmarkDetailData } from '../bookmark-detail/types';
+import type { Bookmark } from '../../types';
 import styles from './SplitLayout.module.css';
 
 const MIN_COLUMN_WIDTH = 300;
@@ -107,13 +108,13 @@ const SplitLayout: React.FC<SplitLayoutProps> = ({
         onDrop={(e) => handleDrop(e, 'left')}
       />
       {splitState.columns.map((column, index) => {
-        const bookmark = column.bookmarkId
-          ? openBookmarks.find(b => b.id === column.bookmarkId) ?? null
+        const bookmark = column.activeTabId
+          ? openBookmarks.find(b => b.id === column.activeTabId) ?? null
           : null;
 
-        const columnBookmarks = column.bookmarkId
-          ? openBookmarks.filter(b => b.id === column.bookmarkId)
-          : [];
+        const columnBookmarks = column.tabs
+          .map((id) => openBookmarks.find((b) => b.id === id))
+          .filter((b): b is Bookmark => b !== undefined);
 
         const flexBasis = `${(column.width / totalWidth) * 100}%`;
         const isActive = column.id === splitState.activeColumnId;
@@ -148,10 +149,10 @@ const SplitLayout: React.FC<SplitLayoutProps> = ({
               style={{ flex: `0 0 ${flexBasis}` }}
               onPointerEnter={() => onColumnActive(column.id)}
             >
-              {column.bookmarkId && (
+              {column.tabs.length > 0 && (
                 <BookmarkTabs
                   openBookmarks={columnBookmarks}
-                  activeBookmarkId={column.bookmarkId}
+                  activeBookmarkId={column.activeTabId}
                   onTabSelect={(id) => handleBookmarkSelect(column.id, id)}
                   onTabClose={(id) => handleTabClose(column.id, id)}
                   onTabCloseBatch={onTabCloseBatch ? (ids) => onTabCloseBatch(column.id, ids) : undefined}
