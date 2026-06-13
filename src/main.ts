@@ -24,11 +24,12 @@ if (started) {
 }
 
 let db: Client;
+let mainWindow: BrowserWindow | null = null;
 
 const createWindow = () => {
   Menu.setApplicationMenu(null);
 
-  const mainWindow = new BrowserWindow({
+  mainWindow = new BrowserWindow({
     width: 800,
     height: 600,
     titleBarStyle: 'hidden',
@@ -52,11 +53,6 @@ const createWindow = () => {
   }
 };
 
-// This method will be called when Electron has finished
-// initialization and is ready to create browser windows.
-// Some APIs can only be used after this event occurs.
-app.on('ready', createWindow);
-
 // Quit when all windows are closed, except on macOS. There, it's common
 // for applications and their menu bar to stay active until the user quits
 // explicitly with Cmd + Q.
@@ -74,7 +70,7 @@ app.on('activate', () => {
   }
 });
 
-// Initialize database after app is ready, then register IPC handlers
+// Initialize database, register IPC handlers, then create window
 app.whenReady().then(async () => {
   // Inject CSP headers
   session.defaultSession.webRequest.onHeadersReceived((details, callback) => {
@@ -111,4 +107,7 @@ app.whenReady().then(async () => {
   app.on('before-quit', () => {
     cronJob.stop();
   });
+
+  // Create window after IPC handlers are ready
+  createWindow();
 });
