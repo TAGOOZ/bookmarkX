@@ -1,4 +1,6 @@
 import type { Client } from '@libsql/client';
+import type { ChatSessionRow, ChatMessageRow } from './row-types';
+import { mapRow } from './row-types';
 
 export interface ChatSession {
   id: string;
@@ -14,6 +16,9 @@ export interface ChatMessage {
   selected_text?: string | null;
   created_at: string;
 }
+
+const CHAT_SESSION_FIELDS: (keyof ChatSessionRow)[] = ['id', 'bookmark_id', 'created_at'];
+const CHAT_MESSAGE_FIELDS: (keyof ChatMessageRow)[] = ['id', 'session_id', 'role', 'content', 'selected_text', 'created_at'];
 
 export async function createChatSession(
   db: Client,
@@ -36,13 +41,14 @@ export async function getChatSession(
     args: [sessionId],
   });
 
-  const row = rows[0] as any;
+  const row = rows[0];
   if (!row) return null;
 
+  const r = mapRow<ChatSessionRow>(row, CHAT_SESSION_FIELDS);
   return {
-    id: row.id,
-    bookmark_id: row.bookmark_id,
-    created_at: row.created_at,
+    id: r.id,
+    bookmark_id: r.bookmark_id,
+    created_at: r.created_at,
   };
 }
 
@@ -69,14 +75,17 @@ export async function getChatMessages(
     args: [sessionId],
   });
 
-  return (rows as any[]).map((row) => ({
-    id: row.id,
-    session_id: row.session_id,
-    role: row.role,
-    content: row.content,
-    selected_text: row.selected_text || null,
-    created_at: row.created_at,
-  }));
+  return rows.map((row) => {
+    const r = mapRow<ChatMessageRow>(row, CHAT_MESSAGE_FIELDS);
+    return {
+      id: r.id,
+      session_id: r.session_id,
+      role: r.role as ChatMessage['role'],
+      content: r.content,
+      selected_text: r.selected_text || null,
+      created_at: r.created_at,
+    };
+  });
 }
 
 export async function getRecentChatMessages(
@@ -89,12 +98,15 @@ export async function getRecentChatMessages(
     args: [sessionId, limit],
   });
 
-  return (rows as any[]).map((row) => ({
-    id: row.id,
-    session_id: row.session_id,
-    role: row.role,
-    content: row.content,
-    selected_text: row.selected_text || null,
-    created_at: row.created_at,
-  }));
+  return rows.map((row) => {
+    const r = mapRow<ChatMessageRow>(row, CHAT_MESSAGE_FIELDS);
+    return {
+      id: r.id,
+      session_id: r.session_id,
+      role: r.role as ChatMessage['role'],
+      content: r.content,
+      selected_text: r.selected_text || null,
+      created_at: r.created_at,
+    };
+  });
 }

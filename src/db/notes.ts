@@ -1,4 +1,6 @@
 import type { Client } from '@libsql/client';
+import type { NoteRow } from './row-types';
+import { mapRow } from './row-types';
 
 export interface NoteData {
   title: string | null;
@@ -11,6 +13,8 @@ export interface Note extends NoteData {
   created_at: string;
   updated_at: string;
 }
+
+const NOTE_FIELDS: (keyof NoteRow)[] = ['id', 'bookmark_id', 'title', 'content', 'created_at', 'updated_at'];
 
 export async function createNote(
   db: Client,
@@ -34,14 +38,17 @@ export async function getNotes(
     args: [bookmarkId],
   });
 
-  return (rows as any[]).map((row) => ({
-    id: row.id,
-    bookmark_id: row.bookmark_id,
-    title: row.title,
-    content: row.content,
-    created_at: row.created_at,
-    updated_at: row.updated_at,
-  }));
+  return rows.map((row) => {
+    const r = mapRow<NoteRow>(row, NOTE_FIELDS);
+    return {
+      id: r.id,
+      bookmark_id: r.bookmark_id,
+      title: r.title,
+      content: r.content,
+      created_at: r.created_at,
+      updated_at: r.updated_at,
+    };
+  });
 }
 
 export async function updateNote(

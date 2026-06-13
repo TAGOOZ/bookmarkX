@@ -1,4 +1,6 @@
 import type { Client } from '@libsql/client';
+import type { TopicRow, TopicCountRow, BookmarkRow } from './row-types';
+import { mapRow } from './row-types';
 
 export interface Topic {
   id: string;
@@ -12,6 +14,8 @@ export interface TopicTreeNode extends Topic {
   children: TopicTreeNode[];
   bookmark_count: number;
 }
+
+const TOPIC_FIELDS: (keyof TopicRow)[] = ['id', 'name', 'parent_id', 'created_by', 'created_at'];
 
 export async function createTopic(
   db: Client,
@@ -34,9 +38,10 @@ export async function getTopic(db: Client, topicId: string): Promise<Topic | nul
     sql: 'SELECT * FROM topics WHERE id = ?',
     args: [topicId],
   });
-  const row = rows[0] as any;
+  const row = rows[0];
   if (!row) return null;
-  return { id: row.id, name: row.name, parent_id: row.parent_id, created_by: row.created_by, created_at: row.created_at };
+  const r = mapRow<TopicRow>(row, TOPIC_FIELDS);
+  return { id: r.id, name: r.name, parent_id: r.parent_id, created_by: r.created_by as Topic['created_by'], created_at: r.created_at };
 }
 
 export async function getTopicByName(
@@ -48,9 +53,10 @@ export async function getTopicByName(
     sql: 'SELECT * FROM topics WHERE name = ? AND parent_id IS ?',
     args: [name, parentId],
   });
-  const row = rows[0] as any;
+  const row = rows[0];
   if (!row) return null;
-  return { id: row.id, name: row.name, parent_id: row.parent_id, created_by: row.created_by, created_at: row.created_at };
+  const r = mapRow<TopicRow>(row, TOPIC_FIELDS);
+  return { id: r.id, name: r.name, parent_id: r.parent_id, created_by: r.created_by as Topic['created_by'], created_at: r.created_at };
 }
 
 export async function getOrCreateTopic(
@@ -112,15 +118,18 @@ export async function getTopicTree(db: Client): Promise<TopicTreeNode[]> {
     'SELECT * FROM topics ORDER BY name',
   );
 
-  const allTopics = (rows as any[]).map((row) => ({
-    id: row.id,
-    name: row.name,
-    parent_id: row.parent_id,
-    created_by: row.created_by,
-    created_at: row.created_at,
-    children: [] as TopicTreeNode[],
-    bookmark_count: 0,
-  }));
+  const allTopics = rows.map((row) => {
+    const r = mapRow<TopicRow>(row, TOPIC_FIELDS);
+    return {
+      id: r.id,
+      name: r.name,
+      parent_id: r.parent_id,
+      created_by: r.created_by as Topic['created_by'],
+      created_at: r.created_at,
+      children: [] as TopicTreeNode[],
+      bookmark_count: 0,
+    };
+  });
 
   // Get bookmark counts per topic
   const { rows: countRows } = await db.execute(
@@ -128,8 +137,9 @@ export async function getTopicTree(db: Client): Promise<TopicTreeNode[]> {
      WHERE topic_id IS NOT NULL GROUP BY topic_id`,
   );
   const countMap = new Map<string, number>();
-  for (const row of countRows as any[]) {
-    countMap.set(row.topic_id, row.cnt);
+  for (const row of countRows) {
+    const r = mapRow<TopicCountRow>(row, ['topic_id', 'cnt']);
+    countMap.set(r.topic_id, r.cnt);
   }
 
   // Apply counts
@@ -170,10 +180,13 @@ export async function getBookmarksByTopic(
     args: [topicId],
   });
 
-  return (rows as any[]).map((row) => ({
-    id: row.id,
-    title: row.title_en || row.title_ar || row.title || 'Untitled',
-    url: row.url,
-    topic_id: row.topic_id,
-  }));
+  return rows.map((row) => {
+    const r = mapRow<BookmarkRow>(row, ['id', 'title', 'title_ar', 'title_en', 'url', 'topic_id']);
+    return {
+      id: r.id,
+      title: r.title_en || r.title_ar || r.title || 'Untitled',
+      url: r.url,
+      topic_id: r.topic_id,
+    };
+  });
 }

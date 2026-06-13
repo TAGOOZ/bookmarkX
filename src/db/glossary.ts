@@ -1,4 +1,6 @@
 import type { Client } from '@libsql/client';
+import type { GlossaryTermRow } from './row-types';
+import { mapRow } from './row-types';
 
 export interface GlossaryTerm {
   id: string;
@@ -6,6 +8,8 @@ export interface GlossaryTerm {
   definition: string;
   created_at: string;
 }
+
+const GLOSSARY_FIELDS: (keyof GlossaryTermRow)[] = ['id', 'term', 'definition', 'created_at'];
 
 export async function addTerm(
   db: Client,
@@ -29,11 +33,11 @@ export async function batchAddTermsAndLink(
   const stmts = [
     ...terms.map((t, i) => ({
       sql: 'INSERT INTO glossary_terms (id, term, definition) VALUES (?, ?, ?)',
-      args: [ids[i], t.term, t.definition] as any[],
+      args: [ids[i], t.term, t.definition] as (string | number | null)[],
     })),
     ...ids.map((id) => ({
       sql: 'INSERT OR IGNORE INTO bookmark_glossary (bookmark_id, term_id) VALUES (?, ?)',
-      args: [bookmarkId, id] as any[],
+      args: [bookmarkId, id] as (string | number | null)[],
     })),
   ];
   await db.batch(stmts);
@@ -48,12 +52,10 @@ export async function searchTerms(
     const { rows } = await db.execute(
       'SELECT * FROM glossary_terms ORDER BY term ASC',
     );
-    return (rows as any[]).map((row) => ({
-      id: row.id,
-      term: row.term,
-      definition: row.definition,
-      created_at: row.created_at,
-    }));
+    return rows.map((row) => {
+      const r = mapRow<GlossaryTermRow>(row, GLOSSARY_FIELDS);
+      return { id: r.id, term: r.term, definition: r.definition, created_at: r.created_at };
+    });
   }
 
   const { rows } = await db.execute({
@@ -61,12 +63,10 @@ export async function searchTerms(
     args: [`${query}%`],
   });
 
-  return (rows as any[]).map((row) => ({
-    id: row.id,
-    term: row.term,
-    definition: row.definition,
-    created_at: row.created_at,
-  }));
+  return rows.map((row) => {
+    const r = mapRow<GlossaryTermRow>(row, GLOSSARY_FIELDS);
+    return { id: r.id, term: r.term, definition: r.definition, created_at: r.created_at };
+  });
 }
 
 export async function linkTermToBookmark(
@@ -92,12 +92,10 @@ export async function getTermsForBookmark(
     args: [bookmarkId],
   });
 
-  return (rows as any[]).map((row) => ({
-    id: row.id,
-    term: row.term,
-    definition: row.definition,
-    created_at: row.created_at,
-  }));
+  return rows.map((row) => {
+    const r = mapRow<GlossaryTermRow>(row, GLOSSARY_FIELDS);
+    return { id: r.id, term: r.term, definition: r.definition, created_at: r.created_at };
+  });
 }
 
 export async function getAllTerms(
@@ -106,12 +104,10 @@ export async function getAllTerms(
   const { rows } = await db.execute(
     'SELECT * FROM glossary_terms ORDER BY term ASC',
   );
-  return (rows as any[]).map((row) => ({
-    id: row.id,
-    term: row.term,
-    definition: row.definition,
-    created_at: row.created_at,
-  }));
+  return rows.map((row) => {
+    const r = mapRow<GlossaryTermRow>(row, GLOSSARY_FIELDS);
+    return { id: r.id, term: r.term, definition: r.definition, created_at: r.created_at };
+  });
 }
 
 export async function deleteTerm(

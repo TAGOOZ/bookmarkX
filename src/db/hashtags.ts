@@ -1,10 +1,14 @@
 import type { Client } from '@libsql/client';
+import type { HashtagRow, BookmarkRow } from './row-types';
+import { mapRow } from './row-types';
 
 export interface Hashtag {
   id: string;
   name: string;
   created_at: string;
 }
+
+const HASHTAG_FIELDS: (keyof HashtagRow)[] = ['id', 'name', 'created_at'];
 
 export async function createHashtag(
   db: Client,
@@ -26,8 +30,11 @@ export async function getOrCreateHashtag(
     sql: 'SELECT * FROM hashtags WHERE name = ?',
     args: [name],
   });
-  const row = rows[0] as any;
-  if (row) return { id: row.id, name: row.name, created_at: row.created_at };
+  const row = rows[0];
+  if (row) {
+    const r = mapRow<HashtagRow>(row, HASHTAG_FIELDS);
+    return { id: r.id, name: r.name, created_at: r.created_at };
+  }
   return createHashtag(db, name);
 }
 
@@ -36,18 +43,18 @@ export async function getHashtag(db: Client, hashtagId: string): Promise<Hashtag
     sql: 'SELECT * FROM hashtags WHERE id = ?',
     args: [hashtagId],
   });
-  const row = rows[0] as any;
+  const row = rows[0];
   if (!row) return null;
-  return { id: row.id, name: row.name, created_at: row.created_at };
+  const r = mapRow<HashtagRow>(row, HASHTAG_FIELDS);
+  return { id: r.id, name: r.name, created_at: r.created_at };
 }
 
 export async function getAllHashtags(db: Client): Promise<Hashtag[]> {
   const { rows } = await db.execute('SELECT * FROM hashtags ORDER BY name');
-  return (rows as any[]).map((row) => ({
-    id: row.id,
-    name: row.name,
-    created_at: row.created_at,
-  }));
+  return rows.map((row) => {
+    const r = mapRow<HashtagRow>(row, HASHTAG_FIELDS);
+    return { id: r.id, name: r.name, created_at: r.created_at };
+  });
 }
 
 export async function deleteHashtag(
@@ -93,11 +100,10 @@ export async function getBookmarkHashtags(
           ORDER BY h.name`,
     args: [bookmarkId],
   });
-  return (rows as any[]).map((row) => ({
-    id: row.id,
-    name: row.name,
-    created_at: row.created_at,
-  }));
+  return rows.map((row) => {
+    const r = mapRow<HashtagRow>(row, HASHTAG_FIELDS);
+    return { id: r.id, name: r.name, created_at: r.created_at };
+  });
 }
 
 export async function getBookmarksByHashtag(
@@ -112,11 +118,14 @@ export async function getBookmarksByHashtag(
           ORDER BY b.created_at DESC`,
     args: [hashtagId],
   });
-  return (rows as any[]).map((row) => ({
-    id: row.id,
-    title: row.title_en || row.title_ar || row.title || 'Untitled',
-    url: row.url,
-  }));
+  return rows.map((row) => {
+    const r = mapRow<BookmarkRow>(row, ['id', 'title', 'title_ar', 'title_en', 'url']);
+    return {
+      id: r.id,
+      title: r.title_en || r.title_ar || r.title || 'Untitled',
+      url: r.url,
+    };
+  });
 }
 
 export async function setBookmarkHashtags(

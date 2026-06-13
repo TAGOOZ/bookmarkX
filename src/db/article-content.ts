@@ -1,4 +1,6 @@
 import type { Client } from '@libsql/client';
+import type { ArticleContentRow, FtsSearchRow } from './row-types';
+import { mapRow } from './row-types';
 
 export interface ArticleContentData {
   extracted_text: string;
@@ -17,6 +19,12 @@ export interface ArticleContent extends ArticleContentData {
   content_hash: string;
   created_at: string;
 }
+
+const ARTICLE_CONTENT_FIELDS: (keyof ArticleContentRow)[] = [
+  'id', 'bookmark_id', 'extracted_text', 'word_count', 'blocks_json',
+  'parser_version', 'content_hash', 'og_title', 'og_description',
+  'og_image', 'og_site_name', 'created_at',
+];
 
 function computeContentHash(text: string): string {
   let hash = 0;
@@ -41,6 +49,7 @@ export async function createArticleContent(
   });
 
   if (existing.rows.length > 0) {
+    const existingId = existing.rows[0]['id'] as string;
     await db.execute({
       sql: `UPDATE article_content
             SET extracted_text = ?, word_count = ?, blocks_json = ?, parser_version = ?, content_hash = ?,
@@ -56,7 +65,7 @@ export async function createArticleContent(
         data.og_description || null,
         data.og_image || null,
         data.og_site_name || null,
-        (existing.rows[0] as any).id,
+        existingId,
       ],
     });
   } else {
@@ -91,22 +100,23 @@ export async function getArticleContent(
     args: [bookmarkId],
   });
 
-  const row = rows[0] as any;
+  const row = rows[0];
   if (!row) return null;
 
+  const r = mapRow<ArticleContentRow>(row, ARTICLE_CONTENT_FIELDS);
   return {
-    id: row.id,
-    bookmark_id: row.bookmark_id,
-    extracted_text: row.extracted_text,
-    word_count: row.word_count,
-    blocks_json: row.blocks_json || undefined,
-    parser_version: row.parser_version || 1,
-    content_hash: row.content_hash || '',
-    og_title: row.og_title || undefined,
-    og_description: row.og_description || undefined,
-    og_image: row.og_image || undefined,
-    og_site_name: row.og_site_name || undefined,
-    created_at: row.created_at,
+    id: r.id,
+    bookmark_id: r.bookmark_id,
+    extracted_text: r.extracted_text,
+    word_count: r.word_count,
+    blocks_json: r.blocks_json || undefined,
+    parser_version: r.parser_version || 1,
+    content_hash: r.content_hash || '',
+    og_title: r.og_title || undefined,
+    og_description: r.og_description || undefined,
+    og_image: r.og_image || undefined,
+    og_site_name: r.og_site_name || undefined,
+    created_at: r.created_at,
   };
 }
 
@@ -133,9 +143,12 @@ export async function searchArticleContent(
     args: [sanitizeFtsQuery(query), limit],
   });
 
-  return rows.map((row: any) => ({
-    bookmark_id: row.bookmark_id,
-    snippet: row.snippet,
-    rank: row.rank,
-  }));
+  return rows.map((row) => {
+    const r = mapRow<FtsSearchRow>(row, ['bookmark_id', 'snippet', 'rank']);
+    return {
+      bookmark_id: r.bookmark_id,
+      snippet: r.snippet,
+      rank: r.rank,
+    };
+  });
 }

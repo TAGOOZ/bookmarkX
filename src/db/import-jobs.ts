@@ -1,4 +1,6 @@
 import type { Client } from '@libsql/client';
+import type { ImportJobRow } from './row-types';
+import { mapRow } from './row-types';
 
 export interface ImportJob {
   id: string;
@@ -9,6 +11,8 @@ export interface ImportJob {
   started_at: string;
   completed_at: string | null;
 }
+
+const IMPORT_JOB_FIELDS: (keyof ImportJobRow)[] = ['id', 'status', 'cursor', 'total_fetched', 'total_classified', 'started_at', 'completed_at'];
 
 export async function createImportJob(db: Client): Promise<ImportJob> {
   const id = crypto.randomUUID();
@@ -35,16 +39,17 @@ export async function getImportJob(
     sql: 'SELECT * FROM import_jobs WHERE id = ?',
     args: [jobId],
   });
-  const row = rows[0] as any;
+  const row = rows[0];
   if (!row) return null;
+  const r = mapRow<ImportJobRow>(row, IMPORT_JOB_FIELDS);
   return {
-    id: row.id,
-    status: row.status,
-    cursor: row.cursor,
-    total_fetched: row.total_fetched,
-    total_classified: row.total_classified,
-    started_at: row.started_at,
-    completed_at: row.completed_at,
+    id: r.id,
+    status: r.status as ImportJob['status'],
+    cursor: r.cursor,
+    total_fetched: r.total_fetched,
+    total_classified: r.total_classified,
+    started_at: r.started_at,
+    completed_at: r.completed_at,
   };
 }
 
@@ -59,7 +64,7 @@ export async function updateImportJob(
   },
 ): Promise<void> {
   const sets: string[] = [];
-  const args: any[] = [];
+  const args: (string | number | null)[] = [];
 
   if (updates.status !== undefined) {
     sets.push('status = ?');
@@ -99,15 +104,16 @@ export async function getActiveImportJob(
      WHERE status IN ('running', 'paused')
      ORDER BY started_at DESC LIMIT 1`,
   );
-  const row = rows[0] as any;
+  const row = rows[0];
   if (!row) return null;
+  const r = mapRow<ImportJobRow>(row, IMPORT_JOB_FIELDS);
   return {
-    id: row.id,
-    status: row.status,
-    cursor: row.cursor,
-    total_fetched: row.total_fetched,
-    total_classified: row.total_classified,
-    started_at: row.started_at,
-    completed_at: row.completed_at,
+    id: r.id,
+    status: r.status as ImportJob['status'],
+    cursor: r.cursor,
+    total_fetched: r.total_fetched,
+    total_classified: r.total_classified,
+    started_at: r.started_at,
+    completed_at: r.completed_at,
   };
 }
