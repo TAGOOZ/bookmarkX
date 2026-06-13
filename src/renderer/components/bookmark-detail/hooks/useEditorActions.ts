@@ -1,6 +1,7 @@
 import { useCallback } from 'react';
 import { IntlShape } from 'react-intl';
 import type { BlockNoteEditor } from '@blocknote/core';
+import { blocksToMarkdown } from '../../../../parser/blocks-to-markdown';
 
 interface UseEditorActionsProps {
   editor: BlockNoteEditor;
@@ -12,24 +13,29 @@ interface UseEditorActionsProps {
 export function useEditorActions({ editor, bookmarkTitle, intl, setNotification }: UseEditorActionsProps) {
   const handleExpandCollapseAll = useCallback(() => {
     const blocks = editor.document;
-    const toggleExpansion = (blocks: Array<{ props?: { isExpanded?: boolean }; children?: unknown[] }>): void => {
-      for (const block of blocks) {
-        if (block.props?.isExpanded !== undefined) {
-          block.props.isExpanded = !block.props.isExpanded;
+    const cloneAndToggle = (blocks: Array<{ props?: { isExpanded?: boolean }; children?: unknown[] }>): Array<Record<string, unknown>> => {
+      return blocks.map((block) => {
+        const cloned: Record<string, unknown> = { ...block };
+        if (cloned.props && typeof cloned.props === 'object') {
+          cloned.props = { ...cloned.props as Record<string, unknown> };
+          if ((cloned.props as Record<string, unknown>).isExpanded !== undefined) {
+            (cloned.props as Record<string, unknown>).isExpanded = !(cloned.props as Record<string, unknown>).isExpanded;
+          }
         }
         if (block.children && Array.isArray(block.children)) {
-          toggleExpansion(block.children as Array<{ props?: { isExpanded?: boolean }; children?: unknown[] }>);
+          cloned.children = cloneAndToggle(block.children as Array<{ props?: { isExpanded?: boolean }; children?: unknown[] }>);
         }
-      }
+        return cloned;
+      });
     };
-    toggleExpansion(blocks as Array<{ props?: { isExpanded?: boolean }; children?: unknown[] }>);
-    editor.replaceBlocks(editor.document, editor.document);
+    const newBlocks = cloneAndToggle(blocks as Array<{ props?: { isExpanded?: boolean }; children?: unknown[] }>);
+    editor.replaceBlocks(editor.document, newBlocks);
   }, [editor]);
 
   const handleExport = useCallback(async (format: 'md' | 'json' = 'json') => {
     try {
       const blocks = editor.document;
-      const content = format === 'json' ? JSON.stringify(blocks, null, 2) : JSON.stringify(blocks);
+      const content = format === 'json' ? JSON.stringify(blocks, null, 2) : blocksToMarkdown(blocks);
       const result = await window.api.exportBookmark(format, content, bookmarkTitle || 'bookmark');
       if (result.success && !result.cancelled) {
         setNotification(intl.formatMessage({ id: 'exported', defaultMessage: 'Exported successfully' }));
