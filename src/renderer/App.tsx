@@ -88,11 +88,14 @@ function AppContent() {
     if (!activeCol) return;
     const bookmark = bookmarks.find((b) => b.id === bookmarkId);
     if (!bookmark) return;
-    // First ensure the bookmark is in openBookmarks (adds it as tab in active column)
-    handleBookmarkSelect(bookmark);
-    // Then split: duplicates the tab into a new column
+    // Ensure the bookmark is in openBookmarks (without adding it as a tab)
+    const { openBookmarks } = useSplitStore.getState();
+    if (!openBookmarks.find((b) => b.id === bookmarkId)) {
+      useSplitStore.getState().setOpenBookmarks([...openBookmarks, bookmark]);
+    }
+    // Split: creates a new column with this bookmark
     handleSplitColumn(activeCol.id, bookmarkId);
-  }, [splitState, bookmarks, handleBookmarkSelect, handleSplitColumn]);
+  }, [splitState, bookmarks, handleSplitColumn]);
 
   useEffect(() => {
     const scheduleFetch = window.requestIdleCallback ?? ((cb: IdleRequestCallback) => setTimeout(() => cb({ timeRemaining: () => 0, didTimeout: false } as IdleDeadline), 0));
