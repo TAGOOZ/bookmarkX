@@ -71,7 +71,7 @@ honor its STOP conditions, and update your row when done.
 | 061 | Standardize DB operation naming conventions | P3 | M | 052 | DONE |
 | 062 | Add missing index on chat_sessions.bookmark_id | P3 | S | — | DONE |
 | 063 | Add index on glossary_terms.term for LIKE queries | P3 | S | — | DONE |
-| 064 | Add bookmarkStore split-view unit tests | P2 | M | 054 | TODO |
+| 064 | Add bookmarkStore split-view unit tests | P2 | M | 054 | DONE |
 | 065 | Split NavPanel into child components and hooks | P2 | M | — | TODO |
 | 066 | Split Settings.tsx into section components | P2 | M | — | TODO |
 | 067 | Migrate credentials to OS keychain via safeStorage | P2 | L | — | TODO |
