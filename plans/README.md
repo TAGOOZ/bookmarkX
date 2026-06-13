@@ -74,7 +74,7 @@ honor its STOP conditions, and update your row when done.
 | 064 | Add bookmarkStore split-view unit tests | P2 | M | 054 | DONE |
 | 065 | Split NavPanel into child components and hooks | P2 | M | — | DONE |
 | 066 | Split Settings.tsx into section components | P2 | M | — | DONE |
-| 067 | Migrate credentials to OS keychain via safeStorage | P2 | L | — | TODO |
+| 067 | Migrate credentials to OS keychain via safeStorage | P2 | L | — | DONE |
 
 Status values: TODO | IN PROGRESS | DONE | BLOCKED (with one-line reason) | REJECTED (with one-line rationale)
 

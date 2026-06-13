@@ -6,6 +6,7 @@ import { createClient, type Client } from '@libsql/client';
 import { registerAllIpc } from './main/ipc';
 import { initializeSchema } from './db/schema';
 import { startCronScheduler } from './scheduler/cron';
+import { removePlaintextSecrets } from './main/user-config';
 
 // Disable GPU acceleration on Linux to avoid crashes
 // NOTE: --no-sandbox MUST be passed as CLI arg, not appendSwitch (see electron/electron#47650)
@@ -87,6 +88,7 @@ app.whenReady().then(async () => {
   const dbPath = path.join(userDataDir, 'bookmarks.db');
   db = createClient({ url: `file:${dbPath}` });
   await initializeSchema(db);
+  await removePlaintextSecrets(userDataDir);
 
   // Register all IPC handlers (was: 390 lines of inline handlers)
   const { ipcMain } = await import('electron');
