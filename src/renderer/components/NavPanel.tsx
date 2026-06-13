@@ -1,27 +1,15 @@
-import React, { useState, useCallback, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useIntl } from 'react-intl';
-import {
-  Search, Download, Tag, FlaskConical, FlaskConicalOff, Settings,
-  PanelRightOpen, PanelRightClose, Plus,
-} from 'lucide-react';
 import type { Bookmark } from '../types';
 import TopicGroup from './TopicGroup';
 import SearchOverlay from './SearchOverlay';
-import ImportProgress from './ImportProgress';
-import { NotificationBell, NotificationPanel } from './notifications';
-import type { NotificationItem } from './notifications';
 import { useUIStore } from '../stores/uiStore';
-
-interface TopicTreeNode {
-  id: string;
-  name: string;
-  parent_id: string | null;
-  created_by: 'ai' | 'user';
-  created_at: string;
-  children: TopicTreeNode[];
-  bookmark_count: number;
-}
-
+import { useNotifications } from './nav-panel/hooks/useNotifications';
+import { useTopicTree } from './nav-panel/hooks/useTopicTree';
+import type { TopicTreeNode } from './nav-panel/hooks/useTopicTree';
+import NavPanelTabs from './nav-panel/NavPanelTabs';
+import NavPanelUser from './nav-panel/NavPanelUser';
+import TopicCreateRow from './nav-panel/TopicCreateRow';
 interface NavPanelProps {
   bookmarks: Bookmark[];
   onSettingsClick: () => void;
@@ -32,67 +20,22 @@ interface NavPanelProps {
   mockMode: boolean;
   onToggleMockMode: () => void;
 }
-
 const NavPanel: React.FC<NavPanelProps> = ({
-  bookmarks,
-  onSettingsClick,
-  onFetchClick,
-  onClassifyClick,
-  onSelectBookmark,
-  selectedBookmarkId,
-  mockMode,
-  onToggleMockMode,
+  bookmarks, onSettingsClick, onFetchClick, onClassifyClick,
+  onSelectBookmark, selectedBookmarkId, mockMode, onToggleMockMode,
 }) => {
   const intl = useIntl();
   const [showSearch, setShowSearch] = useState(false);
-  const [showNotifications, setShowNotifications] = useState(false);
-  const [notifications, setNotifications] = useState<NotificationItem[]>([]);
-  const [unreadCount, setUnreadCount] = useState(0);
+  const [userName, setUserName] = useState('');
   const isExpanded = useUIStore((s) => s.navExpanded);
   const setNavExpanded = useUIStore((s) => s.setNavExpanded);
   const expandedTopics = useUIStore((s) => s.expandedTopics);
   const toggleTopic = useUIStore((s) => s.toggleTopic);
-  const [topicTree, setTopicTree] = useState<TopicTreeNode[]>([]);
-  const [userName, setUserName] = useState('');
-  const [showCreateTopic, setShowCreateTopic] = useState(false);
-  const [newTopicName, setNewTopicName] = useState('');
-
-  const refreshTopicTree = useCallback(async () => {
-    try {
-      const tree = await (window as any).api?.getTopicTree?.();
-      if (tree) setTopicTree(tree);
-    } catch {
-      // ignore
-    }
-  }, []);
-
+  const { topicTree, refresh: refreshTopicTree, createTopic, renameTopic, deleteTopic, moveBookmark } = useTopicTree();
+  const { notifications, unreadCount, showNotifications, setShowNotifications, markRead, markAllRead, deleteNotification } = useNotifications();
   useEffect(() => {
-    window.api.getTopicTree().then(setTopicTree).catch((err) => {
-      console.warn('Failed to load topic tree:', err);
-      setTopicTree([]);
-    });
+    window.api.getSettings().then((s) => setUserName(s.name || '')).catch(() => {});
   }, []);
-
-  useEffect(() => {
-    window.api.getSettings().then((s) => setUserName(s.name || '')).catch((err) => {
-      console.warn('Failed to load settings:', err);
-    });
-  }, []);
-
-  useEffect(() => {
-    const loadNotifications = async () => {
-      try {
-        const notifs = await (window as any).api?.getNotifications?.() ?? [];
-        setNotifications(notifs);
-        const count = await (window as any).api?.getUnreadCount?.() ?? 0;
-        setUnreadCount(count);
-      } catch {
-        // notifications not available yet
-      }
-    };
-    loadNotifications();
-  }, []);
-
   const bookmarkTopicMap = useMemo(() => {
     const map = new Map<string, Bookmark[]>();
     bookmarks.forEach((b) => {
@@ -102,104 +45,6 @@ const NavPanel: React.FC<NavPanelProps> = ({
     });
     return map;
   }, [bookmarks]);
-
-  const handleToggleExpand = useCallback(() => {
-    setNavExpanded((prev) => !prev);
-  }, [setNavExpanded]);
-
-  const handleToggleTopic = useCallback((topic: string) => {
-    toggleTopic(topic);
-  }, [toggleTopic]);
-
-  const handleOpenSearch = useCallback(() => {
-    setShowSearch(true);
-  }, []);
-
-  const handleCloseSearch = useCallback(() => {
-    setShowSearch(false);
-  }, []);
-
-  const handleCreateTopic = useCallback(async () => {
-    if (!newTopicName.trim()) return;
-    try {
-      await (window as any).api?.createTopic?.(newTopicName.trim(), null);
-      const tree = await (window as any).api?.getTopicTree?.();
-      if (tree) setTopicTree(tree);
-      setNewTopicName('');
-      setShowCreateTopic(false);
-    } catch (err) {
-      console.error('Failed to create topic:', err);
-    }
-  }, [newTopicName]);
-
-  const handleNotificationBellClick = useCallback(() => {
-    setShowNotifications((prev) => !prev);
-  }, []);
-
-  const handleMarkNotificationRead = useCallback(async (id: string) => {
-    try {
-      await (window as any).api?.markNotificationRead?.(id);
-      setNotifications((prev) => prev.map((n) => n.id === id ? { ...n, read: 1 } : n));
-      setUnreadCount((prev) => Math.max(0, prev - 1));
-    } catch (err) {
-      console.warn('Failed to mark notification read:', err);
-    }
-  }, []);
-
-  const handleMarkAllNotificationsRead = useCallback(async () => {
-    try {
-      await (window as any).api?.markAllNotificationsRead?.();
-      setNotifications((prev) => prev.map((n) => ({ ...n, read: 1 })));
-      setUnreadCount(0);
-    } catch (err) {
-      console.warn('Failed to mark all notifications read:', err);
-    }
-  }, []);
-
-  const handleDeleteNotification = useCallback(async (id: string) => {
-    try {
-      await (window as any).api?.deleteNotification?.(id);
-      setNotifications((prev) => prev.filter((n) => n.id !== id));
-      setUnreadCount((prev) => {
-        const notif = notifications.find((n) => n.id === id);
-        return notif?.read === 0 ? Math.max(0, prev - 1) : prev;
-      });
-    } catch (err) {
-      console.warn('Failed to delete notification:', err);
-    }
-  }, [notifications]);
-
-  const handleRenameTopic = useCallback(async (topicId: string, newName: string) => {
-    if (!newName.trim()) return;
-    try {
-      await (window as any).api?.renameTopic?.(topicId, newName.trim());
-      const tree = await (window as any).api?.getTopicTree?.();
-      if (tree) setTopicTree(tree);
-    } catch (err) {
-      console.error('Failed to rename topic:', err);
-    }
-  }, []);
-
-  const handleDeleteTopic = useCallback(async (topicId: string) => {
-    try {
-      await (window as any).api?.deleteTopic?.(topicId);
-      const tree = await (window as any).api?.getTopicTree?.();
-      if (tree) setTopicTree(tree);
-    } catch (err) {
-      console.error('Failed to delete topic:', err);
-    }
-  }, []);
-
-  const handleMoveBookmark = useCallback(async (bookmarkId: string, targetTopicId: string | null) => {
-    try {
-      await (window as any).api?.moveBookmarkToTopic?.(bookmarkId, targetTopicId);
-      const tree = await (window as any).api?.getTopicTree?.();
-      if (tree) setTopicTree(tree);
-    } catch (err) {
-      console.error('Failed to move bookmark:', err);
-    }
-  }, []);
-
   const renderTopicNodes = (nodes: TopicTreeNode[], depth = 0) =>
     nodes.map((node) => {
       const bookmarksInTopic = bookmarkTopicMap.get(node.name) ?? [];
@@ -207,186 +52,66 @@ const NavPanel: React.FC<NavPanelProps> = ({
       const expanded = expandedTopics[node.name] ?? true;
       return (
         <TopicGroup
-          key={node.id}
-          topic={node.name}
-          topicId={node.id}
-          bookmarks={bookmarksInTopic}
-          isExpanded={expanded}
-          onToggle={handleToggleTopic}
-          onSelectBookmark={onSelectBookmark}
-          selectedBookmarkId={selectedBookmarkId}
-          depth={depth}
-          childCount={node.children.length}
-          totalCount={node.bookmark_count}
-          onRename={handleRenameTopic}
-          onDelete={handleDeleteTopic}
-          onMoveBookmark={handleMoveBookmark}
+          key={node.id} topic={node.name} topicId={node.id}
+          bookmarks={bookmarksInTopic} isExpanded={expanded}
+          onToggle={toggleTopic} onSelectBookmark={onSelectBookmark}
+          selectedBookmarkId={selectedBookmarkId} depth={depth}
+          childCount={node.children.length} totalCount={node.bookmark_count}
+          onRename={renameTopic} onDelete={deleteTopic} onMoveBookmark={moveBookmark}
         >
           {hasChildren && expanded && renderTopicNodes(node.children, depth + 1)}
         </TopicGroup>
       );
     });
-
-  const hasTopics = topicTree.length > 0;
-  const hasBookmarks = bookmarks.length > 0;
-
-  const panelTabs = (
-    <div className="nav-panel-tabs">
-      <button
-        className="nav-panel-tab"
-        onClick={handleToggleExpand}
-        title={isExpanded ? intl.formatMessage({ id: 'collapseNav' }) : intl.formatMessage({ id: 'expandNav' })}
-      >
-        {isExpanded ? <PanelRightClose size={18} /> : <PanelRightOpen size={18} />}
-      </button>
-      <button
-        className="nav-panel-tab"
-        onClick={handleOpenSearch}
-        title={intl.formatMessage({ id: 'searchTooltip' })}
-      >
-        <Search size={18} />
-      </button>
-      {!mockMode && (
-        <>
-          <ImportProgress onRefresh={refreshTopicTree} />
-          <button
-            className="nav-panel-tab"
-            onClick={onFetchClick}
-            title={intl.formatMessage({ id: 'fetchNowTooltip' })}
-          >
-            <Download size={18} />
-          </button>
-          <button
-            className="nav-panel-tab"
-            onClick={onClassifyClick}
-            title={intl.formatMessage({ id: 'classifyNowTooltip' })}
-          >
-            <Tag size={18} />
-          </button>
-        </>
-      )}
-      <button
-        className={`nav-panel-tab ${mockMode ? 'mock-mode-active' : ''}`}
-        onClick={onToggleMockMode}
-        title={mockMode ? intl.formatMessage({ id: 'stopMockModeTooltip' }) : intl.formatMessage({ id: 'mockModeTooltip' })}
-      >
-        {mockMode ? <FlaskConicalOff size={18} /> : <FlaskConical size={18} />}
-      </button>
-      <button
-        className="nav-panel-tab"
-        onClick={onSettingsClick}
-        title={intl.formatMessage({ id: 'settingsTooltip' })}
-      >
-        <Settings size={18} />
-      </button>
-      <div style={{ position: 'relative' }}>
-        <NotificationBell unreadCount={unreadCount} onClick={handleNotificationBellClick} />
-        {showNotifications && (
-          <NotificationPanel
-            notifications={notifications}
-            onMarkRead={handleMarkNotificationRead}
-            onMarkAllRead={handleMarkAllNotificationsRead}
-            onDelete={handleDeleteNotification}
-            onClose={() => setShowNotifications(false)}
-          />
-        )}
-      </div>
-    </div>
-  );
-
-  const collapsedAvatar = userName && (
-    <div className="nav-panel-collapsed-avatar" title={userName}>
-      <div className="nav-panel-user-avatar">
-        {userName.charAt(0).toUpperCase()}
-      </div>
-    </div>
-  );
-
   return (
     <div
       className={`nav-panel ${isExpanded ? '' : 'nav-panel-collapsed'}`}
       onMouseEnter={() => { if (!isExpanded) setNavExpanded(true); }}
       onMouseLeave={() => { if (!isExpanded) setNavExpanded(false); }}
     >
-      {!isExpanded && collapsedAvatar}
+      {!isExpanded && <NavPanelUser userName={userName} isExpanded={false} />}
       {isExpanded && (
         <>
-          {userName && (
-            <div className="nav-panel-user">
-              <div className="nav-panel-user-avatar">
-                {userName.charAt(0).toUpperCase()}
-              </div>
-              <span className="nav-panel-user-name">{userName}</span>
-            </div>
-          )}
+          <NavPanelUser userName={userName} isExpanded={true} />
           <div className="nav-panel-content">
-            {hasTopics ? (
+            {topicTree.length > 0 ? (
               renderTopicNodes(topicTree)
-            ) : hasBookmarks ? (
+            ) : bookmarks.length > 0 ? (
               Array.from(bookmarkTopicMap.entries()).map(([topic, items]) => (
                 <TopicGroup
-                  key={topic}
-                  topic={topic}
-                  bookmarks={items}
+                  key={topic} topic={topic} bookmarks={items}
                   isExpanded={expandedTopics[topic] ?? true}
-                  onToggle={handleToggleTopic}
-                  onSelectBookmark={onSelectBookmark}
-                  selectedBookmarkId={selectedBookmarkId}
-                  depth={0}
-                  onMoveBookmark={handleMoveBookmark}
+                  onToggle={toggleTopic} onSelectBookmark={onSelectBookmark}
+                  selectedBookmarkId={selectedBookmarkId} depth={0}
+                  onMoveBookmark={moveBookmark}
                 />
               ))
             ) : (
-              <div className="nav-panel-empty">
-                {intl.formatMessage({ id: 'noBookmarks' })}
-              </div>
+              <div className="nav-panel-empty">{intl.formatMessage({ id: 'noBookmarks' })}</div>
             )}
-            {showCreateTopic ? (
-              <div className="topic-create-row">
-                <input
-                  className="topic-create-input"
-                  value={newTopicName}
-                  onChange={(e) => setNewTopicName(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter') handleCreateTopic();
-                    if (e.key === 'Escape') { setShowCreateTopic(false); setNewTopicName(''); }
-                  }}
-                  placeholder={intl.formatMessage({ id: 'topicName' })}
-                  autoFocus
-                />
-                <button className="topic-create-btn" onClick={handleCreateTopic}>
-                  {intl.formatMessage({ id: 'createTopic' })}
-                </button>
-                <button
-                  className="topic-create-cancel"
-                  onClick={() => { setShowCreateTopic(false); setNewTopicName(''); }}
-                >
-                  {intl.formatMessage({ id: 'cancel' })}
-                </button>
-              </div>
-            ) : (
-              <button
-                className="topic-add-btn"
-                onClick={() => setShowCreateTopic(true)}
-              >
-                <Plus size={14} />
-                {intl.formatMessage({ id: 'addTopic' })}
-              </button>
-            )}
+            <TopicCreateRow onCreate={createTopic} />
           </div>
         </>
       )}
-      {panelTabs}
-
+      <NavPanelTabs
+        isExpanded={isExpanded}
+        onToggleExpand={() => setNavExpanded((prev) => !prev)}
+        onOpenSearch={() => setShowSearch(true)}
+        onRefreshTopicTree={refreshTopicTree}
+        onFetchClick={onFetchClick} onClassifyClick={onClassifyClick}
+        mockMode={mockMode} onToggleMockMode={onToggleMockMode}
+        onSettingsClick={onSettingsClick}
+        unreadCount={unreadCount} showNotifications={showNotifications}
+        onToggleNotifications={() => setShowNotifications((prev) => !prev)}
+        onCloseNotifications={() => setShowNotifications(false)}
+        notifications={notifications}
+        onMarkNotificationRead={markRead} onMarkAllNotificationsRead={markAllRead}
+        onDeleteNotification={deleteNotification}
+      />
       {showSearch && (
-        <SearchOverlay
-          bookmarks={bookmarks}
-          onSelectBookmark={onSelectBookmark}
-          onClose={handleCloseSearch}
-        />
+        <SearchOverlay bookmarks={bookmarks} onSelectBookmark={onSelectBookmark} onClose={() => setShowSearch(false)} />
       )}
     </div>
   );
 };
-
 export default NavPanel;
