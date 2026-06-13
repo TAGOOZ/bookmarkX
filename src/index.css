@@ -635,11 +635,7 @@ body {
   padding: var(--space-s) var(--space-m);
   background-color: rgba(168, 130, 255, 0.08);
   border-bottom: 1px solid rgba(168, 130, 255, 0.2);
-  position: fixed;
-  top: 36px;
-  left: 0;
-  right: 0;
-  z-index: 99;
+  flex-shrink: 0;
   animation: bannerSlideIn 0.3s ease;
 }
 
