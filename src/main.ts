@@ -1,8 +1,6 @@
 import { app, BrowserWindow, Menu } from 'electron';
 import path from 'node:path';
-import fs from 'node:fs';
 import started from 'electron-squirrel-startup';
-import { createClient, type Client } from '@libsql/client';
 
 // Linux-specific flags for GPU-less systems (Electron 42 compat)
 // NOTE: --no-sandbox MUST be passed as CLI arg, not appendSwitch (see electron/electron#47650)
@@ -17,11 +15,13 @@ if (process.platform === 'linux') {
 }
 
 // Handle creating/removing shortcuts on Windows when installing/uninstalling.
-if (started) {
+// electron-squirrel-startup is only relevant on Windows
+if (process.platform === 'win32' && started) {
   app.quit();
 }
 
-let db: Client;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+let db: any;
 let mainWindow: BrowserWindow | null = null;
 
 const createWindow = () => {
@@ -86,18 +86,10 @@ app.whenReady().then(async () => {
 
   const userDataDir = app.getPath('userData');
 
-  // Delete .env on first launch after update
-  const envPath = path.join(app.getAppPath(), '.env');
-  try {
-    await fs.promises.access(envPath);
-    await fs.promises.unlink(envPath);
-  } catch {
-    // .env doesn't exist — nothing to delete
-  }
-
   // Initialize SQLite database with error handling
   let dbInitialized = false;
   try {
+    const { createClient } = await import('@libsql/client');
     const dbPath = path.join(userDataDir, 'bookmarks.db');
     db = createClient({ url: `file:${dbPath}` });
     dbInitialized = true;
@@ -106,24 +98,39 @@ app.whenReady().then(async () => {
   }
 
   if (dbInitialized) {
-    // Lazy-load schema, IPC, and cron modules
+    // Lazy-load schema and IPC modules
     try {
-      const [{ initializeSchema }, { registerAllIpc }, { startCronScheduler }, { removePlaintextSecrets }] =
+      const [{ initializeSchema }, { registerAllIpc }] =
         await Promise.all([
           import('./db/schema'),
           import('./main/ipc'),
-          import('./scheduler/cron'),
-          import('./main/user-config'),
         ]);
 
       await initializeSchema(db);
-      await removePlaintextSecrets(userDataDir);
 
       // Register all IPC handlers
       const { ipcMain } = await import('electron');
       registerAllIpc(ipcMain, db);
+    } catch (err) {
+      console.error('Failed to initialize app modules:', err);
+    }
+  }
 
-      // Start cron scheduler: fetch every 6 hours, then classify
+  // Create window first for faster perceived startup
+  createWindow();
+
+  // Background cleanup: remove plaintext secrets from config (one-time migration)
+  if (dbInitialized) {
+    import('./main/user-config').then(({ removePlaintextSecrets }) => {
+      removePlaintextSecrets(userDataDir).catch((err) => {
+        console.error('Failed to remove plaintext secrets:', err);
+      });
+    }).catch((err) => {
+      console.error('Failed to import user-config:', err);
+    });
+
+    // Start cron scheduler in background (first run is 6 hours away)
+    import('./scheduler/cron').then(({ startCronScheduler }) => {
       try {
         const cronJob = startCronScheduler(db, '0 */6 * * *');
         app.on('before-quit', () => {
@@ -132,13 +139,10 @@ app.whenReady().then(async () => {
       } catch (err) {
         console.error('Failed to start cron scheduler:', err);
       }
-    } catch (err) {
-      console.error('Failed to initialize app modules:', err);
-    }
+    }).catch((err) => {
+      console.error('Failed to import cron scheduler:', err);
+    });
   }
-
-  // Create window regardless of initialization success
-  createWindow();
 }).catch((err) => {
   console.error('Fatal startup error:', err);
   // Still attempt to create window so user sees something

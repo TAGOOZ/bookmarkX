@@ -1,5 +1,7 @@
 import type { Client } from '@libsql/client';
 
+const SCHEMA_VERSION = 2;
+
 const SCHEMA_SQL = `
   CREATE TABLE IF NOT EXISTS bookmarks (
     id TEXT PRIMARY KEY,
@@ -153,6 +155,22 @@ const SCHEMA_SQL = `
 `;
 
 export async function initializeSchema(db: Client): Promise<void> {
+  // Ensure version tracking table exists
+  await db.execute(`
+    CREATE TABLE IF NOT EXISTS _schema_version (
+      version INTEGER PRIMARY KEY
+    )
+  `);
+
+  // Check current version
+  const { rows } = await db.execute('SELECT version FROM _schema_version LIMIT 1');
+  const currentVersion = rows[0] ? Number(rows[0].version) : 0;
+
+  if (currentVersion >= SCHEMA_VERSION) {
+    // Schema is up to date — skip all migrations
+    return;
+  }
+
   await db.executeMultiple(SCHEMA_SQL);
 
   // Migration: add blocks_json if missing (existing databases)
@@ -354,4 +372,8 @@ export async function initializeSchema(db: Client): Promise<void> {
   } catch {
     // Table may not exist — ignore
   }
+
+  // Update schema version
+  await db.execute('DELETE FROM _schema_version');
+  await db.execute({ sql: 'INSERT INTO _schema_version (version) VALUES (?)', args: [SCHEMA_VERSION] });
 }

@@ -75,6 +75,15 @@ honor its STOP conditions, and update your row when done.
 | 065 | Split NavPanel into child components and hooks | P2 | M | — | DONE |
 | 066 | Split Settings.tsx into section components | P2 | M | — | DONE |
 | 067 | Migrate credentials to OS keychain via safeStorage | P2 | L | — | DONE |
+| 068 | Consolidate schema migrations to skip on existing databases | P1 | S | — | DONE |
+| 069 | Remove .env file deletion on every startup | P1 | S | — | DONE |
+| 070 | Defer removePlaintextSecrets to after window creation | P1 | S | — | DONE |
+| 071 | Lazy-load @libsql/client in main process | P2 | S | — | DONE |
+| 072 | Lazy-load inactive locale JSON in renderer | P2 | M | — | DONE |
+| 073 | Lazy-load non-critical IPC handler modules | P2 | M | — | DONE |
+| 074 | Defer cron scheduler startup to after window creation | P2 | S | — | DONE |
+| 075 | Defer initial bookmarks fetch to after first paint | P2 | M | — | DONE |
+| 076 | Skip electron-squirrel-startup import on non-Windows | P3 | S | — | DONE |
 
 Status values: TODO | IN PROGRESS | DONE | BLOCKED (with one-line reason) | REJECTED (with one-line rationale)
 
@@ -121,6 +130,15 @@ Status values: TODO | IN PROGRESS | DONE | BLOCKED (with one-line reason) | REJE
 - 065 is independent (NavPanel decomposition)
 - 066 is independent (Settings decomposition)
 - 067 is independent (credential security)
+- 068 is independent (schema migrations)
+- 069 is independent (.env deletion)
+- 070 is independent (removePlaintextSecrets deferral)
+- 071 is independent (libsql lazy load)
+- 072 is independent (locale lazy load)
+- 073 is independent (IPC lazy load)
+- 074 is independent (cron deferral)
+- 075 is independent (bookmarks fetch deferral)
+- 076 is independent (squirrel platform guard)
 
 ## Recommended execution order
 
@@ -156,6 +174,9 @@ Status values: TODO | IN PROGRESS | DONE | BLOCKED (with one-line reason) | REJE
 
 **Phase 11 — Previously deferred (P2, new plans)**:
 065 → 066 → 067
+
+**Phase 12 — Startup optimization (P1-P3, new plans)**:
+068 → 069 → 070 → 071 → 074 → 073 → 075 → 072 → 076
 
 ## Findings considered and rejected
 

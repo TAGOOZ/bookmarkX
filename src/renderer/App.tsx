@@ -1,10 +1,8 @@
-import React, { useEffect, createContext, useContext, Suspense } from 'react';
+import React, { useEffect, useState, createContext, useContext, Suspense } from 'react';
 import { IntlProvider, useIntl } from 'react-intl';
 import NavPanel from './components/NavPanel';
 import { SplitLayout } from './components/split-view';
 import FirstRunBanner from './components/FirstRunBanner';
-import arMessages from '../../locales/ar.json';
-import enMessages from '../../locales/en.json';
 import { useBookmarkStore } from './stores/bookmarkStore';
 import { useSplitStore } from './stores/splitStore';
 import { useSettingsStore } from './stores/settingsStore';
@@ -27,10 +25,16 @@ export const LocaleContext = createContext<LocaleContextValue>({
 
 export const useLocale = () => useContext(LocaleContext);
 
-const messages: Record<string, Record<string, string>> = {
-  ar: arMessages,
-  en: enMessages,
-};
+const localeCache: Record<string, Record<string, string>> = {};
+
+async function loadLocale(locale: string): Promise<Record<string, string>> {
+  if (localeCache[locale]) return localeCache[locale];
+  const mod = locale === 'ar'
+    ? await import('../../locales/ar.json')
+    : await import('../../locales/en.json');
+  localeCache[locale] = mod.default ?? mod;
+  return localeCache[locale];
+}
 
 function Titlebar() {
   const intl = useIntl();
@@ -80,7 +84,17 @@ function AppContent() {
   const toggleMockMode = () => setMockMode((prev) => !prev);
 
   useEffect(() => {
-    fetchBookmarks();
+    const scheduleFetch = window.requestIdleCallback ?? ((cb: IdleRequestCallback) => setTimeout(() => cb({ timeRemaining: () => 0, didTimeout: false } as IdleDeadline), 0));
+    const handle = scheduleFetch(() => {
+      fetchBookmarks();
+    }) as unknown as number;
+    return () => {
+      if (window.cancelIdleCallback) {
+        window.cancelIdleCallback(handle);
+      } else {
+        clearTimeout(handle);
+      }
+    };
   }, [fetchBookmarks]);
 
   return (
@@ -134,15 +148,26 @@ function AppContent() {
 function App() {
   const locale = useSettingsStore((s) => s.locale);
   const setLocale = useSettingsStore((s) => s.setLocale);
+  const [messages, setMessages] = useState<Record<string, string> | null>(null);
 
   useEffect(() => {
     document.documentElement.dir = locale === 'ar' ? 'rtl' : 'ltr';
     document.documentElement.lang = locale;
   }, [locale]);
 
+  useEffect(() => {
+    let cancelled = false;
+    loadLocale(locale).then((msgs) => {
+      if (!cancelled) setMessages(msgs);
+    });
+    return () => { cancelled = true; };
+  }, [locale]);
+
+  if (!messages) return null;
+
   return (
     <LocaleContext.Provider value={{ locale, setLocale }}>
-      <IntlProvider messages={messages[locale]} locale={locale} defaultLocale="ar">
+      <IntlProvider messages={messages} locale={locale} defaultLocale="ar">
         <AppContent />
       </IntlProvider>
     </LocaleContext.Provider>
