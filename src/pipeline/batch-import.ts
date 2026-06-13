@@ -1,10 +1,10 @@
 import type { Client } from '@libsql/client';
 import { fetchBookmarksPaginated } from '../fetch/bird';
-import { storeBookmarks, getBookmarkById } from '../db/bookmarks';
+import { createBookmarks, getBookmarkById } from '../db/bookmarks';
 import { createImportJob, getImportJob, updateImportJob, getActiveImportJob } from '../db/import-jobs';
 import { createNotification } from '../db/notifications';
 import { classifyBookmark } from '../classify/classifier';
-import { storeClassification, getClassification } from '../db/classifications';
+import { createClassification, getClassification } from '../db/classifications';
 import { sendHighPriorityNotification } from '../notify/notify';
 import type { FetchOptions } from '../fetch/types';
 import type { ClassifierOptions } from '../classify/types';
@@ -89,7 +89,7 @@ export async function startBatchImport(
           break;
         }
 
-        await storeBookmarks(db, result.bookmarks);
+        await createBookmarks(db, result.bookmarks);
         totalFetched += result.bookmarks.length;
         batchNum++;
 
@@ -142,7 +142,7 @@ export async function startBatchImport(
               if (!bookmark) continue;
 
               const result = await classifyBookmark(bookmark, options);
-              await storeClassification(db, row.id, result);
+              await createClassification(db, row.id, result);
               totalClassified++;
 
               if (result.priority === 'high') {

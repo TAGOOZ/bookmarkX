@@ -5,7 +5,7 @@ vi.mock('../gemini', () => ({
 }));
 
 vi.mock('../../db/summaries', () => ({
-  storeSummary: vi.fn(),
+  createSummary: vi.fn(),
 }));
 
 vi.mock('../../db/article-content', () => ({
@@ -14,11 +14,11 @@ vi.mock('../../db/article-content', () => ({
 
 import { summarizeBookmark } from '../summarize';
 import { callGemini } from '../gemini';
-import { storeSummary } from '../../db/summaries';
+import { createSummary } from '../../db/summaries';
 import { getArticleContent } from '../../db/article-content';
 
 const mockCallGemini = vi.mocked(callGemini);
-const mockStoreSummary = vi.mocked(storeSummary);
+const mockCreateSummary = vi.mocked(createSummary);
 const mockGetArticleContent = vi.mocked(getArticleContent);
 
 function createMockDb() {
@@ -68,7 +68,7 @@ describe('summarizeBookmark', () => {
       url: 'https://example.com',
     }, { apiKey: 'key' });
 
-    expect(mockStoreSummary).toHaveBeenCalledWith(
+    expect(mockCreateSummary).toHaveBeenCalledWith(
       expect.anything(),
       'bm-1',
       expect.objectContaining({ content_en: 'English', content_ar: 'Arabic' }),

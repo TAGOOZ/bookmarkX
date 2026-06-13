@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import type { Client } from '@libsql/client';
 import { createTestDb } from './test-client';
-import { storeArticleContent, getArticleContent, sanitizeFtsQuery } from '../article-content';
+import { createArticleContent, getArticleContent, sanitizeFtsQuery } from '../article-content';
 
 describe('article_content', () => {
   let db: Client;
@@ -16,9 +16,9 @@ describe('article_content', () => {
 
   afterEach(() => db.close());
 
-  describe('storeArticleContent', () => {
+  describe('createArticleContent', () => {
     it('stores article content for a bookmark', async () => {
-      await storeArticleContent(db, 'bm-1', {
+      await createArticleContent(db, 'bm-1', {
         extracted_text: 'Full article text here...',
         word_count: 1500,
       });
@@ -34,7 +34,7 @@ describe('article_content', () => {
     });
 
     it('generates a UUID for the article content id', async () => {
-      await storeArticleContent(db, 'bm-1', {
+      await createArticleContent(db, 'bm-1', {
         extracted_text: 'Text',
         word_count: 10,
       });
@@ -54,7 +54,7 @@ describe('article_content', () => {
         { type: 'heading', props: { level: 1 }, content: 'Title' },
         { type: 'paragraph', content: 'Body text' },
       ]);
-      await storeArticleContent(db, 'bm-1', {
+      await createArticleContent(db, 'bm-1', {
         extracted_text: 'Title Body text',
         word_count: 3,
         blocks_json: blocks,
@@ -69,7 +69,7 @@ describe('article_content', () => {
     });
 
     it('stores null blocks_json when not provided', async () => {
-      await storeArticleContent(db, 'bm-1', {
+      await createArticleContent(db, 'bm-1', {
         extracted_text: 'Text',
         word_count: 1,
       });
@@ -90,7 +90,7 @@ describe('article_content', () => {
     });
 
     it('returns the article content for a bookmark', async () => {
-      await storeArticleContent(db, 'bm-1', {
+      await createArticleContent(db, 'bm-1', {
         extracted_text: 'Full article text here...',
         word_count: 1500,
       });
@@ -105,7 +105,7 @@ describe('article_content', () => {
       const blocks = JSON.stringify([
         { type: 'heading', props: { level: 1 }, content: 'Title' },
       ]);
-      await storeArticleContent(db, 'bm-1', {
+      await createArticleContent(db, 'bm-1', {
         extracted_text: 'Title',
         word_count: 1,
         blocks_json: blocks,
@@ -116,7 +116,7 @@ describe('article_content', () => {
     });
 
     it('returns undefined blocks_json when not stored', async () => {
-      await storeArticleContent(db, 'bm-1', {
+      await createArticleContent(db, 'bm-1', {
         extracted_text: 'Text',
         word_count: 1,
       });

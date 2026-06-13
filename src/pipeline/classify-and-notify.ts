@@ -1,7 +1,7 @@
 import type { Client } from '@libsql/client';
 import { classifyBookmark } from '../classify/classifier';
 import { getUnclassifiedBookmarks } from '../db/bookmarks';
-import { storeClassification } from '../db/classifications';
+import { createClassification } from '../db/classifications';
 import { createNotification } from '../db/notifications';
 import { sendHighPriorityNotification } from '../notify/notify';
 
@@ -32,7 +32,7 @@ export async function classifyAndNotify(
     for (const bookmark of bookmarks) {
       try {
         const result = await classifyBookmark(bookmark, options);
-        await storeClassification(db, bookmark.id, result);
+        await createClassification(db, bookmark.id, result);
         classified++;
 
         if (result.priority === 'high') {

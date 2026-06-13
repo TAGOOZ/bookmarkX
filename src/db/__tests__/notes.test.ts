@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import type { Client } from '@libsql/client';
 import { createTestDb } from './test-client';
-import { storeNote, getNotes, updateNote, deleteNote } from '../notes';
+import { createNote, getNotes, updateNote, deleteNote } from '../notes';
 
 describe('notes', () => {
   let db: Client;
@@ -16,9 +16,9 @@ describe('notes', () => {
 
   afterEach(() => db.close());
 
-  describe('storeNote', () => {
+  describe('createNote', () => {
     it('stores a note for a bookmark', async () => {
-      await storeNote(db, 'bm-1', {
+      await createNote(db, 'bm-1', {
         title: 'My Note',
         content: '{"type":"doc","content":[]}',
       });
@@ -34,7 +34,7 @@ describe('notes', () => {
     });
 
     it('generates a UUID for the note id', async () => {
-      await storeNote(db, 'bm-1', { title: 'Note', content: '{}' });
+      await createNote(db, 'bm-1', { title: 'Note', content: '{}' });
 
       const { rows } = await db.execute({
         sql: 'SELECT id FROM notes WHERE bookmark_id = ?',
@@ -54,8 +54,8 @@ describe('notes', () => {
     });
 
     it('returns all notes for a bookmark', async () => {
-      await storeNote(db, 'bm-1', { title: 'First', content: '{}' });
-      await storeNote(db, 'bm-1', { title: 'Second', content: '{}' });
+      await createNote(db, 'bm-1', { title: 'First', content: '{}' });
+      await createNote(db, 'bm-1', { title: 'Second', content: '{}' });
 
       const result = await getNotes(db, 'bm-1');
       expect(result).toHaveLength(2);
@@ -64,7 +64,7 @@ describe('notes', () => {
 
   describe('updateNote', () => {
     it('updates note title and content', async () => {
-      await storeNote(db, 'bm-1', { title: 'Old Title', content: 'old' });
+      await createNote(db, 'bm-1', { title: 'Old Title', content: 'old' });
       const { rows } = await db.execute({
         sql: 'SELECT id FROM notes WHERE bookmark_id = ?',
         args: ['bm-1'],
@@ -85,7 +85,7 @@ describe('notes', () => {
 
   describe('deleteNote', () => {
     it('removes a note by id', async () => {
-      await storeNote(db, 'bm-1', { title: 'To delete', content: '{}' });
+      await createNote(db, 'bm-1', { title: 'To delete', content: '{}' });
       const { rows } = await db.execute({
         sql: 'SELECT id FROM notes WHERE bookmark_id = ?',
         args: ['bm-1'],

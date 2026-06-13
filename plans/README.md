@@ -68,7 +68,7 @@ honor its STOP conditions, and update your row when done.
 | 058 | Fix stale closures in useHashtags and useCustomSections hooks | P2 | M | — | DONE |
 | 059 | Add CSP headers to BrowserWindow | P2 | M | — | DONE |
 | 060 | Add CI workflow with pnpm check | P3 | S | — | DONE |
-| 061 | Standardize DB operation naming conventions | P3 | M | 052 | TODO |
+| 061 | Standardize DB operation naming conventions | P3 | M | 052 | DONE |
 | 062 | Add missing index on chat_sessions.bookmark_id | P3 | S | — | DONE |
 | 063 | Add index on glossary_terms.term for LIKE queries | P3 | S | — | DONE |
 | 064 | Add bookmarkStore split-view unit tests | P2 | M | 054 | TODO |

@@ -12,7 +12,7 @@ export interface Note extends NoteData {
   updated_at: string;
 }
 
-export async function storeNote(
+export async function createNote(
   db: Client,
   bookmarkId: string,
   data: NoteData,

@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import type { Client } from '@libsql/client';
 import { createTestDb } from '../../db/__tests__/test-client';
 import { classifyAndNotify } from '../classify-and-notify';
-import { storeBookmarks } from '../../db/bookmarks';
+import { createBookmarks } from '../../db/bookmarks';
 
 import type { Bookmark } from '../../fetch/types';
 
@@ -62,7 +62,7 @@ describe('classifyAndNotify pipeline', () => {
   ];
 
   beforeEach(async () => {
-    await storeBookmarks(db, mockBookmarks);
+    await createBookmarks(db, mockBookmarks);
   });
 
   it('classifies bookmarks and sends notification for high priority', async () => {

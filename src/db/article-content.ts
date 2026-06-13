@@ -28,7 +28,7 @@ function computeContentHash(text: string): string {
   return Math.abs(hash).toString(36);
 }
 
-export async function storeArticleContent(
+export async function createArticleContent(
   db: Client,
   bookmarkId: string,
   data: ArticleContentData,

@@ -5,7 +5,7 @@ vi.mock('../gemini', () => ({
 }));
 
 vi.mock('../../db/article-content', () => ({
-  storeArticleContent: vi.fn(),
+  createArticleContent: vi.fn(),
 }));
 
 vi.mock('../../parser', () => ({
@@ -14,11 +14,11 @@ vi.mock('../../parser', () => ({
 
 import { extractArticle } from '../extract';
 import { callGemini } from '../gemini';
-import { storeArticleContent } from '../../db/article-content';
+import { createArticleContent } from '../../db/article-content';
 import { parseArticle } from '../../parser';
 
 const mockCallGemini = vi.mocked(callGemini);
-const mockStoreArticleContent = vi.mocked(storeArticleContent);
+const mockCreateArticleContent = vi.mocked(createArticleContent);
 const mockParseArticle = vi.mocked(parseArticle);
 
 function createMockDb() {
@@ -49,7 +49,7 @@ describe('extractArticle', () => {
     expect(result.word_count).toBe(100);
     expect(result.reading_time).toBe(3);
     expect(result.og_title).toBe('OG Title');
-    expect(mockStoreArticleContent).toHaveBeenCalled();
+    expect(mockCreateArticleContent).toHaveBeenCalled();
   });
 
   it('returns cached result for same URL', async () => {

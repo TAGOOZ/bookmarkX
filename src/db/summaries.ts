@@ -12,7 +12,7 @@ export interface Summary extends SummaryData {
   created_at: string;
 }
 
-export async function storeSummary(
+export async function createSummary(
   db: Client,
   bookmarkId: string,
   data: SummaryData,

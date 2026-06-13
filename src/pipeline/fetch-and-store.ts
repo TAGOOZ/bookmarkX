@@ -1,6 +1,6 @@
 import type { Client } from '@libsql/client';
 import { fetchBookmarks } from '../fetch/bird';
-import { storeBookmarks } from '../db/bookmarks';
+import { createBookmarks } from '../db/bookmarks';
 import { createNotification } from '../db/notifications';
 import type { FetchOptions } from '../fetch/types';
 
@@ -18,7 +18,7 @@ export async function fetchAndStore(
   const { rows: beforeRows } = await db.execute({ sql: 'SELECT COUNT(*) as count FROM bookmarks' });
   const countBefore = (beforeRows?.[0] as any)?.count ?? 0;
 
-  await storeBookmarks(db, bookmarks);
+  await createBookmarks(db, bookmarks);
 
   const { rows: afterRows } = await db.execute({ sql: 'SELECT COUNT(*) as count FROM bookmarks' });
   const countAfter = (afterRows?.[0] as any)?.count ?? 0;

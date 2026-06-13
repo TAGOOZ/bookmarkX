@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import type { Client } from '@libsql/client';
 import { createTestDb } from './test-client';
-import { storeSummary, getSummary } from '../summaries';
+import { createSummary, getSummary } from '../summaries';
 
 describe('summaries', () => {
   let db: Client;
@@ -16,9 +16,9 @@ describe('summaries', () => {
 
   afterEach(() => db.close());
 
-  describe('storeSummary', () => {
+  describe('createSummary', () => {
     it('stores a summary for a bookmark', async () => {
-      await storeSummary(db, 'bm-1', {
+      await createSummary(db, 'bm-1', {
         content_en: 'English summary',
         content_ar: 'Arabic summary',
         model_used: 'gemini-2.0-flash',
@@ -36,7 +36,7 @@ describe('summaries', () => {
     });
 
     it('generates a UUID for the summary id', async () => {
-      await storeSummary(db, 'bm-1', {
+      await createSummary(db, 'bm-1', {
         content_en: 'Summary',
         content_ar: null,
         model_used: 'gemini-2.0-flash',
@@ -60,7 +60,7 @@ describe('summaries', () => {
     });
 
     it('returns the summary for a bookmark', async () => {
-      await storeSummary(db, 'bm-1', {
+      await createSummary(db, 'bm-1', {
         content_en: 'English summary',
         content_ar: 'Arabic summary',
         model_used: 'gemini-2.0-flash',

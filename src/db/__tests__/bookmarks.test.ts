@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import type { Client } from '@libsql/client';
 import { createTestDb } from './test-client';
-import { storeBookmarks, getStoredBookmarks, getUnclassifiedBookmarks } from '../bookmarks';
+import { createBookmarks, getStoredBookmarks, getUnclassifiedBookmarks } from '../bookmarks';
 import type { Bookmark } from '../../fetch/types';
 
 describe('Bookmark CRUD', () => {
@@ -43,9 +43,9 @@ describe('Bookmark CRUD', () => {
     fetched_at: '2024-01-15T11:00:00Z',
   };
 
-  describe('storeBookmarks', () => {
+  describe('createBookmarks', () => {
     it('inserts a single bookmark into the database', async () => {
-      await storeBookmarks(db, [mockBookmark]);
+      await createBookmarks(db, [mockBookmark]);
 
       const { rows } = await db.execute({
         sql: 'SELECT * FROM bookmarks WHERE tweet_id = ?',
@@ -63,22 +63,22 @@ describe('Bookmark CRUD', () => {
     });
 
     it('inserts multiple bookmarks', async () => {
-      await storeBookmarks(db, [mockBookmark, mockBookmark2]);
+      await createBookmarks(db, [mockBookmark, mockBookmark2]);
 
       const { rows } = await db.execute({ sql: 'SELECT COUNT(*) as count FROM bookmarks' });
       expect((rows[0] as any).count).toBe(2);
     });
 
     it('skips duplicate tweet_ids', async () => {
-      await storeBookmarks(db, [mockBookmark]);
-      await storeBookmarks(db, [mockBookmark]);
+      await createBookmarks(db, [mockBookmark]);
+      await createBookmarks(db, [mockBookmark]);
 
       const { rows } = await db.execute({ sql: 'SELECT COUNT(*) as count FROM bookmarks' });
       expect((rows[0] as any).count).toBe(1);
     });
 
     it('handles empty array', async () => {
-      await storeBookmarks(db, []);
+      await createBookmarks(db, []);
 
       const { rows } = await db.execute({ sql: 'SELECT COUNT(*) as count FROM bookmarks' });
       expect((rows[0] as any).count).toBe(0);
@@ -92,7 +92,7 @@ describe('Bookmark CRUD', () => {
     });
 
     it('returns all stored bookmarks', async () => {
-      await storeBookmarks(db, [mockBookmark, mockBookmark2]);
+      await createBookmarks(db, [mockBookmark, mockBookmark2]);
 
       const result = await getStoredBookmarks(db);
       expect(result).toHaveLength(2);
@@ -101,7 +101,7 @@ describe('Bookmark CRUD', () => {
     });
 
     it('returns bookmarks with correct structure', async () => {
-      await storeBookmarks(db, [mockBookmark]);
+      await createBookmarks(db, [mockBookmark]);
 
       const result = await getStoredBookmarks(db);
       expect(result[0]).toMatchObject({
@@ -120,14 +120,14 @@ describe('Bookmark CRUD', () => {
     });
 
     it('returns all bookmarks when none have been classified', async () => {
-      await storeBookmarks(db, [mockBookmark, mockBookmark2]);
+      await createBookmarks(db, [mockBookmark, mockBookmark2]);
 
       const result = await getUnclassifiedBookmarks(db);
       expect(result).toHaveLength(2);
     });
 
     it('excludes bookmarks that have been classified', async () => {
-      await storeBookmarks(db, [mockBookmark, mockBookmark2]);
+      await createBookmarks(db, [mockBookmark, mockBookmark2]);
 
       await db.execute({
         sql: 'INSERT INTO classifications (id, bookmark_id, priority, reading_time_min) VALUES (?, ?, ?, ?)',
@@ -140,7 +140,7 @@ describe('Bookmark CRUD', () => {
     });
 
     it('returns all bookmarks when all have been classified', async () => {
-      await storeBookmarks(db, [mockBookmark, mockBookmark2]);
+      await createBookmarks(db, [mockBookmark, mockBookmark2]);
 
       await db.execute({
         sql: 'INSERT INTO classifications (id, bookmark_id, priority, reading_time_min) VALUES (?, ?, ?, ?)',

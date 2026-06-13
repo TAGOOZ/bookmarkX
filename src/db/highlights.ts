@@ -12,7 +12,7 @@ export interface Highlight extends HighlightData {
   created_at: string;
 }
 
-export async function storeHighlight(
+export async function createHighlight(
   db: Client,
   bookmarkId: string,
   data: HighlightData,

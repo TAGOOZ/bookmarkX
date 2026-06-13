@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import type { Client } from '@libsql/client';
 import { createTestDb } from './test-client';
 import {
-  storeClassification,
+  createClassification,
   getClassification,
   getClassifiedBookmarks,
 } from '../classifications';
@@ -58,9 +58,9 @@ describe('Classification CRUD', () => {
     });
   });
 
-  describe('storeClassification', () => {
+  describe('createClassification', () => {
     it('stores classification for a bookmark', async () => {
-      await storeClassification(db, mockBookmark.id, mockClassification);
+      await createClassification(db, mockBookmark.id, mockClassification);
 
       const { rows } = await db.execute({
         sql: 'SELECT * FROM classifications WHERE bookmark_id = ?',
@@ -73,7 +73,7 @@ describe('Classification CRUD', () => {
     });
 
     it('creates topic record and links it to bookmark', async () => {
-      await storeClassification(db, mockBookmark.id, mockClassification);
+      await createClassification(db, mockBookmark.id, mockClassification);
 
       const { rows: topicRows } = await db.execute({ sql: 'SELECT name FROM topics ORDER BY name' });
       expect(topicRows.map((t: any) => t.name)).toEqual(['AI']);
@@ -86,7 +86,7 @@ describe('Classification CRUD', () => {
     });
 
     it('reuses existing topics', async () => {
-      await storeClassification(db, mockBookmark.id, mockClassification);
+      await createClassification(db, mockBookmark.id, mockClassification);
 
       const { rows } = await db.execute({ sql: 'SELECT COUNT(*) as count FROM topics' });
       expect((rows[0] as any).count).toBe(1);
@@ -100,7 +100,7 @@ describe('Classification CRUD', () => {
         reading_time_min: 2,
       };
 
-      await storeClassification(db, mockBookmark.id, result);
+      await createClassification(db, mockBookmark.id, result);
 
       const { rows } = await db.execute({
         sql: 'SELECT * FROM classifications WHERE bookmark_id = ?',
@@ -117,7 +117,7 @@ describe('Classification CRUD', () => {
     });
 
     it('returns classification with topic and hashtags', async () => {
-      await storeClassification(db, mockBookmark.id, mockClassification);
+      await createClassification(db, mockBookmark.id, mockClassification);
 
       const result = await getClassification(db, mockBookmark.id);
       expect(result).not.toBeNull();
@@ -130,7 +130,7 @@ describe('Classification CRUD', () => {
 
   describe('getClassifiedBookmarks', () => {
     it('returns bookmarks that have been classified', async () => {
-      await storeClassification(db, mockBookmark.id, mockClassification);
+      await createClassification(db, mockBookmark.id, mockClassification);
 
       const result = await getClassifiedBookmarks(db);
       expect(result).toHaveLength(1);

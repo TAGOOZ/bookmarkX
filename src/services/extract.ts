@@ -1,5 +1,5 @@
 import type { Client } from '@libsql/client';
-import { storeArticleContent } from '../db/article-content';
+import { createArticleContent } from '../db/article-content';
 import type { ServiceOptions } from './types';
 
 export interface ExtractResult {
@@ -56,7 +56,7 @@ export async function extractArticle(
   const cached = getCachedExtract(url);
   if (cached) {
     try {
-      await storeArticleContent(db, bookmarkId, {
+      await createArticleContent(db, bookmarkId, {
         extracted_text: cached.extracted_text,
         word_count: cached.word_count,
         blocks_json: cached.blocks_json,
@@ -103,7 +103,7 @@ export async function extractArticle(
   evictOldest();
 
   try {
-    await storeArticleContent(db, bookmarkId, {
+    await createArticleContent(db, bookmarkId, {
       extracted_text: extractedText,
       word_count: result.wordCount,
       blocks_json: blocksJson,

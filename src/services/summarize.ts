@@ -1,6 +1,6 @@
 import type { Client } from '@libsql/client';
 import { callGemini } from './gemini';
-import { storeSummary } from '../db/summaries';
+import { createSummary } from '../db/summaries';
 import { getArticleContent } from '../db/article-content';
 import type { ServiceOptions, SummarizeResult } from './types';
 
@@ -67,7 +67,7 @@ export async function summarizeBookmark(
     throw new Error('Invalid summary result');
   }
 
-  await storeSummary(db, bookmarkId, {
+  await createSummary(db, bookmarkId, {
     content_en: result.content_en,
     content_ar: result.content_ar,
     model_used: model,

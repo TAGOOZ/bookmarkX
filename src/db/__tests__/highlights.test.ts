@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import type { Client } from '@libsql/client';
 import { createTestDb } from './test-client';
-import { storeHighlight, getHighlights, deleteHighlight } from '../highlights';
+import { createHighlight, getHighlights, deleteHighlight } from '../highlights';
 
 describe('highlights', () => {
   let db: Client;
@@ -16,9 +16,9 @@ describe('highlights', () => {
 
   afterEach(() => db.close());
 
-  describe('storeHighlight', () => {
+  describe('createHighlight', () => {
     it('stores a highlight with selected text', async () => {
-      await storeHighlight(db, 'bm-1', {
+      await createHighlight(db, 'bm-1', {
         selected_text: 'Important quote',
         note: 'Remember this',
         color: '#ff0000',
@@ -36,7 +36,7 @@ describe('highlights', () => {
     });
 
     it('generates a UUID for the highlight id', async () => {
-      await storeHighlight(db, 'bm-1', {
+      await createHighlight(db, 'bm-1', {
         selected_text: 'Text',
         note: null,
         color: '#e69819',
@@ -60,8 +60,8 @@ describe('highlights', () => {
     });
 
     it('returns all highlights for a bookmark', async () => {
-      await storeHighlight(db, 'bm-1', { selected_text: 'First', note: null, color: '#ff0000' });
-      await storeHighlight(db, 'bm-1', { selected_text: 'Second', note: 'Note', color: '#00ff00' });
+      await createHighlight(db, 'bm-1', { selected_text: 'First', note: null, color: '#ff0000' });
+      await createHighlight(db, 'bm-1', { selected_text: 'Second', note: 'Note', color: '#00ff00' });
 
       const result = await getHighlights(db, 'bm-1');
       expect(result).toHaveLength(2);
@@ -71,7 +71,7 @@ describe('highlights', () => {
 
   describe('deleteHighlight', () => {
     it('removes a highlight by id', async () => {
-      await storeHighlight(db, 'bm-1', { selected_text: 'To delete', note: null, color: '#ff0000' });
+      await createHighlight(db, 'bm-1', { selected_text: 'To delete', note: null, color: '#ff0000' });
       const { rows } = await db.execute({
         sql: 'SELECT id FROM highlights WHERE bookmark_id = ?',
         args: ['bm-1'],

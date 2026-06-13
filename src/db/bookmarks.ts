@@ -1,23 +1,33 @@
-import type { Client } from '@libsql/client';
+import type { Client, Row } from '@libsql/client';
 import type { Bookmark } from '../fetch/types';
+import type { BookmarkRow } from './row-types';
+import { mapRow } from './row-types';
 
-export function rowToBookmark(row: any): Bookmark {
+const BOOKMARK_FIELDS: (keyof BookmarkRow)[] = [
+  'id', 'tweet_id', 'url', 'content_type',
+  'title', 'title_ar', 'title_en',
+  'author_name', 'author_handle', 'tweet_text',
+  'topic_id', 'fetched_at',
+];
+
+export function rowToBookmark(row: Row): Bookmark {
+  const r = mapRow<BookmarkRow>(row, BOOKMARK_FIELDS);
   return {
-    id: row.id,
-    tweet_id: row.tweet_id,
-    url: row.url,
-    content_type: row.content_type,
-    title: row.title,
-    title_ar: row.title_ar,
-    title_en: row.title_en,
-    author_name: row.author_name,
-    author_handle: row.author_handle,
-    tweet_text: row.tweet_text,
-    fetched_at: row.fetched_at,
+    id: r.id,
+    tweet_id: r.tweet_id,
+    url: r.url,
+    content_type: r.content_type as Bookmark['content_type'],
+    title: r.title,
+    title_ar: r.title_ar,
+    title_en: r.title_en,
+    author_name: r.author_name,
+    author_handle: r.author_handle,
+    tweet_text: r.tweet_text,
+    fetched_at: r.fetched_at,
   };
 }
 
-export async function storeBookmarks(db: Client, bookmarks: Bookmark[]): Promise<void> {
+export async function createBookmarks(db: Client, bookmarks: Bookmark[]): Promise<void> {
   if (bookmarks.length === 0) return;
 
   const stmts = bookmarks.map((bookmark) => ({
@@ -43,7 +53,7 @@ export async function storeBookmarks(db: Client, bookmarks: Bookmark[]): Promise
 
 export async function getStoredBookmarks(db: Client): Promise<Bookmark[]> {
   const { rows } = await db.execute('SELECT * FROM bookmarks ORDER BY created_at DESC');
-  return (rows as any[]).map(rowToBookmark);
+  return rows.map((row) => rowToBookmark(row));
 }
 
 export async function getBookmarkById(
@@ -56,18 +66,19 @@ export async function getBookmarkById(
   });
   const row = rows[0];
   if (!row) return null;
+  const r = mapRow<BookmarkRow>(row, BOOKMARK_FIELDS);
   return {
-    id: row.id as string,
-    tweet_id: row.tweet_id as string,
-    url: row.url as string,
-    content_type: row.content_type as Bookmark['content_type'],
-    title: row.title as string | null,
-    title_ar: row.title_ar as string | null,
-    title_en: row.title_en as string | null,
-    author_name: row.author_name as string | null,
-    author_handle: row.author_handle as string | null,
-    tweet_text: row.tweet_text as string | null,
-    fetched_at: row.fetched_at as string,
+    id: r.id,
+    tweet_id: r.tweet_id,
+    url: r.url,
+    content_type: r.content_type as Bookmark['content_type'],
+    title: r.title,
+    title_ar: r.title_ar,
+    title_en: r.title_en,
+    author_name: r.author_name,
+    author_handle: r.author_handle,
+    tweet_text: r.tweet_text,
+    fetched_at: r.fetched_at,
   };
 }
 
@@ -79,5 +90,5 @@ export async function getUnclassifiedBookmarks(db: Client): Promise<Bookmark[]> 
     ORDER BY b.created_at DESC
   `);
 
-  return (rows as any[]).map(rowToBookmark);
+  return rows.map((row) => rowToBookmark(row));
 }
