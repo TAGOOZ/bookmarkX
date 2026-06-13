@@ -36,6 +36,19 @@ function loadSplitState(): SplitState | null {
         parsed.columns = parsed.columns.slice(0, MAX_COLUMNS);
       }
       parsed.columns = parsed.columns.map(migrateColumn);
+      // Migration: old behavior created a new column per bookmark click.
+      // Collapse all tabs into the first column so the user starts with one column.
+      if (parsed.columns.length > 1) {
+        const allTabs = parsed.columns.flatMap((c: SplitColumn) => c.tabs);
+        const activeId = parsed.columns[0].id;
+        const activeTabId =
+          parsed.columns.find((c: SplitColumn) => c.id === parsed.activeColumnId)?.activeTabId ??
+          parsed.columns.find((c: SplitColumn) => c.tabs.length > 0)?.activeTabId ??
+          allTabs[0] ??
+          null;
+        parsed.columns = [{ id: activeId, tabs: allTabs, activeTabId, width: 1 }];
+        parsed.activeColumnId = activeId;
+      }
       return parsed;
     }
   } catch {
