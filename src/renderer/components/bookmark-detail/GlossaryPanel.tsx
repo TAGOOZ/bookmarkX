@@ -95,7 +95,7 @@ const GlossaryPanel: React.FC<GlossaryPanelProps> = ({
         <button
           className={styles.closeBtn}
           onClick={onClose}
-          aria-label={intl.formatMessage({ id: 'closeSettings' })}
+          aria-label={intl.formatMessage({ id: 'closeGlossary' })}
         >
           ×
         </button>

@@ -3,7 +3,7 @@
   flex-direction: column;
   height: 100%;
   background: var(--background-primary);
-  border-left: 1px solid var(--background-modifier-border);
+  border-inline-start: 1px solid var(--background-modifier-border);
   overflow: hidden;
 }
 
@@ -43,6 +43,11 @@
   color: var(--text-normal);
 }
 
+.closeBtn:focus-visible {
+  outline: 2px solid var(--accent-color);
+  outline-offset: -1px;
+}
+
 .searchBar {
   display: flex;
   align-items: center;
@@ -63,8 +68,10 @@
   outline: none;
 }
 
-.searchInput:focus {
+.searchInput:focus-visible {
   border-color: var(--accent-color);
+  outline: 2px solid var(--accent-color);
+  outline-offset: -1px;
 }
 
 .spinner {
@@ -115,6 +122,11 @@
 .exportBtn:disabled {
   opacity: 0.4;
   cursor: not-allowed;
+}
+
+.exportBtn:focus-visible {
+  outline: 2px solid var(--accent-color);
+  outline-offset: -1px;
 }
 
 .termList {

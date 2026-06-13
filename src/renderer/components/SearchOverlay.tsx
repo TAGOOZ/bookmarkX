@@ -38,7 +38,8 @@ const SearchOverlay: React.FC<SearchOverlayProps> = ({
     if (!query) return true;
     const q = query.toLowerCase();
     return (
-      bookmark.title.toLowerCase().includes(q) ||
+      (bookmark.titleAr && bookmark.titleAr.toLowerCase().includes(q)) ||
+      (bookmark.titleEn && bookmark.titleEn.toLowerCase().includes(q)) ||
       bookmark.url.toLowerCase().includes(q)
     );
   });
@@ -137,6 +138,7 @@ const SearchOverlay: React.FC<SearchOverlayProps> = ({
             type="text"
             className="search-overlay-input"
             placeholder={intl.formatMessage({ id: 'searchBookmarksPlaceholder' })}
+            aria-label={intl.formatMessage({ id: 'search' })}
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             onKeyDown={handleKeyDown}

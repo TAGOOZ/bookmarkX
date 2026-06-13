@@ -13,6 +13,7 @@
   /* Font Sizes */
   --font-ui-xs: 0.7rem;
   --font-ui-small: 0.8rem;
+  --font-ui-sm: var(--font-ui-small);
   --font-ui: 0.9rem;
   --font-ui-large: 1rem;
   --font-text: 1rem;
@@ -34,6 +35,14 @@
   /* Transitions */
   --transition-fast: 0.1s ease;
   --transition-normal: 0.2s ease;
+
+  /* Z-Index Scale */
+  --z-base: 1;
+  --z-dropdown: 10;
+  --z-sticky: 20;
+  --z-overlay: 100;
+  --z-modal: 200;
+  --z-toast: 300;
 }
 
 /* Dark Theme (primary) */
@@ -49,7 +58,7 @@
 
   --text-normal: #dadada;
   --text-muted: #999999;
-  --text-faint: #666666;
+  --text-faint: #808080;
   --text-on-accent: #ffffff;
 
   --accent-color: #a882ff;
@@ -63,8 +72,11 @@
   --shadow-l: 0 8px 16px rgba(0, 0, 0, 0.5);
 
   --priority-high: #fb464c;
-  --priority-medium: #e0de71;
+  --priority-medium: #f0ee5a;
   --priority-low: #44cf6e;
+  --color-error: var(--priority-high);
+  --color-success: var(--priority-low);
+  --color-red: var(--priority-high);
 
   --section-agent-bg: rgba(168, 130, 255, 0.05);
   --section-user-bg: rgba(68, 207, 110, 0.05);
@@ -98,8 +110,11 @@
   --shadow-l: 0 8px 16px rgba(0, 0, 0, 0.16);
 
   --priority-high: #e03e3e;
-  --priority-medium: #c4b930;
+  --priority-medium: #9a8f10;
   --priority-low: #36a854;
+  --color-error: var(--priority-high);
+  --color-success: var(--priority-low);
+  --color-red: var(--priority-high);
 
   --section-agent-bg: rgba(124, 92, 191, 0.05);
   --section-user-bg: rgba(54, 168, 84, 0.05);

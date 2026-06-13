@@ -18,16 +18,21 @@
   color: var(--text-normal);
 }
 
+.bell:focus-visible {
+  outline: 2px solid var(--accent-color);
+  outline-offset: -1px;
+}
+
 .badge {
   position: absolute;
   top: 2px;
-  right: 2px;
+  inset-inline-end: 2px;
   min-width: 14px;
   height: 14px;
   padding: 0 3px;
   border-radius: 7px;
   background-color: var(--color-red);
-  color: white;
+  color: var(--text-on-accent);
   font-size: 10px;
   font-weight: 600;
   line-height: 14px;

@@ -86,7 +86,7 @@ const PageHeader: React.FC<PageHeaderProps> = ({
             {priority.toUpperCase()}
           </span>
         )}
-        {readingTime && (
+        {readingTime != null && (
           <span className={styles.metaItem}>
             <span className={styles.metaIcon}>{ICONS.time}</span>
             <FormattedMessage id="minRead" values={{ 0: readingTime }} />

@@ -36,7 +36,10 @@ const SectionRenderer: React.FC<SectionRendererProps> = ({
           className={styles.section}
           style={{ '--section-bg': SECTION_COLORS[section.type] || 'var(--background-secondary)' } as React.CSSProperties}
           data-section-id={section.id}
+          role={onSectionClick ? 'button' : undefined}
+          tabIndex={onSectionClick ? 0 : undefined}
           onClick={() => onSectionClick?.(section.id)}
+          onKeyDown={onSectionClick ? (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onSectionClick(section.id); } } : undefined}
         >
           <div className={styles.sectionHeader}>
             <span className={styles.sectionTitle}>{section.title}</span>

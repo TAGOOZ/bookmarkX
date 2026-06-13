@@ -52,7 +52,7 @@ export const createCollapsibleArticleBlock = createReactBlockSpec(
               cursor: 'pointer',
               color: 'var(--text-normal)',
               fontSize: '13px',
-              textAlign: 'left',
+              textAlign: 'start',
             }}
           >
             <span style={{ transform: expanded ? 'rotate(90deg)' : 'rotate(0deg)', transition: 'transform 0.15s' }}>

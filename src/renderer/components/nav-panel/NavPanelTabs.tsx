@@ -54,6 +54,7 @@ const NavPanelTabs: React.FC<NavPanelTabsProps> = ({
       <button
         className="nav-panel-tab"
         onClick={onToggleExpand}
+        aria-label={isExpanded ? intl.formatMessage({ id: 'collapseNav' }) : intl.formatMessage({ id: 'expandNav' })}
         title={isExpanded ? intl.formatMessage({ id: 'collapseNav' }) : intl.formatMessage({ id: 'expandNav' })}
       >
         {isExpanded ? <PanelRightClose size={18} /> : <PanelRightOpen size={18} />}
@@ -61,6 +62,7 @@ const NavPanelTabs: React.FC<NavPanelTabsProps> = ({
       <button
         className="nav-panel-tab"
         onClick={onOpenSearch}
+        aria-label={intl.formatMessage({ id: 'searchTooltip' })}
         title={intl.formatMessage({ id: 'searchTooltip' })}
       >
         <Search size={18} />
@@ -71,6 +73,7 @@ const NavPanelTabs: React.FC<NavPanelTabsProps> = ({
           <button
             className="nav-panel-tab"
             onClick={onFetchClick}
+            aria-label={intl.formatMessage({ id: 'fetchNowTooltip' })}
             title={intl.formatMessage({ id: 'fetchNowTooltip' })}
           >
             <Download size={18} />
@@ -78,6 +81,7 @@ const NavPanelTabs: React.FC<NavPanelTabsProps> = ({
           <button
             className="nav-panel-tab"
             onClick={onClassifyClick}
+            aria-label={intl.formatMessage({ id: 'classifyNowTooltip' })}
             title={intl.formatMessage({ id: 'classifyNowTooltip' })}
           >
             <Tag size={18} />
@@ -87,6 +91,7 @@ const NavPanelTabs: React.FC<NavPanelTabsProps> = ({
       <button
         className={`nav-panel-tab ${mockMode ? 'mock-mode-active' : ''}`}
         onClick={onToggleMockMode}
+        aria-label={mockMode ? intl.formatMessage({ id: 'stopMockModeTooltip' }) : intl.formatMessage({ id: 'mockModeTooltip' })}
         title={mockMode ? intl.formatMessage({ id: 'stopMockModeTooltip' }) : intl.formatMessage({ id: 'mockModeTooltip' })}
       >
         {mockMode ? <FlaskConicalOff size={18} /> : <FlaskConical size={18} />}
@@ -94,6 +99,7 @@ const NavPanelTabs: React.FC<NavPanelTabsProps> = ({
       <button
         className="nav-panel-tab"
         onClick={onSettingsClick}
+        aria-label={intl.formatMessage({ id: 'settingsTooltip' })}
         title={intl.formatMessage({ id: 'settingsTooltip' })}
       >
         <Settings size={18} />

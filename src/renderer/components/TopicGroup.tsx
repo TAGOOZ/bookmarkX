@@ -179,11 +179,13 @@ const TopicGroup: React.FC<TopicGroupProps> = ({
               className="topic-context-btn"
               onClick={handleContextMenu}
               aria-label={intl.formatMessage({ id: 'settings' })}
+              aria-expanded={showContextMenu}
+              aria-haspopup="menu"
             >
               <MoreHorizontal size={14} />
             </button>
             {showContextMenu && (
-              <div className="topic-context-menu">
+              <div className="topic-context-menu" role="menu" onKeyDown={(e) => { if (e.key === 'Escape') setShowContextMenu(false); }}>
                 {onRename && (
                   <button
                     className="topic-context-item"
