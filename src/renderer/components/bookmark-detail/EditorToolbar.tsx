@@ -1,5 +1,6 @@
 import React, { useState, useCallback, useRef, useEffect } from 'react';
 import { useIntl } from 'react-intl';
+import { BookOpen } from 'lucide-react';
 import styles from './EditorToolbar.module.css';
 
 interface EditorToolbarProps {
@@ -91,7 +92,7 @@ const EditorToolbar: React.FC<EditorToolbarProps> = ({
           aria-label={intl.formatMessage({ id: 'openGlossaryPanel' })}
           title={intl.formatMessage({ id: 'openGlossaryPanel' })}
         >
-          📖
+          <BookOpen size={16} />
         </button>
       </div>
       <div className={styles.rightGroup}>

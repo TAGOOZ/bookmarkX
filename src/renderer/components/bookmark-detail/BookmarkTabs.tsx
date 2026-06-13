@@ -1,5 +1,6 @@
 import React, { useState, useCallback, useMemo, useRef, useEffect } from 'react';
 import { useIntl } from 'react-intl';
+import { RotateCcw } from 'lucide-react';
 import type { Bookmark } from '../../types';
 import { useLocale } from '../../App';
 import { useBookmarkStore } from '../../stores/bookmarkStore';
@@ -383,7 +384,7 @@ const BookmarkTabs: React.FC<BookmarkTabsProps> = ({
           className={styles.reopenBtn}
           onClick={handleMenuReopen}
         >
-          ↺ Reopen
+          <RotateCcw size={14} /> Reopen
         </button>
       </div>
     );
