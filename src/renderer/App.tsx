@@ -7,6 +7,7 @@ import FirstRunBanner from './components/FirstRunBanner';
 import arMessages from '../../locales/ar.json';
 import enMessages from '../../locales/en.json';
 import { useBookmarkStore } from './stores/bookmarkStore';
+import { useSplitStore } from './stores/splitStore';
 import { useSettingsStore } from './stores/settingsStore';
 
 export type { Bookmark } from './types';
@@ -40,18 +41,18 @@ function AppContent() {
   const dir = locale === 'ar' ? 'rtl' : 'ltr';
 
   const bookmarks = useBookmarkStore((s) => s.bookmarks);
-  const openBookmarks = useBookmarkStore((s) => s.openBookmarks);
-  const splitState = useBookmarkStore((s) => s.splitState);
+  const openBookmarks = useSplitStore((s) => s.openBookmarks);
+  const splitState = useSplitStore((s) => s.splitState);
   const mockMode = useBookmarkStore((s) => s.mockMode);
   const handleBookmarkSelect = useBookmarkStore((s) => s.handleBookmarkSelect);
   const handleBookmarkChange = useBookmarkStore((s) => s.handleBookmarkChange);
-  const handleSplitColumn = useBookmarkStore((s) => s.handleSplitColumn);
-  const handleMergeColumn = useBookmarkStore((s) => s.handleMergeColumn);
-  const handleTabCloseTab = useBookmarkStore((s) => s.handleTabCloseTab);
-  const handleTabCloseBatch = useBookmarkStore((s) => s.handleTabCloseBatch);
-  const handleColumnActive = useBookmarkStore((s) => s.handleColumnActive);
-  const handleColumnResize = useBookmarkStore((s) => s.handleColumnResize);
-  const handleColumnResizeBatch = useBookmarkStore((s) => s.handleColumnResizeBatch);
+  const handleSplitColumn = useSplitStore((s) => s.handleSplitColumn);
+  const handleMergeColumn = useSplitStore((s) => s.handleMergeColumn);
+  const handleTabCloseTab = useSplitStore((s) => s.handleTabCloseTab);
+  const handleTabCloseBatch = useSplitStore((s) => s.handleTabCloseBatch);
+  const handleColumnActive = useSplitStore((s) => s.handleColumnActive);
+  const handleColumnResize = useSplitStore((s) => s.handleColumnResize);
+  const handleColumnResizeBatch = useSplitStore((s) => s.handleColumnResizeBatch);
   const setMockMode = useBookmarkStore((s) => s.setMockMode);
   const incrementRefreshKey = useBookmarkStore((s) => s.incrementRefreshKey);
   const fetchBookmarks = useBookmarkStore((s) => s.fetchBookmarks);
