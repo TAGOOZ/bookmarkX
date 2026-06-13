@@ -84,18 +84,40 @@ function AppContent() {
   const toggleMockMode = () => setMockMode((prev) => !prev);
 
   const handleOpenInNewColumn = useCallback((bookmarkId: string) => {
-    const activeCol = splitState.columns.find((c) => c.id === splitState.activeColumnId);
+    const { splitState: current, openBookmarks, setSplitState, setOpenBookmarks } = useSplitStore.getState();
+    const activeCol = current.columns.find((c) => c.id === current.activeColumnId);
     if (!activeCol) return;
     const bookmark = bookmarks.find((b) => b.id === bookmarkId);
     if (!bookmark) return;
-    // Ensure the bookmark is in openBookmarks (without adding it as a tab)
-    const { openBookmarks } = useSplitStore.getState();
-    if (!openBookmarks.find((b) => b.id === bookmarkId)) {
-      useSplitStore.getState().setOpenBookmarks([...openBookmarks, bookmark]);
+
+    // If bookmark is already in the active column, remove it from there first
+    // so it doesn't appear duplicated after the split
+    const isInActiveCol = activeCol.tabs.includes(bookmarkId);
+    if (isInActiveCol) {
+      const newTabs = activeCol.tabs.filter((id) => id !== bookmarkId);
+      const newActive = activeCol.activeTabId === bookmarkId
+        ? (newTabs[0] ?? null)
+        : activeCol.activeTabId;
+      const newCols = current.columns.map((c) =>
+        c.id === activeCol.id
+          ? { ...c, tabs: newTabs, activeTabId: newActive }
+          : c,
+      );
+      setSplitState({ ...current, columns: newCols });
     }
+
+    // Ensure the bookmark is in openBookmarks
+    if (!openBookmarks.find((b) => b.id === bookmarkId)) {
+      setOpenBookmarks([...openBookmarks, bookmark]);
+    }
+
     // Split: creates a new column with this bookmark
-    handleSplitColumn(activeCol.id, bookmarkId);
-  }, [splitState, bookmarks, handleSplitColumn]);
+    const { splitState: latest } = useSplitStore.getState();
+    const latestActiveCol = latest.columns.find((c) => c.id === latest.activeColumnId);
+    if (latestActiveCol) {
+      handleSplitColumn(latestActiveCol.id, bookmarkId);
+    }
+  }, [bookmarks, handleSplitColumn]);
 
   useEffect(() => {
     const scheduleFetch = window.requestIdleCallback ?? ((cb: IdleRequestCallback) => setTimeout(() => cb({ timeRemaining: () => 0, didTimeout: false } as IdleDeadline), 0));
