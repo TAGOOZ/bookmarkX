@@ -50,3 +50,20 @@
   left: 50%;
   transform: translateX(-50%);
 }
+
+.emptyState {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  flex: 1;
+  height: 100%;
+  color: var(--text-secondary);
+  font-size: var(--font-ui-base);
+  user-select: none;
+}
+
+.emptyIcon {
+  font-size: 48px;
+  margin-bottom: var(--space-2);
+}

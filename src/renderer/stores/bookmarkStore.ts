@@ -48,27 +48,58 @@ export const useBookmarkStore = create<BookmarkStore>((set, get) => ({
 
   handleBookmarkSelect: (bookmark) => {
     const { splitState, openBookmarks } = useSplitStore.getState();
+    const MAX_COLUMNS = 3;
 
+    // Already open in the active column — no-op
     const activeCol = splitState.columns.find((c) => c.id === splitState.activeColumnId);
-    if (!activeCol) return;
+    if (activeCol?.activeTabId === bookmark.id) return;
 
-    // Already the active tab — no-op
-    if (activeCol.activeTabId === bookmark.id) return;
+    // If bookmark is already open in any column, switch to that column
+    const existingCol = splitState.columns.find((c) => c.tabs.includes(bookmark.id));
+    if (existingCol) {
+      if (existingCol.id === splitState.activeColumnId) return; // already active
+      useSplitStore.getState().setSplitState({
+        ...splitState,
+        activeColumnId: existingCol.id,
+      });
+      return;
+    }
 
-    const isInTabs = activeCol.tabs.includes(bookmark.id);
+    let newSplit: typeof splitState;
 
-    const newTabs = isInTabs
-      ? activeCol.tabs
-      : [...activeCol.tabs, bookmark.id];
-
-    const newSplit: typeof splitState = {
-      ...splitState,
-      columns: splitState.columns.map((c) =>
-        c.id === activeCol.id
-          ? { ...c, tabs: newTabs, activeTabId: bookmark.id, bookmarkId: bookmark.id }
-          : c,
-      ),
-    };
+    if (!activeCol) {
+      // No columns yet — create first column
+      const newCol = {
+        id: `col-${Date.now()}`,
+        tabs: [bookmark.id],
+        activeTabId: bookmark.id,
+        width: 1,
+      };
+      newSplit = { columns: [newCol], activeColumnId: newCol.id };
+    } else if (splitState.columns.length < MAX_COLUMNS) {
+      // Create new column for this bookmark
+      const newCol = {
+        id: `col-${Date.now()}`,
+        tabs: [bookmark.id],
+        activeTabId: bookmark.id,
+        width: 1,
+      };
+      newSplit = {
+        columns: [...splitState.columns, newCol],
+        activeColumnId: newCol.id,
+      };
+    } else {
+      // Max columns reached — replace active column's bookmark
+      newSplit = {
+        ...splitState,
+        columns: splitState.columns.map((c) =>
+          c.id === activeCol.id
+            ? { ...c, tabs: [bookmark.id], activeTabId: bookmark.id }
+            : c,
+        ),
+        activeColumnId: activeCol.id,
+      };
+    }
 
     const newOpen = (() => {
       const bookmarkInOpen = openBookmarks.find((b) => b.id === bookmark.id);
@@ -92,11 +123,10 @@ export const useBookmarkStore = create<BookmarkStore>((set, get) => ({
   },
 
   getActiveBookmark: () => {
-    const { openBookmarks } = useSplitStore.getState();
-    const { splitState } = useSplitStore.getState();
+    const { openBookmarks, splitState } = useSplitStore.getState();
     const activeCol = splitState.columns.find((c) => c.id === splitState.activeColumnId);
-    if (!activeCol?.bookmarkId) return null;
-    return openBookmarks.find((b) => b.id === activeCol.bookmarkId) ?? null;
+    if (!activeCol?.activeTabId) return null;
+    return openBookmarks.find((b) => b.id === activeCol.activeTabId) ?? null;
   },
 
   fetchBookmarks: async () => {

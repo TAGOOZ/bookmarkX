@@ -3,7 +3,6 @@ import type { BookmarkDetailData } from '../bookmark-detail/types';
 
 export interface SplitColumn {
   id: string;
-  bookmarkId: string | null;
   tabs: string[];
   activeTabId: string | null;
   width: number;
@@ -11,7 +10,7 @@ export interface SplitColumn {
 
 export interface SplitState {
   columns: SplitColumn[];
-  activeColumnId: string;
+  activeColumnId: string | null;
 }
 
 export interface SplitLayoutProps {

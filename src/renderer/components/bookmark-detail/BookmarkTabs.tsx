@@ -368,14 +368,14 @@ const BookmarkTabs: React.FC<BookmarkTabsProps> = ({
   }, [contextMenu?.visible]);
 
   if (openBookmarks.length === 0) {
+    if (closedTabs.length === 0) return null;
     return (
       <div className={styles.emptyTabs}>
         <button
           className={styles.reopenBtn}
           onClick={handleMenuReopen}
-          disabled={closedTabs.length === 0}
         >
-          {closedTabs.length > 0 ? '↺ Reopen' : 'No open tabs'}
+          ↺ Reopen
         </button>
       </div>
     );

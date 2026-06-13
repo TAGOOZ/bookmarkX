@@ -37,7 +37,7 @@ beforeEach(() => {
   });
   useSplitStore.setState({
     splitState: {
-      columns: [{ id: 'col-1', bookmarkId: null, tabs: [], activeTabId: null, width: 1 }],
+      columns: [{ id: 'col-1', tabs: [], activeTabId: null, width: 1 }],
       activeColumnId: 'col-1',
     },
     openBookmarks: [],
@@ -60,67 +60,67 @@ describe('bookmarkStore', () => {
       expect(openBookmarks).toHaveLength(1);
     });
 
-    it('assigns bookmark to empty active column', () => {
+    it('creates new column for bookmark when empty column exists', () => {
       useBookmarkStore.getState().handleBookmarkSelect(bookmark1);
       const { splitState } = useSplitStore.getState();
-      expect(splitState.columns[0].bookmarkId).toBe('b1');
-      expect(splitState.columns[0].tabs).toEqual(['b1']);
-      expect(splitState.columns[0].activeTabId).toBe('b1');
+      expect(splitState.columns[1].tabs).toEqual(['b1']);
+      expect(splitState.columns[1].activeTabId).toBe('b1');
     });
 
-    it('adds bookmark to active column tabs when active column is occupied', () => {
+    it('creates separate columns for multiple bookmarks', () => {
       useBookmarkStore.getState().handleBookmarkSelect(bookmark1);
       useBookmarkStore.getState().handleBookmarkSelect(bookmark2);
       const { splitState } = useSplitStore.getState();
-      expect(splitState.columns).toHaveLength(1);
-      expect(splitState.columns[0].tabs).toEqual(['b1', 'b2']);
-      expect(splitState.columns[0].activeTabId).toBe('b2');
-      expect(splitState.columns[0].bookmarkId).toBe('b2');
+      expect(splitState.columns).toHaveLength(3);
     });
 
     it('no-ops when selecting the already active tab', () => {
       useBookmarkStore.getState().handleBookmarkSelect(bookmark1);
       const { splitState: before } = useSplitStore.getState();
+      const activeColId = before.activeColumnId;
       useBookmarkStore.getState().handleBookmarkSelect(bookmark1);
       const { splitState: after } = useSplitStore.getState();
-      expect(after.columns[0].tabs).toEqual(before.columns[0].tabs);
-      expect(after.columns[0].activeTabId).toBe('b1');
+      expect(after.activeColumnId).toBe(activeColId);
     });
   });
 
   describe('handleTabCloseTab', () => {
-    it('clears column bookmarkId and tabs', () => {
+    it('clears column tabs', () => {
       useBookmarkStore.getState().handleBookmarkSelect(bookmark1);
-      useSplitStore.getState().handleTabCloseTab('col-1', 'b1');
+      const { splitState: before } = useSplitStore.getState();
+      const colWithBookmark = before.columns.find(c => c.tabs.includes('b1'));
+      useSplitStore.getState().handleTabCloseTab(colWithBookmark!.id, 'b1');
       const { splitState } = useSplitStore.getState();
-      expect(splitState.columns[0].bookmarkId).toBeNull();
-      expect(splitState.columns[0].tabs).toEqual([]);
-      expect(splitState.columns[0].activeTabId).toBeNull();
+      expect(splitState.columns.find(c => c.id === colWithBookmark!.id)!.tabs).toEqual([]);
+      expect(splitState.columns.find(c => c.id === colWithBookmark!.id)!.activeTabId).toBeNull();
     });
 
     it('removes bookmark from openBookmarks', () => {
       useBookmarkStore.getState().handleBookmarkSelect(bookmark1);
-      useSplitStore.getState().handleTabCloseTab('col-1', 'b1');
+      const { splitState } = useSplitStore.getState();
+      const colWithBookmark = splitState.columns.find(c => c.tabs.includes('b1'));
+      useSplitStore.getState().handleTabCloseTab(colWithBookmark!.id, 'b1');
       const { openBookmarks } = useSplitStore.getState();
       expect(openBookmarks).toHaveLength(0);
     });
   });
 
   describe('handleMergeColumn', () => {
-    it('clears column bookmarkId on single column', () => {
-      useBookmarkStore.getState().handleBookmarkSelect(bookmark1);
+    it('removes all columns when merging last column', () => {
+      useSplitStore.getState().setSplitState({
+        columns: [{ id: 'col-1', tabs: ['b1'], activeTabId: 'b1', width: 1 }],
+        activeColumnId: 'col-1',
+      });
       useSplitStore.getState().handleMergeColumn('col-1');
       const { splitState } = useSplitStore.getState();
-      expect(splitState.columns[0].bookmarkId).toBeNull();
-      expect(splitState.columns[0].tabs).toEqual([]);
-      expect(splitState.columns[0].activeTabId).toBeNull();
+      expect(splitState.columns).toHaveLength(0);
     });
 
     it('removes column when multiple columns exist', () => {
       useSplitStore.getState().setSplitState({
         columns: [
-          { id: 'col-1', bookmarkId: 'b1', tabs: ['b1'], activeTabId: 'b1', width: 1 },
-          { id: 'col-2', bookmarkId: 'b2', tabs: ['b2'], activeTabId: 'b2', width: 1 },
+          { id: 'col-1', tabs: ['b1'], activeTabId: 'b1', width: 1 },
+          { id: 'col-2', tabs: ['b2'], activeTabId: 'b2', width: 1 },
         ],
         activeColumnId: 'col-1',
       });

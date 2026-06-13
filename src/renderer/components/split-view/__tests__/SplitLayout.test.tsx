@@ -87,7 +87,7 @@ describe('SplitLayout', () => {
 
   it('renders a single column with no bookmark', () => {
     const state: SplitState = {
-      columns: [{ id: 'col-1', bookmarkId: null, tabs: [], activeTabId: null, width: 1 }],
+      columns: [{ id: 'col-1', tabs: [], activeTabId: null, width: 1 }],
       activeColumnId: 'col-1',
     };
     const { container } = renderWithIntl(
@@ -99,7 +99,7 @@ describe('SplitLayout', () => {
 
   it('renders a single column with a bookmark', () => {
     const state: SplitState = {
-      columns: [{ id: 'col-1', bookmarkId: '1', tabs: ['1'], activeTabId: '1', width: 1 }],
+      columns: [{ id: 'col-1', tabs: ['1'], activeTabId: '1', width: 1 }],
       activeColumnId: 'col-1',
     };
     renderWithIntl(
@@ -111,8 +111,8 @@ describe('SplitLayout', () => {
   it('renders two columns with a divider between them', () => {
     const state: SplitState = {
       columns: [
-        { id: 'col-1', bookmarkId: '1', tabs: ['1'], activeTabId: '1', width: 1 },
-        { id: 'col-2', bookmarkId: '2', tabs: ['2'], activeTabId: '2', width: 1 },
+        { id: 'col-1', tabs: ['1'], activeTabId: '1', width: 1 },
+        { id: 'col-2', tabs: ['2'], activeTabId: '2', width: 1 },
       ],
       activeColumnId: 'col-1',
     };
@@ -128,7 +128,7 @@ describe('SplitLayout', () => {
 
   it('sets dir attribute on container', () => {
     const state: SplitState = {
-      columns: [{ id: 'col-1', bookmarkId: null, tabs: [], activeTabId: null, width: 1 }],
+      columns: [{ id: 'col-1', tabs: [], activeTabId: null, width: 1 }],
       activeColumnId: 'col-1',
     };
     const { container } = renderWithIntl(
@@ -140,7 +140,7 @@ describe('SplitLayout', () => {
   describe('drag-to-edge drop zones', () => {
     it('renders left and right drop zones', () => {
       const state: SplitState = {
-        columns: [{ id: 'col-1', bookmarkId: '1', tabs: ['1'], activeTabId: '1', width: 1 }],
+        columns: [{ id: 'col-1', tabs: ['1'], activeTabId: '1', width: 1 }],
         activeColumnId: 'col-1',
       };
       const { container } = renderWithIntl(
@@ -153,7 +153,7 @@ describe('SplitLayout', () => {
     it('calls onSplitColumn with position when drop occurs on left edge', () => {
       const onSplitColumn = vi.fn();
       const state: SplitState = {
-        columns: [{ id: 'col-1', bookmarkId: '1', tabs: ['1'], activeTabId: '1', width: 1 }],
+        columns: [{ id: 'col-1', tabs: ['1'], activeTabId: '1', width: 1 }],
         activeColumnId: 'col-1',
       };
       const { container } = renderWithIntl(
@@ -167,9 +167,9 @@ describe('SplitLayout', () => {
     it('disables drop zones when max columns reached', () => {
       const state: SplitState = {
         columns: [
-          { id: 'col-1', bookmarkId: '1', tabs: ['1'], activeTabId: '1', width: 0.5 },
-          { id: 'col-2', bookmarkId: '2', tabs: ['2'], activeTabId: '2', width: 0.5 },
-          { id: 'col-3', bookmarkId: null, tabs: [], activeTabId: null, width: 1 },
+          { id: 'col-1', tabs: ['1'], activeTabId: '1', width: 0.5 },
+          { id: 'col-2', tabs: ['2'], activeTabId: '2', width: 0.5 },
+          { id: 'col-3', tabs: [], activeTabId: null, width: 1 },
         ],
         activeColumnId: 'col-1',
       };
@@ -182,7 +182,7 @@ describe('SplitLayout', () => {
 
     it('shows active state when dragging over drop zone', () => {
       const state: SplitState = {
-        columns: [{ id: 'col-1', bookmarkId: '1', tabs: ['1'], activeTabId: '1', width: 1 }],
+        columns: [{ id: 'col-1', tabs: ['1'], activeTabId: '1', width: 1 }],
         activeColumnId: 'col-1',
       };
       const { container } = renderWithIntl(

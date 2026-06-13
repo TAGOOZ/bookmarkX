@@ -2,9 +2,10 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import BookmarkDetail from '../bookmark-detail/BookmarkDetail';
 import BookmarkTabs from '../bookmark-detail/BookmarkTabs';
 import SplitDivider from './SplitDivider';
-import type { SplitLayoutProps } from './types';
+import type { SplitLayoutProps, SplitColumn } from './types';
 import type { BookmarkDetailData } from '../bookmark-detail/types';
 import type { Bookmark } from '../../types';
+import { useSplitStore } from '../../stores/splitStore';
 import styles from './SplitLayout.module.css';
 
 const MIN_COLUMN_WIDTH = 300;
@@ -39,9 +40,17 @@ const SplitLayout: React.FC<SplitLayoutProps> = ({
   }, []);
 
   const handleBookmarkSelect = useCallback((_columnId: string, bookmarkId: string) => {
-    onColumnActive(_columnId);
-    void bookmarkId;
-  }, [onColumnActive]);
+    const { splitState: current, setSplitState } = useSplitStore.getState();
+    setSplitState({
+      ...current,
+      activeColumnId: _columnId,
+      columns: current.columns.map((c: SplitColumn) =>
+        c.id === _columnId
+          ? { ...c, activeTabId: bookmarkId }
+          : c,
+      ),
+    });
+  }, []);
 
   const handleTabClose = useCallback((columnId: string, bookmarkId: string) => {
     if (onTabCloseTab) {
@@ -94,8 +103,8 @@ const SplitLayout: React.FC<SplitLayoutProps> = ({
       className={styles.container}
       dir={dir}
       onMouseEnter={() => {
-        if (!splitState.columns.find(c => c.id === splitState.activeColumnId)) {
-          onColumnActive(splitState.columns[0]?.id);
+        if (splitState.columns.length > 0 && !splitState.columns.find(c => c.id === splitState.activeColumnId)) {
+          onColumnActive(splitState.columns[0].id);
         }
       }}
     >
@@ -107,6 +116,12 @@ const SplitLayout: React.FC<SplitLayoutProps> = ({
         onDragLeave={handleDragLeave}
         onDrop={(e) => handleDrop(e, 'left')}
       />
+      {splitState.columns.length === 0 && (
+        <div className={styles.emptyState}>
+          <div className={styles.emptyIcon}>📑</div>
+          <p>{dir === 'rtl' ? 'اختر إشارات مرجعية من القائمة' : 'Select bookmarks from the sidebar'}</p>
+        </div>
+      )}
       {splitState.columns.map((column, index) => {
         const bookmark = column.activeTabId
           ? openBookmarks.find(b => b.id === column.activeTabId) ?? null

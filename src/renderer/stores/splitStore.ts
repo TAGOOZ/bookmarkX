@@ -15,13 +15,14 @@ export function computeOpenBookmarks(
   return bookmarks.filter((b) => referencedIds.has(b.id));
 }
 
-function migrateColumn(col: SplitColumn): SplitColumn {
-  if (col.tabs) return col;
+function migrateColumn(col: SplitColumn & { bookmarkId?: string | null }): SplitColumn {
+  if (col.tabs) return { id: col.id, tabs: col.tabs, activeTabId: col.activeTabId, width: col.width };
   const tabs = col.bookmarkId ? [col.bookmarkId] : [];
   return {
-    ...col,
+    id: col.id,
     tabs,
     activeTabId: col.bookmarkId ?? null,
+    width: col.width,
   };
 }
 
@@ -68,8 +69,8 @@ interface SplitStore {
 
 export const useSplitStore = create<SplitStore>((set) => ({
   splitState: loadSplitState() ?? {
-    columns: [{ id: 'col-1', bookmarkId: null, tabs: [], activeTabId: null, width: 1 }],
-    activeColumnId: 'col-1',
+    columns: [],
+    activeColumnId: null,
   },
   openBookmarks: [],
 
@@ -102,7 +103,6 @@ export const useSplitStore = create<SplitStore>((set) => ({
 
       const newCol: SplitColumn = {
         id: `col-${Date.now()}`,
-        bookmarkId,
         tabs: [bookmarkId],
         activeTabId: bookmarkId,
         width: 1,
@@ -110,7 +110,7 @@ export const useSplitStore = create<SplitStore>((set) => ({
 
       const newCols = state.splitState.columns.map((c) =>
         c.id === columnId
-          ? { ...c, tabs: newSourceTabs, activeTabId: newSourceActive, bookmarkId: newSourceActive }
+          ? { ...c, tabs: newSourceTabs, activeTabId: newSourceActive }
           : c,
       );
 
@@ -129,19 +129,9 @@ export const useSplitStore = create<SplitStore>((set) => ({
       if (state.splitState.columns.length === 0) return state;
 
       if (state.splitState.columns.length === 1) {
-        const clearedCol: SplitColumn = {
-          ...state.splitState.columns[0],
-          tabs: [],
-          activeTabId: null,
-          bookmarkId: null,
-        };
-        const newSplit: SplitState = {
-          columns: [clearedCol],
-          activeColumnId: state.splitState.columns[0].id,
-        };
-        const newOpen = computeOpenBookmarks([clearedCol], state.openBookmarks);
+        const newSplit: SplitState = { columns: [], activeColumnId: null };
         saveSplitState(newSplit);
-        return { splitState: newSplit, openBookmarks: newOpen };
+        return { splitState: newSplit, openBookmarks: [] };
       }
 
       const remaining = state.splitState.columns.filter((c) => c.id !== columnId);
@@ -152,7 +142,6 @@ export const useSplitStore = create<SplitStore>((set) => ({
           ...remaining[0],
           tabs: [],
           activeTabId: null,
-          bookmarkId: null,
         };
         const newSplit: SplitState = {
           columns: [clearedRemaining],
@@ -189,15 +178,12 @@ export const useSplitStore = create<SplitStore>((set) => ({
         newActiveTabId = newTabs[Math.min(closedIdx, newTabs.length - 1)] ?? null;
       }
 
-      const newBookmarkId = newActiveTabId;
-
       // If column has no tabs left, handle single-column case
       if (newTabs.length === 0 && state.splitState.columns.length === 1) {
         const clearedCol: SplitColumn = {
           ...col,
           tabs: [],
           activeTabId: null,
-          bookmarkId: null,
         };
         const newSplit: SplitState = {
           columns: [clearedCol],
@@ -210,7 +196,7 @@ export const useSplitStore = create<SplitStore>((set) => ({
 
       const newColumns = state.splitState.columns.map((c) =>
         c.id === columnId
-          ? { ...c, tabs: newTabs, activeTabId: newActiveTabId, bookmarkId: newBookmarkId }
+          ? { ...c, tabs: newTabs, activeTabId: newActiveTabId }
           : c,
       );
 
@@ -243,7 +229,7 @@ export const useSplitStore = create<SplitStore>((set) => ({
 
       const newColumns = state.splitState.columns.map((c) =>
         c.id === columnId
-          ? { ...c, tabs: newTabs, activeTabId: newActiveTabId, bookmarkId: newActiveTabId }
+          ? { ...c, tabs: newTabs, activeTabId: newActiveTabId }
           : c,
       );
 
