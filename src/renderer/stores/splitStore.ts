@@ -127,7 +127,12 @@ export const useSplitStore = create<SplitStore>((set) => ({
       newCols.splice(idx + 1, 0, newCol);
 
       const newSplit = { columns: newCols, activeColumnId: newCol.id };
-      const newOpen = computeOpenBookmarks(newCols, state.openBookmarks);
+      // Ensure the bookmark is in openBookmarks before computing
+      const hasBookmark = state.openBookmarks.some((b) => b.id === bookmarkId);
+      const withBookmark = hasBookmark
+        ? state.openBookmarks
+        : [...state.openBookmarks, { id: bookmarkId } as Bookmark];
+      const newOpen = computeOpenBookmarks(newCols, withBookmark);
       saveSplitState(newSplit);
       return { splitState: newSplit, openBookmarks: newOpen };
     });

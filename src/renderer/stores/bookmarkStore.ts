@@ -174,6 +174,14 @@ export const useBookmarkStore = create<BookmarkStore>((set, get) => ({
         };
       });
       set({ bookmarks: mappedBookmarks });
+
+      // Sync openBookmarks with saved splitState columns on startup
+      const { splitState } = useSplitStore.getState();
+      const tabIds = new Set(splitState.columns.flatMap((c) => c.tabs));
+      const syncedOpen = mappedBookmarks.filter((b) => tabIds.has(b.id));
+      if (syncedOpen.length > 0) {
+        useSplitStore.getState().setOpenBookmarks(syncedOpen);
+      }
     } catch (err) {
       console.error('Failed to fetch bookmarks:', err);
       set({ bookmarks: [] });
