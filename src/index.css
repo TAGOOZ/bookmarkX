@@ -395,6 +395,33 @@ body {
   background-color: var(--bg-tertiary);
 }
 
+.bookmark-context-menu {
+  min-width: 160px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-m);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  padding: var(--space-xs) 0;
+}
+
+.bookmark-context-item {
+  display: block;
+  width: 100%;
+  padding: var(--space-xs) var(--space-m);
+  border: none;
+  background: transparent;
+  color: var(--text-primary);
+  font-size: var(--font-ui-small);
+  cursor: pointer;
+  text-align: start;
+  white-space: nowrap;
+  transition: background-color var(--transition-fast);
+}
+
+.bookmark-context-item:hover {
+  background-color: var(--bg-tertiary);
+}
+
 .topic-rename-input {
   flex: 1;
   padding: 2px var(--space-s);

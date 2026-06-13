@@ -1,8 +1,15 @@
-import React, { useState, useCallback, useRef } from 'react';
+import React, { useState, useCallback, useRef, useEffect } from 'react';
 import { useIntl } from 'react-intl';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import { ChevronDown, ChevronRight, MoreHorizontal, Pencil, Trash2 } from 'lucide-react';
 import type { Bookmark } from '../types';
+
+interface BookmarkContextMenuState {
+  visible: boolean;
+  x: number;
+  y: number;
+  bookmark: Bookmark;
+}
 
 const VIRTUALIZE_THRESHOLD = 50;
 const ITEM_HEIGHT = 56;
@@ -24,6 +31,7 @@ interface TopicGroupProps {
   onRename?: (topicId: string, newName: string) => void;
   onDelete?: (topicId: string) => void;
   onMoveBookmark?: (bookmarkId: string, targetTopicId: string | null) => void;
+  onOpenInNewColumn?: (bookmarkId: string) => void;
   isDragOver?: boolean;
 }
 
@@ -42,6 +50,7 @@ const TopicGroup: React.FC<TopicGroupProps> = ({
   onRename,
   onDelete,
   onMoveBookmark,
+  onOpenInNewColumn,
   isDragOver,
 }) => {
   const intl = useIntl();
@@ -50,6 +59,8 @@ const TopicGroup: React.FC<TopicGroupProps> = ({
   const [isRenaming, setIsRenaming] = useState(false);
   const [renameValue, setRenameValue] = useState(topic);
   const [localDragOver, setLocalDragOver] = useState(false);
+  const [bookmarkCtx, setBookmarkCtx] = useState<BookmarkContextMenuState | null>(null);
+  const bookmarkMenuRef = useRef<HTMLDivElement>(null);
   const hasMore = bookmarks.length > maxVisible;
   const shouldVirtualize = bookmarks.length > VIRTUALIZE_THRESHOLD;
   const visibleBookmarks = showAll ? bookmarks : bookmarks.slice(0, maxVisible);
@@ -137,6 +148,44 @@ const TopicGroup: React.FC<TopicGroupProps> = ({
       onMoveBookmark(draggedBookmarkId, topicId || null);
     }
   }, [topicId, onMoveBookmark]);
+
+  const handleBookmarkContextMenu = useCallback((e: React.MouseEvent, bookmark: Bookmark) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setBookmarkCtx({ visible: true, x: e.clientX, y: e.clientY, bookmark });
+  }, []);
+
+  const handleBookmarkCtxOpen = useCallback(() => {
+    if (bookmarkCtx) {
+      onSelectBookmark(bookmarkCtx.bookmark);
+      setBookmarkCtx(null);
+    }
+  }, [bookmarkCtx, onSelectBookmark]);
+
+  const handleBookmarkCtxOpenNewColumn = useCallback(() => {
+    if (bookmarkCtx && onOpenInNewColumn) {
+      onOpenInNewColumn(bookmarkCtx.bookmark.id);
+      setBookmarkCtx(null);
+    }
+  }, [bookmarkCtx, onOpenInNewColumn]);
+
+  useEffect(() => {
+    if (!bookmarkCtx?.visible) return;
+    const handleClick = (e: MouseEvent) => {
+      if (bookmarkMenuRef.current && !bookmarkMenuRef.current.contains(e.target as Node)) {
+        setBookmarkCtx(null);
+      }
+    };
+    const handleEsc = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setBookmarkCtx(null);
+    };
+    document.addEventListener('mousedown', handleClick);
+    document.addEventListener('keydown', handleEsc);
+    return () => {
+      document.removeEventListener('mousedown', handleClick);
+      document.removeEventListener('keydown', handleEsc);
+    };
+  }, [bookmarkCtx?.visible]);
 
   return (
     <div
@@ -230,6 +279,7 @@ const TopicGroup: React.FC<TopicGroupProps> = ({
                       draggable
                       onDragStart={(e) => handleDragStart(e, bookmark)}
                       onClick={() => onSelectBookmark(bookmark)}
+                      onContextMenu={(e) => handleBookmarkContextMenu(e, bookmark)}
                       onKeyDown={(e) =>
                         (e.key === 'Enter' || e.key === ' ') &&
                         (e.preventDefault(), onSelectBookmark(bookmark))
@@ -269,6 +319,7 @@ const TopicGroup: React.FC<TopicGroupProps> = ({
                 draggable
                 onDragStart={(e) => handleDragStart(e, bookmark)}
                 onClick={() => onSelectBookmark(bookmark)}
+                onContextMenu={(e) => handleBookmarkContextMenu(e, bookmark)}
                 onKeyDown={(e) =>
                   (e.key === 'Enter' || e.key === ' ') &&
                   (e.preventDefault(), onSelectBookmark(bookmark))
@@ -295,6 +346,24 @@ const TopicGroup: React.FC<TopicGroupProps> = ({
             </button>
           )}
           {children}
+        </div>
+      )}
+      {bookmarkCtx?.visible && (
+        <div
+          ref={bookmarkMenuRef}
+          className="bookmark-context-menu"
+          style={{ position: 'fixed', left: bookmarkCtx.x, top: bookmarkCtx.y, zIndex: 1000 }}
+          role="menu"
+          onKeyDown={(e) => { if (e.key === 'Escape') setBookmarkCtx(null); }}
+        >
+          <button className="bookmark-context-item" onClick={handleBookmarkCtxOpen} role="menuitem">
+            {intl.formatMessage({ id: 'openLink' })}
+          </button>
+          {onOpenInNewColumn && (
+            <button className="bookmark-context-item" onClick={handleBookmarkCtxOpenNewColumn} role="menuitem">
+              {intl.formatMessage({ id: 'openInNewColumn' })}
+            </button>
+          )}
         </div>
       )}
     </div>

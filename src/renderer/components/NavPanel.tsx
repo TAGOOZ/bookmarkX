@@ -19,10 +19,12 @@ interface NavPanelProps {
   selectedBookmarkId: string | null;
   mockMode: boolean;
   onToggleMockMode: () => void;
+  onOpenInNewColumn?: (bookmarkId: string) => void;
 }
 const NavPanel: React.FC<NavPanelProps> = ({
   bookmarks, onSettingsClick, onFetchClick, onClassifyClick,
   onSelectBookmark, selectedBookmarkId, mockMode, onToggleMockMode,
+  onOpenInNewColumn,
 }) => {
   const intl = useIntl();
   const [showSearch, setShowSearch] = useState(false);
@@ -58,6 +60,7 @@ const NavPanel: React.FC<NavPanelProps> = ({
           selectedBookmarkId={selectedBookmarkId} depth={depth}
           childCount={node.children.length} totalCount={node.bookmark_count}
           onRename={renameTopic} onDelete={deleteTopic} onMoveBookmark={moveBookmark}
+          onOpenInNewColumn={onOpenInNewColumn}
         >
           {hasChildren && expanded && renderTopicNodes(node.children, depth + 1)}
         </TopicGroup>
@@ -84,6 +87,7 @@ const NavPanel: React.FC<NavPanelProps> = ({
                   onToggle={toggleTopic} onSelectBookmark={onSelectBookmark}
                   selectedBookmarkId={selectedBookmarkId} depth={0}
                   onMoveBookmark={moveBookmark}
+                  onOpenInNewColumn={onOpenInNewColumn}
                 />
               ))
             ) : (

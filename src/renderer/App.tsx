@@ -1,4 +1,4 @@
-import React, { useEffect, useState, createContext, useContext, Suspense } from 'react';
+import React, { useEffect, useState, useCallback, createContext, useContext, Suspense } from 'react';
 import { IntlProvider, useIntl } from 'react-intl';
 import NavPanel from './components/NavPanel';
 import { SplitLayout } from './components/split-view';
@@ -83,6 +83,13 @@ function AppContent() {
 
   const toggleMockMode = () => setMockMode((prev) => !prev);
 
+  const handleOpenInNewColumn = useCallback((bookmarkId: string) => {
+    const activeCol = splitState.columns.find((c) => c.id === splitState.activeColumnId);
+    if (activeCol) {
+      handleSplitColumn(activeCol.id, bookmarkId);
+    }
+  }, [splitState, handleSplitColumn]);
+
   useEffect(() => {
     const scheduleFetch = window.requestIdleCallback ?? ((cb: IdleRequestCallback) => setTimeout(() => cb({ timeRemaining: () => 0, didTimeout: false } as IdleDeadline), 0));
     const handle = scheduleFetch(() => {
@@ -134,6 +141,7 @@ function AppContent() {
           selectedBookmarkId={activeBookmarkId}
           mockMode={mockMode}
           onToggleMockMode={toggleMockMode}
+          onOpenInNewColumn={handleOpenInNewColumn}
         />
         {showSettings && (
           <Suspense fallback={null}>
