@@ -87,7 +87,6 @@
   display: flex;
   gap: var(--space-xs);
   flex-wrap: wrap;
-  flex: 1;
 }
 
 .hashtagChip {

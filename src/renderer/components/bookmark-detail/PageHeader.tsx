@@ -1,15 +1,7 @@
 import React, { useState, useCallback } from 'react';
 import { FormattedMessage, useIntl } from 'react-intl';
+import { Folder, FileText, Zap, Clock, Calendar, Link } from 'lucide-react';
 import styles from './PageHeader.module.css';
-
-const ICONS: Record<string, string> = {
-  topic: '📁',
-  type: '📄',
-  priority: '⚡',
-  time: '⏱️',
-  calendar: '📅',
-  link: '🔗',
-};
 
 interface PageHeaderProps {
   title: string;
@@ -63,38 +55,38 @@ const PageHeader: React.FC<PageHeaderProps> = ({
           onClick={() => onOpenUrl?.(url)}
           title={url}
         >
-          <span className={styles.urlIcon}>{ICONS.link}</span>
+          <span className={styles.urlIcon}><Link size={14} /></span>
           <span className={styles.urlText}>{url}</span>
         </button>
       )}
       <div className={styles.meta}>
         {topic && (
           <span className={styles.metaItem}>
-            <span className={styles.metaIcon}>{ICONS.topic}</span>
+            <span className={styles.metaIcon}><Folder size={14} /></span>
             {topic}
           </span>
         )}
         {contentType && (
           <span className={styles.metaItem}>
-            <span className={styles.metaIcon}>{ICONS.type}</span>
+            <span className={styles.metaIcon}><FileText size={14} /></span>
             {contentType}
           </span>
         )}
         {priority && (
           <span className={`${styles.metaItem} ${priorityClass}`}>
-            <span className={styles.metaIcon}>{ICONS.priority}</span>
+            <span className={styles.metaIcon}><Zap size={14} /></span>
             {priority.toUpperCase()}
           </span>
         )}
         {readingTime != null && (
           <span className={styles.metaItem}>
-            <span className={styles.metaIcon}>{ICONS.time}</span>
+            <span className={styles.metaIcon}><Clock size={14} /></span>
             <FormattedMessage id="minRead" values={{ 0: readingTime }} />
           </span>
         )}
         {createdAt && (
           <span className={styles.metaItem}>
-            <span className={styles.metaIcon}>{ICONS.calendar}</span>
+            <span className={styles.metaIcon}><Calendar size={14} /></span>
             {new Date(createdAt).toLocaleDateString()}
           </span>
         )}
