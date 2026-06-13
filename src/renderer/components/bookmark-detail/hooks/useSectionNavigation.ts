@@ -16,6 +16,19 @@ interface UseSectionNavigationProps {
 
 function scanHeadings(editorEl: HTMLDivElement | null): Section[] {
   if (!editorEl) return [];
+
+  // BlockNote renders headings as div[data-type="heading"] with data-level
+  const blocknoteHeadings = editorEl.querySelectorAll('[data-type="heading"]');
+  if (blocknoteHeadings.length > 0) {
+    return Array.from(blocknoteHeadings).map((el, i) => ({
+      id: `section-${i}`,
+      label: el.textContent || '',
+      visible: true,
+      level: parseInt(el.getAttribute('data-level') || '1'),
+    }));
+  }
+
+  // Fallback: standard h1-h6 elements
   const headings = editorEl.querySelectorAll('h1, h2, h3, h4, h5, h6');
   return Array.from(headings).map((heading, i) => ({
     id: `section-${i}`,
@@ -49,6 +62,16 @@ export function useSectionNavigation({ editorRef }: UseSectionNavigationProps) {
   const handleNavigate = useCallback((sectionId: string) => {
     const idx = sections.findIndex((s) => s.id === sectionId);
     if (idx < 0) return;
+
+    // Try BlockNote headings first
+    const blocknoteHeadings = editorRef.current?.querySelectorAll('[data-type="heading"]');
+    if (blocknoteHeadings && blocknoteHeadings[idx]) {
+      blocknoteHeadings[idx].scrollIntoView({ behavior: 'smooth', block: 'start' });
+      setActiveSection(sectionId);
+      return;
+    }
+
+    // Fallback: standard headings
     const headings = editorRef.current?.querySelectorAll('h1, h2, h3, h4, h5, h6');
     if (headings && headings[idx]) {
       headings[idx].scrollIntoView({ behavior: 'smooth', block: 'start' });
