@@ -33,13 +33,14 @@
 
 **The repeated disk read (content.ts:18-22)**:
 ```typescript
-async function getConfigEnv(userDataDir: string) {
+async function getConfigEnv(): Promise<{ apiKey?: string }> {
+  const userDataDir = app.getPath('userData');
   const config = await readConfig(userDataDir);
-  return { apiKey: config.apiKey };
+  return { apiKey: config.geminiApiKey || undefined };
 }
 ```
 
-**Called from multiple handlers**: summarize-bookmark (line 31), extract-article (line 38), send-chat-message (line 57), enhance-note (line 127), generate-glossary (line 137).
+**Called from multiple handlers**: summarize-bookmark (line 31), extract-article (line 38), send-chat-message (line 57), enhance-note (line 121), generate-glossary (line 132).
 
 ## Commands you will need
 
@@ -68,14 +69,15 @@ Add a module-level cache variable and modify `getConfigEnv` to return cached res
 ```typescript
 let cachedConfig: { apiKey?: string; ts: number } | null = null;
 
-async function getConfigEnv(userDataDir: string) {
+async function getConfigEnv(): Promise<{ apiKey?: string }> {
   const now = Date.now();
   if (cachedConfig && now - cachedConfig.ts < 5000) {
     return { apiKey: cachedConfig.apiKey };
   }
+  const userDataDir = app.getPath('userData');
   const config = await readConfig(userDataDir);
-  cachedConfig = { apiKey: config.apiKey, ts: now };
-  return { apiKey: config.apiKey };
+  cachedConfig = { apiKey: config.geminiApiKey || undefined, ts: now };
+  return { apiKey: config.geminiApiKey || undefined };
 }
 
 export function invalidateConfigCache() {
