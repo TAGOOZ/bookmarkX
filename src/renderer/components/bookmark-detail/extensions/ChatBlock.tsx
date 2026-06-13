@@ -1,6 +1,7 @@
 import { createReactBlockSpec } from '@blocknote/react';
 import { defaultProps } from '@blocknote/core';
 import React, { useState, useRef, useEffect } from 'react';
+import { useIntl } from 'react-intl';
 import type { ChatMessage } from '../types';
 
 export const createChatBlock = createReactBlockSpec(
@@ -14,6 +15,7 @@ export const createChatBlock = createReactBlockSpec(
   },
   {
     render: (props) => {
+      const intl = useIntl();
       const sessionId = props.block.props.sessionId as string;
       const [messages, setMessages] = useState<ChatMessage[]>([]);
       const [input, setInput] = useState('');
@@ -86,7 +88,7 @@ export const createChatBlock = createReactBlockSpec(
           >
             {messages.length === 0 && (
               <div style={{ color: 'var(--text-muted)', fontSize: '13px', padding: '8px 0' }}>
-                Ask a question about this bookmark...
+                {intl.formatMessage({ id: 'chatPlaceholder' })}
               </div>
             )}
             {messages.map((msg) => (
@@ -102,14 +104,14 @@ export const createChatBlock = createReactBlockSpec(
                 }}
               >
                 <span style={{ fontWeight: 600, color: msg.role === 'user' ? 'var(--accent-color)' : 'var(--priority-low)' }}>
-                  {msg.role === 'user' ? 'You' : 'Assistant'}:
+                  {msg.role === 'user' ? intl.formatMessage({ id: 'chatYou' }) : intl.formatMessage({ id: 'chatAssistant' })}:
                 </span>{' '}
                 {msg.content}
               </div>
             ))}
             {isLoading && (
               <div style={{ color: 'var(--text-muted)', fontSize: '12px', padding: '4px 0' }}>
-                Thinking...
+                {intl.formatMessage({ id: 'chatThinking' })}
               </div>
             )}
           </div>
@@ -125,7 +127,7 @@ export const createChatBlock = createReactBlockSpec(
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={handleKeyDown}
-              placeholder="Type a message..."
+              placeholder={intl.formatMessage({ id: 'chatInputPlaceholder' })}
               aria-label="Chat message input"
               disabled={isLoading}
               style={{
@@ -153,7 +155,7 @@ export const createChatBlock = createReactBlockSpec(
                 opacity: isLoading || !input.trim() ? 0.5 : 1,
               }}
             >
-              Send
+              {intl.formatMessage({ id: 'chatSend' })}
             </button>
           </div>
         </div>

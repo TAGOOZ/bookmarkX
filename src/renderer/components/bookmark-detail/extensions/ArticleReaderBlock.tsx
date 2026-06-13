@@ -245,7 +245,7 @@ export const createArticleReaderBlock = createReactBlockSpec(
               {ogTitle && (
                 <div className={styles.previewCard}>
                   {ogImage && (
-                    <img src={ogImage} alt="" className={styles.previewImage} />
+                    <img src={ogImage} alt={ogTitle ? `Preview: ${ogTitle}` : 'Article preview'} className={styles.previewImage} />
                   )}
                   <div className={styles.previewText}>
                     {ogSiteName && <span className={styles.previewSite}>{ogSiteName}</span>}

@@ -39,13 +39,15 @@ export function useNotifications() {
   const deleteNotification = useCallback(async (id: string) => {
     try {
       await (window as any).api?.deleteNotification?.(id);
-      setNotifications(prev => prev.filter(n => n.id !== id));
-      setUnreadCount(prev => {
-        const notif = notifications.find(n => n.id === id);
-        return notif?.read === 0 ? Math.max(0, prev - 1) : prev;
+      setNotifications((prev) => {
+        const notif = prev.find(n => n.id === id);
+        if (notif && notif.read === 0) {
+          setUnreadCount((c) => Math.max(0, c - 1));
+        }
+        return prev.filter(n => n.id !== id);
       });
     } catch (err) { console.warn('Failed to delete notification:', err); }
-  }, [notifications]);
+  }, []);
 
   return { notifications, unreadCount, showNotifications, setShowNotifications, markRead, markAllRead, deleteNotification };
 }

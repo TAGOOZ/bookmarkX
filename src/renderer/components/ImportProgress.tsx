@@ -143,8 +143,20 @@ const ImportProgress: React.FC<ImportProgressProps> = ({ onRefresh }) => {
         <span>{progress.totalClassified} {intl.formatMessage({ id: 'classified' })}</span>
       </div>
       {progress.status === 'running' && (
-        <div className="import-progress-bar">
-          <div className="import-progress-bar-fill" />
+        <div className="import-progress-bar-wrapper">
+          <div
+            className="import-progress-bar"
+            role="progressbar"
+            aria-valuenow={progress.totalFetched}
+            aria-valuemin={0}
+            aria-valuemax={Math.max(progress.totalFetched, 1)}
+            aria-label={intl.formatMessage({ id: 'importProgress' })}
+          >
+            <div className="import-progress-bar-fill" />
+          </div>
+          <span className="import-progress-percent">
+            {progress.totalClassified}/{progress.totalFetched} {intl.formatMessage({ id: 'classified' })}
+          </span>
         </div>
       )}
       {progress.error && (

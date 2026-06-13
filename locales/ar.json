@@ -163,5 +163,12 @@
   "resumeImport": "استئناف",
   "fetched": "تم الجلب",
   "classified": "تم التصنيف",
-  "actions": "إجراءات"
+  "actions": "إجراءات",
+  "importProgress": "تقدم الاستيراد",
+  "chatPlaceholder": "اسأل سؤالاً عن هذه الإشارة المرجعية...",
+  "chatInputPlaceholder": "اكتب رسالة...",
+  "chatSend": "إرسال",
+  "chatThinking": "جاري التفكير...",
+  "chatYou": "أنت",
+  "chatAssistant": "المساعد"
 }

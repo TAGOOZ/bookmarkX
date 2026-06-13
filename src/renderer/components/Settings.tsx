@@ -17,6 +17,7 @@ const Settings: React.FC<SettingsProps> = ({ onClose, mockMode = false }) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showRestartPrompt, setShowRestartPrompt] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
   const [initialLanguage, setInitialLanguage] = useState<'ar' | 'en'>('ar');
   const containerRef = useRef<HTMLDivElement>(null);
   const intl = useIntl();
@@ -85,6 +86,7 @@ const Settings: React.FC<SettingsProps> = ({ onClose, mockMode = false }) => {
       return;
     }
     setError(null);
+    setIsSaving(true);
     try {
       await window.api.saveSettings(formData);
       try { localStorage.setItem('bookmarkx-setup-complete', 'true'); } catch { /* localStorage unavailable */ }
@@ -96,6 +98,8 @@ const Settings: React.FC<SettingsProps> = ({ onClose, mockMode = false }) => {
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to save settings');
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -175,8 +179,8 @@ const Settings: React.FC<SettingsProps> = ({ onClose, mockMode = false }) => {
             >
               <FormattedMessage id="cancel" />
             </button>
-            <button type="submit" className="action-button primary-button" disabled={mockMode}>
-              <FormattedMessage id="save" />
+            <button type="submit" className="action-button primary-button" disabled={mockMode || isSaving}>
+              {isSaving ? 'Saving...' : <FormattedMessage id="save" />}
             </button>
           </div>
         </form>

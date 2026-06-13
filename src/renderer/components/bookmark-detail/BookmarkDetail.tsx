@@ -142,6 +142,7 @@ const BookmarkEditor: React.FC<BookmarkEditorProps> = ({
   });
 
   const { selectionToolbar, setSelectionToolbar, handleEnhance, handleHighlight, handleReference } = useSelectionToolbar({
+    editor: editor as any,
     editorRef,
     bookmarkTitle: bookmark.title,
     bookmarkId: bookmark.id,

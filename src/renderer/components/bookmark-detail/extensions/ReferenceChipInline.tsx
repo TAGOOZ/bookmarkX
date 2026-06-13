@@ -43,7 +43,12 @@ export const createReferenceChipInline = () =>
         return (
           <span
             onClick={handleCopy}
-            onKeyDown={(e) => e.key === 'Enter' && handleCopy()}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                handleCopy();
+              }
+            }}
             title={sentence}
             contentEditable={false}
             role="button"

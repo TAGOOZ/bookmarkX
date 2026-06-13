@@ -155,3 +155,33 @@
   background-color: var(--background-modifier-border);
   margin: var(--space-xs) 0;
 }
+
+.emptyTabs {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-height: 40px;
+  border-bottom: 1px solid var(--background-modifier-border);
+  background-color: var(--background-primary);
+}
+
+.reopenBtn {
+  padding: var(--space-xs) var(--space-m);
+  border: none;
+  background: none;
+  color: var(--text-muted);
+  font-size: var(--font-ui-sm);
+  cursor: pointer;
+  border-radius: var(--radius-s);
+}
+
+.reopenBtn:hover:not(:disabled) {
+  background-color: var(--background-modifier-hover);
+  color: var(--text-normal);
+}
+
+.reopenBtn:disabled {
+  color: var(--text-faint);
+  cursor: default;
+}

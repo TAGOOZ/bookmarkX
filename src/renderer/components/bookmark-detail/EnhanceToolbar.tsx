@@ -41,6 +41,13 @@ const EnhanceToolbar: React.FC<EnhanceToolbarProps> = ({
 
   if (!position) return null;
 
+  const toolbarWidth = 280;
+  const toolbarHeight = 40;
+  const clampedLeft = Math.min(position.left, window.innerWidth - toolbarWidth - 16);
+  const clampedTop = position.top - toolbarHeight - 8 < 0
+    ? position.top + 24
+    : Math.max(16, position.top - toolbarHeight - 8);
+
   const preview =
     selectedText.length > MAX_PREVIEW
       ? selectedText.slice(0, MAX_PREVIEW) + '...'
@@ -52,7 +59,7 @@ const EnhanceToolbar: React.FC<EnhanceToolbarProps> = ({
       className={styles.toolbar}
       role="toolbar"
       aria-label={intl.formatMessage({ id: 'enhanceBtnAria' })}
-      style={{ top: `${position.top}px`, left: `${position.left}px` }}
+      style={{ top: `${clampedTop}px`, left: `${Math.max(16, clampedLeft)}px` }}
       tabIndex={-1}
     >
       <span className={styles.preview} title={selectedText}>

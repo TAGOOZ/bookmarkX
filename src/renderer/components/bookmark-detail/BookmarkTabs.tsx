@@ -123,7 +123,12 @@ const BookmarkTabs: React.FC<BookmarkTabsProps> = ({
   useEffect(() => {
     if (!activeBookmarkId || !tabBarRef.current) return;
     const activeTab = tabBarRef.current.querySelector(`[data-bookmark-id="${activeBookmarkId}"]`);
-    if (activeTab) {
+    if (!activeTab) return;
+    const container = tabBarRef.current;
+    const tabRect = activeTab.getBoundingClientRect();
+    const containerRect = container.getBoundingClientRect();
+    const isVisible = tabRect.left >= containerRect.left && tabRect.right <= containerRect.right;
+    if (!isVisible) {
       activeTab.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'nearest' });
     }
   }, [activeBookmarkId]);
@@ -362,7 +367,19 @@ const BookmarkTabs: React.FC<BookmarkTabsProps> = ({
     return () => cancelAnimationFrame(timer);
   }, [contextMenu?.visible]);
 
-  if (openBookmarks.length === 0 && closedTabs.length === 0) return null;
+  if (openBookmarks.length === 0) {
+    return (
+      <div className={styles.emptyTabs}>
+        <button
+          className={styles.reopenBtn}
+          onClick={handleMenuReopen}
+          disabled={closedTabs.length === 0}
+        >
+          {closedTabs.length > 0 ? '↺ Reopen' : 'No open tabs'}
+        </button>
+      </div>
+    );
+  }
 
   const menuStyle: React.CSSProperties = {
     top: Math.min(contextMenu?.y ?? 0, window.innerHeight - 300),
