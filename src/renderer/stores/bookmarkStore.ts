@@ -53,13 +53,18 @@ export const useBookmarkStore = create<BookmarkStore>((set, get) => ({
     const activeCol = splitState.columns.find((c) => c.id === splitState.activeColumnId);
     if (activeCol?.activeTabId === bookmark.id) return;
 
-    // If bookmark is already open in any column, switch to that column
+    // If bookmark is already open in any column, switch to that column and activate it
     const existingCol = splitState.columns.find((c) => c.tabs.includes(bookmark.id));
     if (existingCol) {
-      if (existingCol.id === splitState.activeColumnId) return; // already active
+      if (existingCol.id === splitState.activeColumnId && existingCol.activeTabId === bookmark.id) return; // already active
       useSplitStore.getState().setSplitState({
         ...splitState,
         activeColumnId: existingCol.id,
+        columns: splitState.columns.map((c) =>
+          c.id === existingCol.id
+            ? { ...c, activeTabId: bookmark.id }
+            : c,
+        ),
       });
       return;
     }
@@ -67,14 +72,28 @@ export const useBookmarkStore = create<BookmarkStore>((set, get) => ({
     let newSplit: typeof splitState;
 
     if (!activeCol) {
-      // No columns yet — create first column
-      const newCol = {
-        id: `col-${Date.now()}`,
-        tabs: [bookmark.id],
-        activeTabId: bookmark.id,
-        width: 1,
-      };
-      newSplit = { columns: [newCol], activeColumnId: newCol.id };
+      if (splitState.columns.length > 0) {
+        // activeColumnId is stale — use first column
+        const firstCol = splitState.columns[0];
+        newSplit = {
+          ...splitState,
+          activeColumnId: firstCol.id,
+          columns: splitState.columns.map((c) =>
+            c.id === firstCol.id
+              ? { ...c, tabs: [...c.tabs, bookmark.id], activeTabId: bookmark.id }
+              : c,
+          ),
+        };
+      } else {
+        // No columns yet — create first column
+        const newCol = {
+          id: `col-${Date.now()}`,
+          tabs: [bookmark.id],
+          activeTabId: bookmark.id,
+          width: 1,
+        };
+        newSplit = { columns: [newCol], activeColumnId: newCol.id };
+      }
     } else {
       // Add bookmark as a new tab in the active column (Obsidian behavior)
       newSplit = {
