@@ -34,6 +34,10 @@ export async function parseURL(url: string, options: { timeoutMs?: number } = {}
     });
     const html = await response.text();
 
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}: Failed to fetch ${url}`);
+    }
+
     let cleanHtml: string;
     let ogTitle = '';
     let ogDescription = '';
