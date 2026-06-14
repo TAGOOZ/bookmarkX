@@ -97,7 +97,7 @@ export function parseMDToBlocks(markdown: string): PartialBlock[] {
         codeLines.push(lines[i]);
         i++;
       }
-      i++; // skip closing ```
+      if (i < lines.length) { i++; } // skip closing ```
       const codeContent = codeLines.join('\n');
       if (codeContent.trim()) {
         blocks.push({

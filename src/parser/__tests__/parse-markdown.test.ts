@@ -162,6 +162,14 @@ describe('parseMDToBlocks', () => {
     expect(parseMDToBlocks('')).toEqual([]);
   });
 
+  it('preserves content after unclosed code fence', () => {
+    const md = '```js\nconsole.log("hi")\nRemaining paragraph after unclosed fence';
+    const blocks = parseMDToBlocks(md);
+    expect(blocks).toEqual([
+      { type: 'paragraph', content: [{ type: 'text', text: 'console.log("hi")\nRemaining paragraph after unclosed fence', styles: { code: true } }] },
+    ]);
+  });
+
   it('handles Arabic text', () => {
     const md = '# العنوان\nهذا نص عربي';
     const blocks = parseMDToBlocks(md);
