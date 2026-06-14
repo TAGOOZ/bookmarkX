@@ -1,4 +1,36 @@
 import type { ParserResult, ParseOptions } from './types';
+import type { Bookmark } from '../fetch/types';
+
+export async function parseBookmark(
+  bookmark: Bookmark,
+  options: ParseOptions = {},
+): Promise<ParserResult> {
+  const { content_type, tweet_text, outer_urls, url } = bookmark;
+
+  switch (content_type) {
+    case 'plain_tweet':
+    case 'thread': {
+      if (tweet_text) {
+        const { parseTweetText } = await import('./local-parser');
+        return parseTweetText(tweet_text);
+      }
+      return parseArticle(url, options);
+    }
+
+    case 'outer_link': {
+      return parseArticle(url, {
+        ...options,
+        outerUrls: outer_urls || undefined,
+      });
+    }
+
+    case 'x_article':
+    case 'video':
+    default: {
+      return parseArticle(url, options);
+    }
+  }
+}
 
 export async function parseArticle(
   url: string,
