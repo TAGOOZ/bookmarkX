@@ -202,4 +202,16 @@ describe('parseHTMLToBlocks', () => {
     expect(blocks[0]).toEqual({ type: 'bulletListItem', content: 'Item 1Nested ANested B' });
     expect(blocks[1]).toEqual({ type: 'bulletListItem', content: 'Item 2' });
   });
+
+  it('extracts text from paragraph blocks with inline content for word count', () => {
+    const html = '<p>Hello world this is a paragraph</p>';
+    const blocks = parseHTMLToBlocks(html);
+    expect(blocks).toHaveLength(1);
+    const block = blocks[0] as any;
+    expect(typeof block.content).toBe('object');
+    expect(Array.isArray(block.content)).toBe(true);
+    const text = block.content.map((c: any) => c.text).join('');
+    const wordCount = text.split(/\s+/).filter(Boolean).length;
+    expect(wordCount).toBe(6);
+  });
 });

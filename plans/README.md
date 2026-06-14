@@ -85,6 +85,7 @@ honor its STOP conditions, and update your row when done.
 | 075 | Defer initial bookmarks fetch to after first paint | P2 | M | — | DONE |
 | 076 | Skip electron-squirrel-startup import on non-Windows | P3 | S | — | DONE |
 | 077 | Fix tabs to match Obsidian behavior (add tab to active column, keep tab on split, hide chrome for 1 column) | P1 | M | — | DONE |
+| 078 | Fix word count excluding paragraph content blocks | P1 | S | — | DONE |
 
 Status values: TODO | IN PROGRESS | DONE | BLOCKED (with one-line reason) | REJECTED (with one-line rationale)
 
