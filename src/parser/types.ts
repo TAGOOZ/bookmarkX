@@ -14,4 +14,5 @@ export interface ParseOptions {
   apiKey?: string;
   model?: string;
   timeoutMs?: number;
+  outerUrls?: string[];
 }

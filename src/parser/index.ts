@@ -4,19 +4,29 @@ export async function parseArticle(
   url: string,
   options: ParseOptions = {},
 ): Promise<ParserResult> {
-  try {
-    const { parseURL } = await import('./local-parser');
-    return await parseURL(url, { timeoutMs: options.timeoutMs || 15000 });
-  } catch (localError) {
-    console.warn('Local parser failed, trying Gemini fallback:', localError);
-    // Local parser failed — try Gemini fallback
-    const { parseWithGemini } = await import('./gemini-fallback');
-    return await parseWithGemini(url, {
-      apiKey: options.apiKey,
-      model: options.model,
-      timeoutMs: options.timeoutMs,
-    });
+  const urlsToTry = options.outerUrls?.length
+    ? [...options.outerUrls, url]
+    : [url];
+
+  for (const tryUrl of urlsToTry) {
+    try {
+      const { parseURL } = await import('./local-parser');
+      return await parseURL(tryUrl, { timeoutMs: options.timeoutMs || 15000 });
+    } catch (localError) {
+      console.warn(`Local parser failed for ${tryUrl}:`, localError);
+      // Only try Gemini for the last URL
+      if (tryUrl === urlsToTry[urlsToTry.length - 1]) {
+        const { parseWithGemini } = await import('./gemini-fallback');
+        return await parseWithGemini(tryUrl, {
+          apiKey: options.apiKey,
+          model: options.model,
+          timeoutMs: options.timeoutMs,
+        });
+      }
+    }
   }
+
+  throw new Error(`Failed to parse any URL: ${urlsToTry.join(', ')}`);
 }
 
 export { parseHTMLToBlocks } from './local-parser';

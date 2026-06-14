@@ -64,6 +64,7 @@ export async function extractArticle(
   bookmarkId: string,
   url: string,
   options: ServiceOptions = {},
+  outerUrls?: string[],
 ): Promise<ExtractResult> {
   const cached = getCachedExtract(url);
   if (cached) {
@@ -88,6 +89,7 @@ export async function extractArticle(
   const result = await parseArticle(url, {
     apiKey: options.apiKey,
     model: options.model,
+    outerUrls,
   });
 
   const blocksJson = JSON.stringify(result.blocks);
