@@ -1,5 +1,5 @@
-import { describe, it, expect } from 'vitest';
-import { parseHTMLToBlocks } from '../local-parser';
+import { describe, it, expect, vi } from 'vitest';
+import { parseHTMLToBlocks, parseURL } from '../local-parser';
 
 describe('parseHTMLToBlocks', () => {
   it('converts headings to heading blocks', () => {
@@ -213,5 +213,15 @@ describe('parseHTMLToBlocks', () => {
     const text = block.content.map((c: any) => c.text).join('');
     const wordCount = text.split(/\s+/).filter(Boolean).length;
     expect(wordCount).toBe(6);
+  });
+});
+
+describe('parseURL', () => {
+  it('throws on non-2xx HTTP responses', async () => {
+    vi.spyOn(globalThis, 'fetch').mockResolvedValueOnce(
+      new Response('Not Found', { status: 404, statusText: 'Not Found' })
+    );
+    await expect(parseURL('https://example.com/missing')).rejects.toThrow('HTTP 404');
+    vi.restoreAllMocks();
   });
 });
