@@ -38,7 +38,7 @@ export async function parseWithGemini(
   }
 
   const prompt = GEMINI_PROMPT + url;
-  const text = await callGemini(prompt, { apiKey, model });
+  const text = await callGemini(prompt, { apiKey, model, timeoutMs: options.timeoutMs });
 
   let blocks: PartialBlock[];
   try {
