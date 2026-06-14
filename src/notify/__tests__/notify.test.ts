@@ -24,6 +24,9 @@ describe('Notification module', () => {
     author_name: 'Test Author',
     author_handle: 'testauthor',
     tweet_text: 'Check this out',
+    outer_urls: null,
+    thread_tweet_count: null,
+    video_url: null,
     fetched_at: '2024-01-15T10:00:00Z',
   };
 

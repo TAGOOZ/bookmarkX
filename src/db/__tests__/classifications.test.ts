@@ -31,6 +31,9 @@ describe('Classification CRUD', () => {
     author_name: 'Test User',
     author_handle: 'testuser',
     tweet_text: 'Check out this article about AI',
+    outer_urls: null,
+    thread_tweet_count: null,
+    video_url: null,
     fetched_at: '2024-01-15T10:00:00Z',
   };
 

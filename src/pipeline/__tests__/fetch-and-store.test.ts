@@ -37,6 +37,9 @@ describe('fetchAndStore pipeline', () => {
       author_name: 'Pipe User',
       author_handle: 'pipeuser',
       tweet_text: 'Testing pipeline',
+      outer_urls: null,
+      thread_tweet_count: null,
+      video_url: null,
       fetched_at: '2024-01-15T10:00:00Z',
     },
     {
@@ -50,6 +53,9 @@ describe('fetchAndStore pipeline', () => {
       author_name: 'Thread User',
       author_handle: 'threaduser',
       tweet_text: 'Thread content',
+      outer_urls: null,
+      thread_tweet_count: null,
+      video_url: null,
       fetched_at: '2024-01-15T11:00:00Z',
     },
   ];

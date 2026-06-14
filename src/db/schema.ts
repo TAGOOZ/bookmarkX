@@ -1,6 +1,6 @@
 import type { Client } from '@libsql/client';
 
-const SCHEMA_VERSION = 2;
+const SCHEMA_VERSION = 3;
 
 const SCHEMA_SQL = `
   CREATE TABLE IF NOT EXISTS bookmarks (
@@ -14,6 +14,9 @@ const SCHEMA_SQL = `
     author_name TEXT,
     author_handle TEXT,
     tweet_text TEXT,
+    outer_urls TEXT,
+    thread_tweet_count INTEGER,
+    video_url TEXT,
     topic_id TEXT REFERENCES topics(id) ON DELETE SET NULL,
     fetched_at DATETIME,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP
@@ -371,6 +374,23 @@ export async function initializeSchema(db: Client): Promise<void> {
     await db.execute('DROP TABLE IF EXISTS bookmark_topics');
   } catch {
     // Table may not exist — ignore
+  }
+
+  // Migration: add Twitter-specific fields to bookmarks
+  try {
+    await db.execute({ sql: 'ALTER TABLE bookmarks ADD COLUMN outer_urls TEXT', args: [] });
+  } catch {
+    // Column already exists — ignore
+  }
+  try {
+    await db.execute({ sql: 'ALTER TABLE bookmarks ADD COLUMN thread_tweet_count INTEGER', args: [] });
+  } catch {
+    // Column already exists — ignore
+  }
+  try {
+    await db.execute({ sql: 'ALTER TABLE bookmarks ADD COLUMN video_url TEXT', args: [] });
+  } catch {
+    // Column already exists — ignore
   }
 
   // Update schema version

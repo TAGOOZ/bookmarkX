@@ -7,6 +7,7 @@ const BOOKMARK_FIELDS: (keyof BookmarkRow)[] = [
   'id', 'tweet_id', 'url', 'content_type',
   'title', 'title_ar', 'title_en',
   'author_name', 'author_handle', 'tweet_text',
+  'outer_urls', 'thread_tweet_count', 'video_url',
   'topic_id', 'fetched_at',
 ];
 
@@ -23,6 +24,9 @@ export function rowToBookmark(row: Row): Bookmark {
     author_name: r.author_name,
     author_handle: r.author_handle,
     tweet_text: r.tweet_text,
+    outer_urls: r.outer_urls ? JSON.parse(r.outer_urls) : null,
+    thread_tweet_count: r.thread_tweet_count,
+    video_url: r.video_url,
     fetched_at: r.fetched_at,
   };
 }
@@ -31,8 +35,8 @@ export async function createBookmarks(db: Client, bookmarks: Bookmark[]): Promis
   if (bookmarks.length === 0) return;
 
   const stmts = bookmarks.map((bookmark) => ({
-    sql: `INSERT OR IGNORE INTO bookmarks (id, tweet_id, url, content_type, title, title_ar, title_en, author_name, author_handle, tweet_text, fetched_at)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    sql: `INSERT OR IGNORE INTO bookmarks (id, tweet_id, url, content_type, title, title_ar, title_en, author_name, author_handle, tweet_text, outer_urls, thread_tweet_count, video_url, fetched_at)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     args: [
       bookmark.id,
       bookmark.tweet_id,
@@ -44,6 +48,9 @@ export async function createBookmarks(db: Client, bookmarks: Bookmark[]): Promis
       bookmark.author_name,
       bookmark.author_handle,
       bookmark.tweet_text,
+      bookmark.outer_urls ? JSON.stringify(bookmark.outer_urls) : null,
+      bookmark.thread_tweet_count,
+      bookmark.video_url,
       bookmark.fetched_at,
     ],
   }));
@@ -78,6 +85,9 @@ export async function getBookmarkById(
     author_name: r.author_name,
     author_handle: r.author_handle,
     tweet_text: r.tweet_text,
+    outer_urls: r.outer_urls ? JSON.parse(r.outer_urls) : null,
+    thread_tweet_count: r.thread_tweet_count,
+    video_url: r.video_url,
     fetched_at: r.fetched_at,
   };
 }

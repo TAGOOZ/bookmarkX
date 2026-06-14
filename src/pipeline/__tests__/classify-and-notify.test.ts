@@ -44,6 +44,9 @@ describe('classifyAndNotify pipeline', () => {
       author_name: 'Test Author',
       author_handle: 'testauthor',
       tweet_text: 'Important content',
+      outer_urls: null,
+      thread_tweet_count: null,
+      video_url: null,
       fetched_at: '2024-01-15T10:00:00Z',
     },
     {
@@ -57,6 +60,9 @@ describe('classifyAndNotify pipeline', () => {
       author_name: 'Another Author',
       author_handle: 'anotherauthor',
       tweet_text: 'Less important',
+      outer_urls: null,
+      thread_tweet_count: null,
+      video_url: null,
       fetched_at: '2024-01-15T11:00:00Z',
     },
   ];

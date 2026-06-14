@@ -39,6 +39,9 @@ describe('classifyBookmark', () => {
     author_name: 'AI Expert',
     author_handle: 'aiexpert',
     tweet_text: 'Check out this article about machine learning and neural networks',
+    outer_urls: null,
+    thread_tweet_count: null,
+    video_url: null,
     fetched_at: '2024-01-15T10:00:00Z',
   };
 
