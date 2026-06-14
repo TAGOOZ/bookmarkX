@@ -9,6 +9,9 @@ export interface Bookmark {
   author_name: string | null;
   author_handle: string | null;
   tweet_text: string | null;
+  outer_urls: string[] | null;
+  thread_tweet_count: number | null;
+  video_url: string | null;
   fetched_at: string;
 }
 

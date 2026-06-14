@@ -37,6 +37,9 @@ function mapBookmark(raw: any): Bookmark {
     author_name: raw.author?.name || null,
     author_handle: raw.author?.screen_name || null,
     tweet_text: raw.text || null,
+    outer_urls: raw.urls || null,
+    thread_tweet_count: raw.thread_tweet_count || null,
+    video_url: raw.video || null,
     fetched_at: new Date().toISOString(),
   };
 }

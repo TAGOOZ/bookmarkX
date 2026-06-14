@@ -91,6 +91,7 @@ honor its STOP conditions, and update your row when done.
 | 081 | Log original error in fallback chain | P3 | S | — | DONE |
 | 082 | Fix unclosed code fence eating remaining content | P1 | S | — | DONE |
 | 083 | Fix plain tweet misclassification as outer_link | P1 | S | — | DONE |
+| 084 | Add Twitter-specific fields to Bookmark type and DB schema | P1 | M | 083 | DONE |
 
 Status values: TODO | IN PROGRESS | DONE | BLOCKED (with one-line reason) | REJECTED (with one-line rationale)
 

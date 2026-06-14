@@ -26,6 +26,9 @@ describe('Bookmark CRUD', () => {
     author_name: 'Test User',
     author_handle: 'testuser',
     tweet_text: 'Check out this article',
+    outer_urls: null,
+    thread_tweet_count: null,
+    video_url: null,
     fetched_at: '2024-01-15T10:00:00Z',
   };
 
@@ -40,6 +43,9 @@ describe('Bookmark CRUD', () => {
     author_name: 'Another User',
     author_handle: 'anotheruser',
     tweet_text: 'Thread about testing',
+    outer_urls: null,
+    thread_tweet_count: null,
+    video_url: null,
     fetched_at: '2024-01-15T11:00:00Z',
   };
 
