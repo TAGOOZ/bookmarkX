@@ -93,6 +93,7 @@ honor its STOP conditions, and update your row when done.
 | 083 | Fix plain tweet misclassification as outer_link | P1 | S | — | DONE |
 | 084 | Add Twitter-specific fields to Bookmark type and DB schema | P1 | M | 083 | DONE |
 | 085 | Parse linked articles via outer_urls instead of tweet page | P1 | M | 084 | DONE |
+| 086 | Use tweet_text as parser input for threads and plain tweets | P1 | M | 084 | DONE |
 
 Status values: TODO | IN PROGRESS | DONE | BLOCKED (with one-line reason) | REJECTED (with one-line rationale)
 

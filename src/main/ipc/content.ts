@@ -26,7 +26,7 @@ export function registerContentIpc(ipcMain: IpcMain, db: Client) {
       const env = await getConfigEnv();
       const bookmark = await getBookmarkById(db, bookmarkId);
       const outerUrls = bookmark?.outer_urls ?? undefined;
-      return await extractArticle(db, bookmarkId, url, { apiKey: env.apiKey }, outerUrls);
+      return await extractArticle(db, bookmarkId, url, { apiKey: env.apiKey }, outerUrls, bookmark?.tweet_text, bookmark?.content_type);
     } catch (err) {
       console.error('extract-article failed:', err);
       throw err;
