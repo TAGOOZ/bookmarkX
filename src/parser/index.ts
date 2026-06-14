@@ -9,7 +9,8 @@ export async function parseBookmark(
 
   switch (content_type) {
     case 'plain_tweet':
-    case 'thread': {
+    case 'thread':
+    case 'x_article': {
       if (tweet_text) {
         const { parseTweetText } = await import('./local-parser');
         return parseTweetText(tweet_text);
@@ -24,7 +25,6 @@ export async function parseBookmark(
       });
     }
 
-    case 'x_article':
     case 'video':
     default: {
       return parseArticle(url, options);
