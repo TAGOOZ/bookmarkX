@@ -2,6 +2,18 @@ import { callGemini } from '../services/gemini';
 import type { PartialBlock } from '@blocknote/core';
 import type { ParserResult, ParseOptions } from './types';
 
+function extractTextFromBlock(b: any): string {
+  const { content } = b;
+  if (typeof content === 'string') return content;
+  if (Array.isArray(content)) {
+    return content
+      .filter((c: any) => c.type === 'text')
+      .map((c: any) => c.text)
+      .join('');
+  }
+  return '';
+}
+
 const GEMINI_PROMPT = `Extract the main article content from this URL. Return a JSON array of BlockNote blocks.
 Each block has: type (heading|paragraph|bulletListItem|numberedListItem), content (string or inline array).
 Inline content: { type: "text", text: "...", styles: { bold?: true, italic?: true, code?: true, link?: "url" } }
@@ -39,8 +51,7 @@ export async function parseWithGemini(
   }
 
   const wordCount = blocks
-    .filter((b: any) => typeof b.content === 'string')
-    .map((b: any) => b.content)
+    .map(extractTextFromBlock)
     .join(' ')
     .split(/\s+/)
     .filter(Boolean).length;

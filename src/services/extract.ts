@@ -2,6 +2,18 @@ import type { Client } from '@libsql/client';
 import { createArticleContent } from '../db/article-content';
 import type { ServiceOptions } from './types';
 
+function extractTextFromBlock(b: any): string {
+  const { content } = b;
+  if (typeof content === 'string') return content;
+  if (Array.isArray(content)) {
+    return content
+      .filter((c: any) => c.type === 'text')
+      .map((c: any) => c.text)
+      .join('');
+  }
+  return '';
+}
+
 export interface ExtractResult {
   extracted_text: string;
   word_count: number;
@@ -79,10 +91,7 @@ export async function extractArticle(
   });
 
   const blocksJson = JSON.stringify(result.blocks);
-  const extractedText = result.blocks
-    .filter((b: any) => typeof b.content === 'string')
-    .map((b: any) => b.content)
-    .join('\n\n');
+  const extractedText = result.blocks.map(extractTextFromBlock).join('\n\n');
 
   const extractResult: ExtractResult = {
     extracted_text: extractedText,

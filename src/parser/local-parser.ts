@@ -5,6 +5,18 @@ import { extractContent } from './extract-content';
 import { createTurndownService } from './turndown-setup';
 import { parseMDToBlocks } from './parse-markdown';
 
+function extractTextFromBlock(b: any): string {
+  const { content } = b;
+  if (typeof content === 'string') return content;
+  if (Array.isArray(content)) {
+    return content
+      .filter((c: any) => c.type === 'text')
+      .map((c: any) => c.text)
+      .join('');
+  }
+  return '';
+}
+
 function htmlToMarkdown(html: string): string {
   const td = createTurndownService();
   return td.turndown(html);
@@ -41,12 +53,7 @@ export async function parseURL(url: string, options: { timeoutMs?: number } = {}
     const markdown = htmlToMarkdown(cleanHtml);
     const blocks = parseMDToBlocks(markdown);
 
-    const text = blocks
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      .filter((b: any) => typeof b.content === 'string')
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      .map((b: any) => b.content)
-      .join(' ');
+    const text = blocks.map(extractTextFromBlock).join(' ');
     const wordCount = text.split(/\s+/).filter(Boolean).length;
     const readingTime = Math.max(1, Math.round(wordCount / 200));
 
