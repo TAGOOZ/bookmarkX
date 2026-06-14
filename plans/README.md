@@ -88,6 +88,7 @@ honor its STOP conditions, and update your row when done.
 | 078 | Fix word count excluding paragraph content blocks | P1 | S | — | DONE |
 | 079 | Add HTTP status check after fetch | P1 | S | — | DONE |
 | 080 | Add timeout to Gemini fallback and forward timeoutMs | P2 | S | — | DONE |
+| 081 | Log original error in fallback chain | P3 | S | — | DONE |
 
 Status values: TODO | IN PROGRESS | DONE | BLOCKED (with one-line reason) | REJECTED (with one-line rationale)
 

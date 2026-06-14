@@ -7,7 +7,8 @@ export async function parseArticle(
   try {
     const { parseURL } = await import('./local-parser');
     return await parseURL(url, { timeoutMs: options.timeoutMs || 15000 });
-  } catch {
+  } catch (localError) {
+    console.warn('Local parser failed, trying Gemini fallback:', localError);
     // Local parser failed — try Gemini fallback
     const { parseWithGemini } = await import('./gemini-fallback');
     return await parseWithGemini(url, {
