@@ -10,16 +10,18 @@ vi.mock('../../db/article-content', () => ({
 
 vi.mock('../../parser', () => ({
   parseArticle: vi.fn(),
+  parseBookmark: vi.fn(),
 }));
 
 import { extractArticle } from '../extract';
 import { callGemini } from '../gemini';
 import { createArticleContent } from '../../db/article-content';
-import { parseArticle } from '../../parser';
+import { parseArticle, parseBookmark } from '../../parser';
 
 const mockCallGemini = vi.mocked(callGemini);
 const mockCreateArticleContent = vi.mocked(createArticleContent);
 const mockParseArticle = vi.mocked(parseArticle);
+const mockParseBookmark = vi.mocked(parseBookmark);
 
 function createMockDb() {
   return {} as any;
@@ -28,6 +30,7 @@ function createMockDb() {
 describe('extractArticle', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mockParseBookmark.mockReset();
   });
 
   it('extracts article content successfully', async () => {

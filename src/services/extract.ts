@@ -1,5 +1,6 @@
 import type { Client } from '@libsql/client';
 import { createArticleContent } from '../db/article-content';
+import type { Bookmark } from '../fetch/types';
 import type { ServiceOptions } from './types';
 
 function extractTextFromBlock(b: any): string {
@@ -64,9 +65,7 @@ export async function extractArticle(
   bookmarkId: string,
   url: string,
   options: ServiceOptions = {},
-  outerUrls?: string[],
-  tweetText?: string,
-  contentType?: string,
+  bookmark?: Bookmark,
 ): Promise<ExtractResult> {
   const cached = getCachedExtract(url);
   if (cached) {
@@ -86,15 +85,17 @@ export async function extractArticle(
     return cached;
   }
 
-  const { parseArticle } = await import('../parser');
+  const { parseBookmark, parseArticle } = await import('../parser');
 
-  const result = await parseArticle(url, {
-    apiKey: options.apiKey,
-    model: options.model,
-    outerUrls,
-    tweetText: (contentType === 'thread' || contentType === 'plain_tweet') ? tweetText : undefined,
-    contentType,
-  });
+  const result = bookmark
+    ? await parseBookmark(bookmark, {
+        apiKey: options.apiKey,
+        model: options.model,
+      })
+    : await parseArticle(url, {
+        apiKey: options.apiKey,
+        model: options.model,
+      });
 
   const blocksJson = JSON.stringify(result.blocks);
   const extractedText = result.blocks.map(extractTextFromBlock).join('\n\n');
