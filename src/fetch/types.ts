@@ -2,7 +2,7 @@ export interface Bookmark {
   id: string;
   tweet_id: string;
   url: string;
-  content_type: 'outer_link' | 'thread' | 'x_article' | 'video';
+  content_type: 'outer_link' | 'thread' | 'x_article' | 'video' | 'plain_tweet';
   title: string | null;
   title_ar: string | null;
   title_en: string | null;
