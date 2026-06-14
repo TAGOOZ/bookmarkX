@@ -7,7 +7,7 @@ const SCHEMA_SQL = `
     id TEXT PRIMARY KEY,
     tweet_id TEXT UNIQUE,
     url TEXT NOT NULL,
-    content_type TEXT CHECK(content_type IN ('outer_link', 'thread', 'x_article', 'video')),
+    content_type TEXT CHECK(content_type IN ('outer_link', 'thread', 'x_article', 'video', 'plain_tweet')),
     title TEXT,
     title_ar TEXT,
     title_en TEXT,

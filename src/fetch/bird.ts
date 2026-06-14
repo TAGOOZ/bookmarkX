@@ -22,7 +22,7 @@ function classifyContentType(raw: any): Bookmark['content_type'] {
   if (raw.is_video || raw.video) return 'video';
   if (raw.urls && raw.urls.length > 0) return 'outer_link';
   if (raw.is_article) return 'x_article';
-  return 'outer_link';
+  return 'plain_tweet';
 }
 
 function mapBookmark(raw: any): Bookmark {
