@@ -20,7 +20,7 @@ function sleep(ms: number): Promise<void> {
 
 export async function callGemini(
   prompt: string,
-  options: { apiKey: string; model: string; retry?: RetryOptions },
+  options: { apiKey: string; model: string; retry?: RetryOptions; timeoutMs?: number },
 ): Promise<string> {
   const retry = { ...DEFAULT_RETRY, ...options.retry };
   const payload = JSON.stringify({
@@ -33,14 +33,26 @@ export async function callGemini(
 
   for (let attempt = 0; attempt <= retry.maxRetries; attempt++) {
     try {
-      const response = await fetch(url, {
-        method: 'POST',
-        headers: {
-          'x-goog-api-key': options.apiKey,
-          'Content-Type': 'application/json',
-        },
-        body: payload,
-      });
+      const controller = new AbortController();
+      let timeoutId: ReturnType<typeof setTimeout> | undefined;
+      if (options.timeoutMs) {
+        timeoutId = setTimeout(() => controller.abort(), options.timeoutMs);
+      }
+
+      let response: Response;
+      try {
+        response = await fetch(url, {
+          method: 'POST',
+          headers: {
+            'x-goog-api-key': options.apiKey,
+            'Content-Type': 'application/json',
+          },
+          body: payload,
+          signal: controller.signal,
+        });
+      } finally {
+        if (timeoutId) clearTimeout(timeoutId);
+      }
 
       if (!response.ok) {
         const body = await response.text().catch(() => {
@@ -76,7 +88,7 @@ export async function callGemini(
     } catch (err) {
       lastError = err instanceof Error ? err : new Error(String(err));
 
-      if (attempt < retry.maxRetries && !lastError.message.startsWith('Gemini API error:')) {
+      if (attempt < retry.maxRetries && !lastError.message.startsWith('Gemini API error:') && lastError.name !== 'AbortError') {
         const delay = Math.min(
           retry.initialDelayMs! * Math.pow(2, attempt),
           retry.maxDelayMs!,

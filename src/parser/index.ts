@@ -13,6 +13,7 @@ export async function parseArticle(
     return await parseWithGemini(url, {
       apiKey: options.apiKey,
       model: options.model,
+      timeoutMs: options.timeoutMs,
     });
   }
 }
