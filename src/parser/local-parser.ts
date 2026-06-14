@@ -269,6 +269,26 @@ function parseNode($: any, el: any): PartialBlock[] {
   return blocks;
 }
 
+export function parseTweetText(text: string): ParserResult {
+  const paragraphs = text.split(/\n\n+/).filter(p => p.trim());
+  const blocks: PartialBlock[] = [];
+
+  for (const para of paragraphs) {
+    const trimmed = para.trim();
+    if (trimmed) {
+      blocks.push({
+        type: 'paragraph',
+        content: [{ type: 'text', text: trimmed, styles: {} }],
+      } as any);
+    }
+  }
+
+  const wordCount = text.split(/\s+/).filter(Boolean).length;
+  const readingTime = Math.max(1, Math.round(wordCount / 200));
+
+  return { blocks, wordCount, readingTime };
+}
+
 export function parseHTMLToBlocks(html: string): PartialBlock[] {
   const $ = cheerio.load(html);
   const blocks: PartialBlock[] = [];

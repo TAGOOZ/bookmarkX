@@ -15,4 +15,6 @@ export interface ParseOptions {
   model?: string;
   timeoutMs?: number;
   outerUrls?: string[];
+  tweetText?: string;
+  contentType?: string;
 }

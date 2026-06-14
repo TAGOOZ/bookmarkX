@@ -4,6 +4,11 @@ export async function parseArticle(
   url: string,
   options: ParseOptions = {},
 ): Promise<ParserResult> {
+  if (options.tweetText) {
+    const { parseTweetText } = await import('./local-parser');
+    return parseTweetText(options.tweetText);
+  }
+
   const urlsToTry = options.outerUrls?.length
     ? [...options.outerUrls, url]
     : [url];

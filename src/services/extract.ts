@@ -65,6 +65,8 @@ export async function extractArticle(
   url: string,
   options: ServiceOptions = {},
   outerUrls?: string[],
+  tweetText?: string,
+  contentType?: string,
 ): Promise<ExtractResult> {
   const cached = getCachedExtract(url);
   if (cached) {
@@ -90,6 +92,8 @@ export async function extractArticle(
     apiKey: options.apiKey,
     model: options.model,
     outerUrls,
+    tweetText: (contentType === 'thread' || contentType === 'plain_tweet') ? tweetText : undefined,
+    contentType,
   });
 
   const blocksJson = JSON.stringify(result.blocks);
