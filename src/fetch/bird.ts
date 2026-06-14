@@ -20,12 +20,21 @@ function runBird(args: string[], env?: Record<string, string>): Promise<string> 
 function classifyContentType(raw: any): Bookmark['content_type'] {
   if (raw.is_thread || raw.thread_tweet_count > 1) return 'thread';
   if (raw.is_video || raw.video) return 'video';
-  if (raw.urls && raw.urls.length > 0) return 'outer_link';
-  if (raw.is_article) return 'x_article';
+  const urls: string[] = (raw.urls || []).map((u: any) =>
+    typeof u === 'string' ? u : u.expanded_url || u.url || '',
+  );
+  const hasOuterLinks = urls.some(
+    (u) => u && !u.includes('x.com') && !u.includes('twitter.com'),
+  );
+  if (hasOuterLinks) return 'outer_link';
+  if (raw.is_article || urls.length > 0) return 'x_article';
   return 'plain_tweet';
 }
 
 function mapBookmark(raw: any): Bookmark {
+  const urls: string[] = (raw.urls || []).map((u: any) =>
+    typeof u === 'string' ? u : u.expanded_url || u.url || '',
+  );
   return {
     id: raw.id || crypto.randomUUID(),
     tweet_id: raw.id,
@@ -37,7 +46,7 @@ function mapBookmark(raw: any): Bookmark {
     author_name: raw.author?.name || null,
     author_handle: raw.author?.screen_name || null,
     tweet_text: raw.text || null,
-    outer_urls: raw.urls || null,
+    outer_urls: urls.length > 0 ? urls : null,
     thread_tweet_count: raw.thread_tweet_count || null,
     video_url: raw.video || null,
     fetched_at: new Date().toISOString(),
