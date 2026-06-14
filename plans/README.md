@@ -96,6 +96,7 @@ honor its STOP conditions, and update your row when done.
 | 086 | Use tweet_text as parser input for threads and plain tweets | P1 | M | 084 | DONE |
 | 087 | Add content_type branching to parser orchestrator | P1 | L | 084,085,086 | DONE |
 | 088 | Enhance CI pipeline with security, coverage, and build checks | P2 | M | — | DONE |
+| 089 | Fix X Article misclassification as outer_link | P1 | S | — | DONE |
 
 Status values: TODO | IN PROGRESS | DONE | BLOCKED (with one-line reason) | REJECTED (with one-line rationale)
 
