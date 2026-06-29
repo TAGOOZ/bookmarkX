@@ -42,8 +42,8 @@ importers:
         specifier: ^2.1.1
         version: 2.1.1
       defuddle:
-        specifier: ^0.18.1
-        version: 0.18.1(canvas@3.2.3)
+        specifier: ^0.19.1
+        version: 0.19.1(canvas@3.2.3)
       dompurify:
         specifier: ^3.4.10
         version: 3.4.10
@@ -1926,8 +1926,8 @@ packages:
     resolution: {integrity: sha512-8QmQKqEASLd5nx0U1B1okLElbUuuttJ/AnYmRXbbbGDWh6uS208EjD4Xqq/I9wK7u0v6O08XhTWnt5XtEbR6Dg==}
     engines: {node: '>= 0.4'}
 
-  defuddle@0.18.1:
-    resolution: {integrity: sha512-AvFPFOsoDjt5xUOA1QxzafSSzJ5dqEIC63yO72tHYtSjj1DYY/XM0XTPUCsHkm5A2f1X9ulBvoSVFJrd4s2ckA==}
+  defuddle@0.19.1:
+    resolution: {integrity: sha512-7e2IVQYuNncMe9Ws8KkU/KHD8H1LFfFPmdTgRVuQNgJPOeQQSqZzAhacCyNAGwg44cM2vwuCW1cy9fmbdOZ+pA==}
     hasBin: true
 
   dequal@2.0.3:
@@ -6724,7 +6724,7 @@ snapshots:
       has-property-descriptors: 1.0.2
       object-keys: 1.1.1
 
-  defuddle@0.18.1(canvas@3.2.3):
+  defuddle@0.19.1(canvas@3.2.3):
     dependencies:
       commander: 12.1.0
     optionalDependencies:
